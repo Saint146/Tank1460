@@ -1,0 +1,36 @@
+<level>
+	<tiles>
+		R...........R...........R.
+		..........................
+		..XX..XX..XX..XX..XX..XX..
+		..XX..XX..XX..XX..XX..XX..
+		..XX..XX..XX..XX..XX..XX..
+		..XX..XX..XX..XX..XX..XX..
+		..XX..XX..XXQQXX..XX..XX..
+		..XX..XX..XXQQXX..XX..XX..
+		..XX..XX..XX..XX..XX..XX..
+		..XX..XX..........XX..XX..
+		..XX..XX..........XX..XX..
+		..........XX..XX..........
+		..........XX..XX..........
+		XX..XXXX..........XXXX..XX
+		QQ..XXXX..........XXXX..QQ
+		..........XX..XX..........
+		..........XXXXXX..........
+		..XX..XX..XXXXXX..XX..XX..
+		..XX..XX..XX..XX..XX..XX..
+		..XX..XX..XX..XX..XX..XX..
+		..XX..XX..XX..XX..XX..XX..
+		..XX..XX..........XX..XX..
+		..XX..XX..........XX..XX..
+		..XX..XX...XXXX...XX..XX..
+		........1..Xs.X.2.........
+		...........X..X...........
+	</tiles>
+	<botTypes>
+		4*18, 5*2
+	</botTypes>
+	<botBonusNumbers>
+		4, 11, 18
+	</botBonusNumbers>
+</level>
