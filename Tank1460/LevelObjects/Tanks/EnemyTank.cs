@@ -12,7 +12,7 @@ namespace Tank1460.LevelObjects.Tanks;
 
 public class EnemyTank : Tank
 {
-    private readonly Dictionary<ObjectDirection, IAnimation> _animations = new();
+    public int PeriodIndex { get; set; }
 
     protected override int[] SpawnAnimationTimesInFrames() => new[] { 4, 4, 4, 6, 4, 4, 6, 4, 4, 6, 4, 4, 2 };
 
@@ -20,39 +20,27 @@ public class EnemyTank : Tank
 
     protected override ShootingProperties ShootingProperties() => ShootingPropertiesProvider.GetEnemyProperties();
 
-    //private EnemyCommand _activeCommand = EnemyCommand.Idle;
+    private readonly Dictionary<ObjectDirection, IAnimation> _animations = new();
 
     private bool _skipThink = false;
     private readonly int _index;
-
     private int _bonusCount;
     private readonly TankType _type;
-    private ObjectDirection? _previousMovingDirection;
-
-    public int PeriodIndex { get; set; }
-
-#if DEBUG
-    public double Lifetime = 0.0;
-#endif
+    private TankOrder _order;
 
     public EnemyTank(Level level, TankType type, int bonusCount, int index, int periodIndex) : base(level)
     {
         _type = type;
         _bonusCount = bonusCount;
-#if !DEBUG
         _index = index;
-#else
-        _index = 1;
-#endif
         PeriodIndex = periodIndex;
-
-        
+        _order = ObjectDirectionExtensions.GetRandomDirection().ToTankOrder();
     }
 
-#if DEBUG
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         base.Draw(gameTime, spriteBatch);
+#if DEBUG
         if (!Tank1460Game.ShowEnemiesPeriods)
             return;
 
@@ -67,8 +55,8 @@ public class EnemyTank : Tank
                 spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Color.Red);
                 break;
         }
-    }
 #endif
+    }
 
     protected override void LoadContent()
     {
@@ -114,95 +102,68 @@ public class EnemyTank : Tank
             _bonusCount--;
             Level.BonusManager.Spawn();
         }
-        Explode();
+        Explode(shell.ShotBy);
     }
 
-    protected override void Think(GameTime gameTime, KeyboardState keyboardState)
+    protected override TankOrder Think(GameTime gameTime, KeyboardState keyboardState)
     {
-#if DEBUG
-        Lifetime += gameTime.ElapsedGameTime.TotalSeconds;
-#endif
+        // По умолчанию движемся туда же, куда и двигались, даже когда не думаем.
+        var newOrder = _order.GetMovementOnly();
 
-        // По умолчанию движемся туда же, куда и двигались.
-        MovingDirection = _previousMovingDirection;
-
-        // Думаем только в каждом втором такте.
+        // Думаем только в каждом втором такте (логика оригинала).
         // TODO: Тут бы тоже время считать по-хорошему как везде, чтобы в случае какого-то лага это все равно срабатывало верно.
         _skipThink = !_skipThink;
         if (_skipThink)
-            return;
+            return newOrder;
 
-        CheckTileReach();
+        var newThoughtDirection = CheckTileReach();
+        if (newThoughtDirection is not null)
+            newOrder = newThoughtDirection.Value.ToTankOrder();
 
-        _previousMovingDirection = MovingDirection;
-
+        // Стреляй, Глеб Егорыч!
         if (Rng.Next(16) == 0)
-            IssueShootOrder(gameTime);
+            newOrder |= TankOrder.Shoot;
+
+        _order = newOrder;
+        return newOrder;
     }
 
-    private void DecideNewTarget()
+    private ObjectDirection? DecideNewTarget()
     {
-        switch (PeriodIndex)
+        return PeriodIndex switch
         {
-            case 0:
-                RoamAround();
-                break;
-            case 1:
-                Hunt(Level.GetTargetPlayerForEnemy(_index));
-                break;
-            default:
-                Hunt(Level.Falcon);
-                break;
-        }
+            0 => ObjectDirectionExtensions.GetRandomDirection(),
+            1 => Hunt(Level.GetTargetPlayerForEnemy(_index)),
+            _ => Hunt(Level.Falcon)
+        };
     }
 
-    private void RoamAround()
-    {
-        SetRandomDirection();
-    }
-
-    private void ChangeDirection()
+    private ObjectDirection? ChangeDirection()
     {
         if (Rng.Next(2) == 0)
-        {
-            DecideNewTarget();
-        }
-        else
-        {
-            MoveTo(Rng.Next(2) == 0 ? Direction.Clockwise() : Direction.CounterClockwise());
-        }
+            return DecideNewTarget();
+
+        return Rng.Next(2) == 0 ? Direction.Clockwise() : Direction.CounterClockwise();
     }
 
-    private void CheckTileReach()
+    private ObjectDirection? CheckTileReach()
     {
         if (IsTankCenteredOnTile() && Rng.Next(16) == 0)
+            return DecideNewTarget();
+
+        if (IsFrontTileBlocked && Rng.Next(4) == 0)
         {
-            DecideNewTarget();
+            return IsTankCenteredOnTile() ? ChangeDirection() : Direction.Invert();
         }
-        else
-        {
-            if (IsFrontTileBlocked && Rng.Next(4) == 0)
-            {
-                if (IsTankCenteredOnTile())
-                    ChangeDirection();
-                else
-                    MoveTo(Direction.Invert());
-            }
-        }
+
+        return null;
     }
 
-    private void SetRandomDirection()
-    {
-        var allDirections = Enum.GetValues(typeof(ObjectDirection));
-        MoveTo((ObjectDirection)allDirections.GetValue(Rng.Next(allDirections.Length))!);
-    }
-
-    private void Hunt(LevelObject target)
+    private ObjectDirection? Hunt(LevelObject target)
     {
         if (target is null || (!IsTankCenteredOnTile() && Rng.Next(2) == 0))
         {
-            CheckTileReach();
-            return;
+            return CheckTileReach();
         }
 
         var deltaX = target.Position.X / Tile.DefaultWidth - Position.X / Tile.DefaultWidth;
@@ -211,43 +172,31 @@ public class EnemyTank : Tank
         if (deltaX != 0 && deltaY != 0)
         {
             if (Rng.Next(2) == 0)
-                OrderMoveByDeltaX(deltaX);
+                DeltaXToDirection(deltaX);
             else
-                OrderMoveByDeltaY(deltaY);
+                DeltaYToDirection(deltaY);
 
-            return;
+            return null;
         }
 
-        if (!OrderMoveByDeltaX(deltaX) && !OrderMoveByDeltaY(deltaY))
-            RoamAround();
+        if (deltaX != 0)
+            return DeltaXToDirection(deltaX);
+
+        if (deltaY != 0)
+            return DeltaYToDirection(deltaY);
+
+        return ObjectDirectionExtensions.GetRandomDirection();
     }
 
-    private bool OrderMoveByDeltaX(int deltaX)
+    private static ObjectDirection DeltaXToDirection(int deltaX)
     {
-        switch (deltaX)
-        {
-            case < 0:
-                MoveTo(ObjectDirection.Left);
-                return true;
-            case > 0:
-                MoveTo(ObjectDirection.Right);
-                return true;
-            default:
-                return false;
-        }
+        Debug.Assert(deltaX != 0);
+        return deltaX < 0 ? ObjectDirection.Left : ObjectDirection.Right;
     }
-    private bool OrderMoveByDeltaY(int deltaY)
+
+    private static ObjectDirection DeltaYToDirection(int deltaY)
     {
-        switch (deltaY)
-        {
-            case < 0:
-                MoveTo(ObjectDirection.Up);
-                return true;
-            case > 0:
-                MoveTo(ObjectDirection.Down);
-                return true;
-            default:
-                return false;
-        }
+        Debug.Assert(deltaY != 0);
+        return deltaY < 0 ? ObjectDirection.Up : ObjectDirection.Down;
     }
 }

@@ -9,7 +9,8 @@ public static class ArrayExtensions
 
         if (y < 0 || y >= array.GetLength(1))
             return default;
-
         return array[x, y];
     }
+
+    public static T GetRandom<T>(this T[] array) => array[Rng.Next(array.Length)];
 }

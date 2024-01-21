@@ -83,26 +83,28 @@ public class PlayerTank : Tank
         AddTimedInvulnerability(184 * Tank1460Game.OneFrameSpan);
     }
 
-    protected override void Think(GameTime gameTime, KeyboardState keyboardState)
+    protected override TankOrder Think(GameTime gameTime, KeyboardState keyboardState)
     {
-        if (State != TankState.Normal)
-            return;
+        var order = TankOrder.None;
 
         // TODO: придумать как передавать управление, пока супер-костыль
         if (keyboardState.IsKeyDown(PlayerNumber == 1 ? Keys.A : Keys.Left))
-            IssueMoveOrderTo(ObjectDirection.Left);
-        else if (keyboardState.IsKeyDown(PlayerNumber == 1 ? Keys.D : Keys.Right))
-            IssueMoveOrderTo(ObjectDirection.Right);
-        else if (keyboardState.IsKeyDown(PlayerNumber == 1 ? Keys.W : Keys.Up))
-            IssueMoveOrderTo(ObjectDirection.Up);
-        else if (keyboardState.IsKeyDown(PlayerNumber == 1 ? Keys.S : Keys.Down))
-            IssueMoveOrderTo(ObjectDirection.Down);
+            order |= TankOrder.MoveLeft;
+
+        if (keyboardState.IsKeyDown(PlayerNumber == 1 ? Keys.D : Keys.Right))
+            order |= TankOrder.MoveRight;
+
+        if (keyboardState.IsKeyDown(PlayerNumber == 1 ? Keys.W : Keys.Up))
+            order |= TankOrder.MoveUp;
+
+        if (keyboardState.IsKeyDown(PlayerNumber == 1 ? Keys.S : Keys.Down))
+            order |= TankOrder.MoveDown;
 
         if (keyboardState.IsKeyDown(PlayerNumber == 1 ? Keys.K : Keys.NumPad2))
-            IssueShootOrder(gameTime);
+            order |= TankOrder.Shoot;
 
         if (KeyboardEx.HasBeenPressed(PlayerNumber == 1 ? Keys.L : Keys.NumPad3))
-            IssueShootOrder(gameTime);
+            order |= TankOrder.Shoot;
 
 #if DEBUG
         if (KeyboardEx.HasBeenPressed(Keys.F10))
@@ -115,8 +117,10 @@ public class PlayerTank : Tank
             UpgradeLevel = UpgradeLevel.LevelDown();
 
         if (KeyboardEx.HasBeenPressed(Keys.Enter))
-            Explode();
+            Explode(this);
 #endif
+
+        return order;
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -127,16 +131,6 @@ public class PlayerTank : Tank
         if (_godMode)
             spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Color.Black);
 #endif
-    }
-
-    protected void IssueMoveOrderTo(ObjectDirection newDirection)
-    {
-
-        // Сразу после поворота танк игрока ещё не движется.
-        if (newDirection == Direction)
-            MoveTo(newDirection);
-        else
-            TurnTo(newDirection);
     }
 
     public void UpgradeUp()
@@ -168,6 +162,6 @@ public class PlayerTank : Tank
             return;
         }
 
-        Explode();
+        Explode(shell.ShotBy);
     }
 }
