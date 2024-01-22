@@ -23,7 +23,7 @@ public class Level : IDisposable
     public bool IsPlayerInGame(int playerNumber) => _playersInGame.Contains(playerNumber);
 
     private readonly int[] _playersInGame = { 1, 2 };
-    
+
     public int BotSpawnsRemaining => BotManager?.SpawnsRemaining ?? 0;
 
     public bool BotsCanGrabBonuses = true;
@@ -37,7 +37,7 @@ public class Level : IDisposable
 
     private List<LevelObject>[,] _tileObjectMap;
 
-    private readonly List<PlayerTank> _players = new();
+    private List<PlayerTank> PlayerTanks { get; } = new();
 
     private readonly Dictionary<int, PlayerSpawner> _playerSpawners = new();
 
@@ -59,7 +59,10 @@ public class Level : IDisposable
     public ContentManagerEx Content { get; }
 
     private const int TotalBots = 20;
-    private const int MaxAliveBots = 4;
+
+    // В оригинале именно так: зависит лишь от режима,
+    // а не от того, жив ли второй игрок. Даже если уровень стартует, когда один уже без жизней, всё равно будет шесть.
+    private int MaxAliveBots() => (_playersInGame.Length + 1) * 2;
 
     private const int MaxBonusesOnScreen = 1;
 
@@ -98,7 +101,7 @@ public class Level : IDisposable
         Content = new ContentManagerEx(serviceProvider, "Content");
 
         SoundPlayer = new SoundPlayer(Content);
-        BotManager = new BotManager(this, TotalBots, MaxAliveBots);
+        BotManager = new BotManager(this, TotalBots, MaxAliveBots());
         BonusManager = new BonusManager(this, MaxBonusesOnScreen);
         LoadTiles(levelStructure.Tiles);
 
@@ -107,11 +110,11 @@ public class Level : IDisposable
 
     public void AddExplosion(Explosion explosion) => _explosions.Add(explosion);
 
-    public void AddPlayer(PlayerTank playerTank) => _players.Add(playerTank);
+    public void AddPlayer(PlayerTank playerTank) => PlayerTanks.Add(playerTank);
 
     private void RemovePlayer(PlayerTank playerTank)
     {
-        _players.Remove(playerTank);
+        PlayerTanks.Remove(playerTank);
         var playerSpawner = _playerSpawners[playerTank.PlayerNumber];
 
         if (playerSpawner is null)
@@ -125,11 +128,11 @@ public class Level : IDisposable
 
     public PlayerTank GetTargetPlayerForBot(int botIndex)
     {
-        return _players.Count switch
+        return PlayerTanks.Count switch
         {
             0 => null,
-            1 => botIndex % 2 == 0 ? null : _players[0],
-            _ => _players[botIndex % _players.Count]
+            1 => botIndex % 2 == 0 ? null : PlayerTanks[0],
+            _ => PlayerTanks[botIndex % PlayerTanks.Count]
         };
     }
 
@@ -215,7 +218,7 @@ public class Level : IDisposable
 
     private Tile CreatePlayerSpawn(int x, int y, int playerNumber)
     {
-        if(_playerSpawners.ContainsKey(playerNumber))
+        if (_playerSpawners.ContainsKey(playerNumber))
             throw new NotSupportedException($"A level may only have one player {playerNumber} spawn.");
 
         var playerSpawner = new PlayerSpawner(this, x, y, playerNumber);
@@ -238,17 +241,11 @@ public class Level : IDisposable
         return null;
     }
 
-    /// <summary>
-    /// Unloads the level content.
-    /// </summary>
     public void Dispose()
     {
         Content.Unload();
     }
 
-    /// <summary>
-    /// Draw everything in the level from background to foreground.
-    /// </summary>
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         spriteBatch.FillRectangle(Bounds, Color.Black);
@@ -260,20 +257,16 @@ public class Level : IDisposable
         foreach (var tile in _tiles.Where(tile => tile.TileView == TileView.Default))
             tile.Draw(gameTime, spriteBatch);
 
-        foreach (var player in _players)
+        foreach (var player in PlayerTanks)
             player.Draw(gameTime, spriteBatch);
 
         Falcon.Draw(gameTime, spriteBatch);
 
         foreach (var explosion in _explosions)
-        {
             explosion.Draw(gameTime, spriteBatch);
-        }
 
         foreach (var shell in Shells)
-        {
             shell.Draw(gameTime, spriteBatch);
-        }
 
         BotManager.Draw(gameTime, spriteBatch);
 
@@ -320,38 +313,6 @@ public class Level : IDisposable
         return closeObjects;
     }
 
-    private IReadOnlyCollection<(LevelObject levelObject, Vector2 depth)> GetAllCollisions(LevelObject levelObject,
-        IReadOnlyCollection<LevelObject> excludedObjects = null)
-    {
-        var allCollisions = new List<(LevelObject levelObject, Vector2 depth)>();
-
-        var outOfBoundsCollisionDepth = DetectOutOfBoundsCollision(levelObject.BoundingRectangle, levelObject.TileRectangle);
-
-        if (outOfBoundsCollisionDepth != Vector2.Zero)
-        {
-            allCollisions.Add((null, outOfBoundsCollisionDepth));
-        }
-        else
-        {
-            var tilesObjects = new HashSet<LevelObject>();
-
-            levelObject.TileRectangle.EnumerateArray(_tileObjectMap, tilesObjects.UnionWith);
-            tilesObjects.Remove(levelObject);
-            if (excludedObjects is not null)
-                tilesObjects.RemoveWhere(excludedObjects.Contains);
-
-            foreach (var collidingObject in tilesObjects)
-            {
-                var depth = levelObject.BoundingRectangle.GetIntersectionDepth(
-                    collidingObject.BoundingRectangle);
-                if (depth != Vector2.Zero)
-                    allCollisions.Add((collidingObject, depth));
-            }
-        }
-
-        return allCollisions;
-    }
-
     private bool DetectOutOfBoundsCollisionSimple(Rectangle tileRect)
     {
         if (tileRect.Top < TileBounds.Top)
@@ -369,42 +330,14 @@ public class Level : IDisposable
         return false;
     }
 
-    private Vector2 DetectOutOfBoundsCollision(Rectangle rect, Rectangle tileRect)
-    {
-        int? outOfBoundsXTile = null;
-        int? outOfBoundsYTile = null;
-
-        if (tileRect.Top < TileBounds.Top)
-            outOfBoundsYTile = tileRect.Top;
-
-        if (tileRect.Bottom > TileBounds.Bottom)
-            outOfBoundsYTile = tileRect.Bottom;
-
-        if (tileRect.Left < TileBounds.Left)
-            outOfBoundsXTile = tileRect.Left;
-
-        if (tileRect.Right > TileBounds.Right)
-            outOfBoundsXTile = tileRect.Right;
-
-        if (outOfBoundsXTile.HasValue || outOfBoundsYTile.HasValue)
-        {
-            outOfBoundsXTile ??= tileRect.Left;
-            outOfBoundsYTile ??= tileRect.Top;
-            var outOfBoundsTile = GetTileBounds(outOfBoundsXTile.Value, outOfBoundsYTile.Value);
-            return rect.GetIntersectionDepth(outOfBoundsTile);
-        }
-
-        return Vector2.Zero;
-    }
-
     public void Update(GameTime gameTime, KeyboardState keyboardState)
     {
         HandleInput();
 
         if (!IsGamePaused)
         {
-            _players.FindAll(p => p.ToRemove).ForEach(RemovePlayer);
-            foreach (var player in _players)
+            PlayerTanks.FindAll(p => p.ToRemove).ForEach(RemovePlayer);
+            foreach (var player in PlayerTanks)
                 player.Update(gameTime, keyboardState);
 
             Falcon.Update(gameTime, keyboardState);
@@ -441,9 +374,6 @@ public class Level : IDisposable
     public bool IsTileFree(Point tilePoint)
     {
         var tileObjects = _tileObjectMap.ElementAtOrDefault(tilePoint.X, tilePoint.Y);
-
-        //Debug.WriteLine($"Point: {tilePoint} Objects: {tileObjects?.Count ?? -1}");
-
         return tileObjects?.All(o => !o.CollisionType.HasFlag(CollisionType.Impassable)) == true;
     }
 

@@ -25,7 +25,7 @@ public class Falcon : LevelObject
     {
         foreach (FalconState state in Enum.GetValues(typeof(FalconState)))
         {
-            var animationKey = Enum.GetName(state == FalconState.Exploding ? FalconState.Destroyed : state);
+            var animationKey = (state == FalconState.Exploding ? FalconState.Destroyed : state).ToString();
             var animation = new Animation(Level.Content.Load<Texture2D>($"Sprites/Falcon/{animationKey}"), false);
             _animations.Add(state, animation);
         }

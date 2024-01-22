@@ -27,7 +27,7 @@ internal class Cursor
     {
         var allTypes = Enum.GetValues<CursorType>();
 
-        var allCursors = allTypes.Select(type => content.Load<Texture2D>($"Sprites/Cursor/{Enum.GetName(type)}")).ToArray();
+        var allCursors = allTypes.Select(type => content.Load<Texture2D>($"Sprites/Cursor/{type}")).ToArray();
 
         _animation = new ShiftingAnimation(allCursors, double.MaxValue, true, Tank1460Game.OneFrameSpan * 240);
     }

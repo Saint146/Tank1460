@@ -11,6 +11,11 @@ public abstract class MoveableLevelObject : LevelObject
     protected double MovingSpeed { get; private set; }
 
     // Вместо перемещения на нецелый путь каждый такт - объект перемещается на целый путь не каждый такт.
+    // Главное при этом - разделять возможные действия объекта на те, что случаются:
+    // - каждый такт независимо от попыток движения; (Update)
+    // - каждый такт при том, что команда движения дана; (сейчас тоже в Update, объект сам думает об этом)
+    // - только при реальной попытке сдвинуться; (HandleTryMove)
+    // - когда объект действительно сдвинулся. (сейчас таких нет, но можно добавить новый абстракт с вызовом внутри Move)
     private double _time;
     private double _timeToMove;
 
@@ -30,7 +35,7 @@ public abstract class MoveableLevelObject : LevelObject
 
     public override void Update(GameTime gameTime, KeyboardState keyboardState)
     {
-        // Совершаем движение, если можно и нужно.
+        // Совершаем движение (бывает, что и не одно), если можно и нужно.
         _time += gameTime.ElapsedGameTime.TotalSeconds;
         while (_time > _timeToMove)
         {
@@ -53,9 +58,16 @@ public abstract class MoveableLevelObject : LevelObject
 
     /// <summary>
     /// Для действий, которые происходят при попытке передвижения независимо от того, получится ли сдвинуться.
-    /// Например, для продвижения анимаций.
     /// </summary>
     protected virtual void HandleTryMove()
+    {
+    }
+
+    /// <summary>
+    /// Для действий, которые происходят после реального передвижения.
+    /// Например, для проверки коллизий (которые влияют НЕ на запрет продвижения, а как например для пули)
+    /// </summary>
+    protected virtual void HandleMove()
     {
     }
 
@@ -65,6 +77,9 @@ public abstract class MoveableLevelObject : LevelObject
     /// </summary>
     protected abstract bool CanMove();
 
+    /// <summary>
+    /// Попытка продвинуться вперёд.
+    /// </summary>
     private void TryMove()
     {
         if (MovingDirection is null)
@@ -76,9 +91,13 @@ public abstract class MoveableLevelObject : LevelObject
             Move();
     }
 
+    /// <summary>
+    /// Реальное движение вперёд после всех проверок.
+    /// </summary>
     private void Move()
     {
         // ReSharper disable once PossibleInvalidOperationException
         Position += Velocities[MovingDirection.Value];
+        HandleMove();
     }
 }

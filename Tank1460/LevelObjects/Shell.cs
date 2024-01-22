@@ -2,9 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Collections.Generic;
 using Tank1460.Audio;
-using Tank1460.Extensions;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
@@ -19,7 +17,7 @@ public class Shell : MoveableLevelObject
     public readonly Tank ShotBy;
     private Explosion _explosion;
     public readonly ObjectDirection Direction;
-    private bool _skipCollisionCheck = false;
+    private bool _skipCollisionCheck;
     public readonly ShellDamage Damage;
 
     public Shell(Level level, ObjectDirection direction, ShellSpeed shellSpeed, Tank shotBy, ShellDamage damage) : base(level, shellSpeed == ShellSpeed.Normal ? 2.0f : 4.0f)
@@ -37,7 +35,7 @@ public class Shell : MoveableLevelObject
 
     protected override void LoadContent()
     {
-        _animation = new Animation(Level.Content.Load<Texture2D>($"Sprites/Shell/{Enum.GetName(Direction)}"), true);
+        _animation = new Animation(Level.Content.Load<Texture2D>($"Sprites/Shell/{Direction}"), true);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -59,8 +57,8 @@ public class Shell : MoveableLevelObject
         switch (State)
         {
             case ShellState.Normal:
+                // Пуля всегда летит вперёд.
                 MovingDirection = Direction;
-                HandleCollisions();
                 break;
 
             case ShellState.Exploding when _explosion.ToRemove:
@@ -74,6 +72,12 @@ public class Shell : MoveableLevelObject
     }
 
     protected override bool CanMove() => State == ShellState.Normal && !ToRemove;
+
+    protected override void HandleMove()
+    {
+        base.HandleMove();
+        HandleCollisions();
+    }
 
     private void HandleCollisions()
     {
@@ -152,8 +156,5 @@ public class Shell : MoveableLevelObject
         State = ShellState.Exploding;
         _explosion = new CommonExplosion(Level);
         _explosion.SpawnViaCenterPosition(BoundingRectangle.Center);
-
-        //// TODO: Переделать на умный учет коллизий
-        //Level.HandleObjectRemoved(this);
     }
 }

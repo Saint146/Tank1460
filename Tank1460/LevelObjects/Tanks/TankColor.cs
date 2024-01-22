@@ -1,11 +1,11 @@
-﻿namespace Tank1460.LevelObjects.Tanks;
+﻿using System;
 
-/// <summary>
-/// В будущем поменяется, когда добавится броня у ботов и соответственно изменение цвета.
-/// </summary>
+namespace Tank1460.LevelObjects.Tanks;
+
+[Flags]
 public enum TankColor
 {
-    Yellow,
-    Green,
-    Gray
+    Gray = 1 << 0,
+    Yellow = 1 << 1,
+    Green = 1 << 2
 }

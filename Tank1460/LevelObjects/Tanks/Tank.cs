@@ -21,18 +21,18 @@ public abstract class Tank : MoveableLevelObject
 
     protected TankType Type { get; private set; }
 
-    protected ObjectDirection Direction { get; private set; }
+    protected ObjectDirection Direction { get; private set; } = ObjectDirection.Up;
 
     protected bool IsFrontTileBlocked { get; private set; } = true;
 
     /// <summary>
-    /// У танков игроков и ботов разное время звезды перед спауном. Пока сделано так.
+    /// У танков игроков и ботов разное время звезды перед спауном. Пока способ это отразить - через такую абстракцию.
     /// TODO: Сделать нову отдельной сущностью.
     /// </summary>
     protected abstract int[] SpawnAnimationTimesInFrames();
 
     private const double FireDelay = 2 * Tank1460Game.OneFrameSpan;
-    private readonly Dictionary<TankType, IReadOnlyDictionary<ObjectDirection, IAnimation>> _animations = new();
+    private IReadOnlyDictionary<ObjectDirection, IAnimation> _animations;
     private IAnimation _spawnAnimation;
     private Explosion _explosion;
     private double _lastFireTime;
@@ -46,10 +46,10 @@ public abstract class Tank : MoveableLevelObject
 
     protected Tank(Level level, TankType type, TankColor color, int bonusCount) : base(level, 0.75f)
     {
-        SetType(type);
         State = TankState.Spawning;
         _color = color;
         _bonusCount = bonusCount;
+        SetType(type);
     }
 
     protected Tank(Level level, TankType type, TankColor color) : this(level, type, color, 0)
@@ -141,13 +141,6 @@ public abstract class Tank : MoveableLevelObject
         // Звезда при респауне.
         var spawnAnimationTimes = SpawnAnimationTimesInFrames().Select(t => t * Tank1460Game.OneFrameSpan).ToArray();
         _spawnAnimation = new Animation(Level.Content.Load<Texture2D>(@"Sprites/Effects/SpawnNova"), spawnAnimationTimes, false);
-
-        // Текстуры всех типов танков.
-        // TODO: Это, конечно, дичь, нет смысла грузить это всё сразу. Но пока некогда придумывать, как лучше.
-        foreach (var type in Enum.GetValues<TankType>())
-            _animations[type] = LoadAnimationsForType(Level.Content, type, _color, _bonusCount > 0);
-
-        TurnTo(ObjectDirection.Up);
     }
 
     private static Dictionary<ObjectDirection, IAnimation> LoadAnimationsForType(ContentManagerEx content,
@@ -165,14 +158,16 @@ public abstract class Tank : MoveableLevelObject
         bool isFlashingBonus, ObjectDirection direction)
     {
         // Загружаем обычные текстуры в любом случае.
-        var plainTexture = content.LoadRecoloredTexture($"Sprites/Tank/Type{(int)type}/{direction}",
-            $"Sprites/_R/Tank/{Enum.GetName(color)}");
+        var plainTexture = content.LoadRecoloredTexture(
+            $"Sprites/Tank/Type{(int)type}/{direction}",
+            $"Sprites/_R/Tank/{color}");
 
         if (!isFlashingBonus)
             return new Animation(plainTexture, true);
 
         // Но только в случае бонуса подгружаем нужную текстуру и подключаем "двумерную" анимацию.
-        var bonusTexture = content.LoadRecoloredTexture($"Sprites/Tank/Type{(int)type}/{direction}",
+        var bonusTexture = content.LoadRecoloredTexture(
+            $"Sprites/Tank/Type{(int)type}/{direction}",
             $"Sprites/_R/Tank/Red");
 
         return new ShiftingAnimation(new[] { bonusTexture, plainTexture }, double.MaxValue, true,
@@ -195,7 +190,6 @@ public abstract class Tank : MoveableLevelObject
         State = TankState.Exploding;
         _explosion = new BigExplosion(Level);
         _explosion.SpawnViaCenterPosition(BoundingRectangle.Center);
-        //MovingDirection = null;
 
         Level.SoundPlayer.Play(this is PlayerTank ? Sound.ExplosionBig : Sound.ExplosionSmall);
     }
@@ -219,8 +213,11 @@ public abstract class Tank : MoveableLevelObject
         Type = type;
         RefreshTankProperties();
 
-        if (_animations.ContainsKey(type))
-            PlayCurrentAnimation();
+        // Каждый раз при смене типа подгружается новая анимация.
+        // TODO: Возможно, сделать у самих анимаций возможность подгружать новые текстуры, чтобы не пересоздавать объект? Так можно заодно и не начинать мигание заново.
+        _animations = LoadAnimationsForType(Level.Content, Type, _color, _bonusCount > 0);
+
+        PlayCurrentAnimation();
     }
 
     protected abstract TankOrder Think(GameTime gameTime, KeyboardState keyboardState);
@@ -233,7 +230,10 @@ public abstract class Tank : MoveableLevelObject
 
     private void PlayCurrentAnimation()
     {
-        Sprite.PlayAnimation(_animations[Type][Direction]);
+        //if (_animations is null)
+        //    return;
+
+        Sprite.PlayAnimation(_animations[Direction]);
     }
 
     private void RefreshTankProperties()

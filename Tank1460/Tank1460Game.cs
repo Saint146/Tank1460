@@ -20,6 +20,7 @@ public class Tank1460Game : Game
 
     /// <summary>
     /// Длительность одного кадра в секундах.
+    /// TODO: Убрать необходимость всем указывать время или скорость с использованием этой константы. Лучше, чтобы всё было в кадрах и пикселях на кадр.
     /// </summary>
     public const double OneFrameSpan = 1.0 / FPS;
 
@@ -55,7 +56,7 @@ public class Tank1460Game : Game
     private SpriteBatch _spriteBatch;
     private SpriteBatch _unscalableSpriteBatch;
 
-    readonly Vector2 _baseScreenSize = new(ScreenWidthInTiles * Tile.DefaultWidth, ScreenHeightInTiles * Tile.DefaultHeight);
+    private readonly Vector2 _baseScreenSize = new(ScreenWidthInTiles * Tile.DefaultWidth, ScreenHeightInTiles * Tile.DefaultHeight);
 
     private readonly Matrix _levelTransformation = Matrix.CreateTranslation(LevelLeftInTiles * Tile.DefaultWidth, LevelTopInTiles * Tile.DefaultHeight, 0);
     private Matrix _globalTransformation;

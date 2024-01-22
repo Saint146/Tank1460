@@ -34,6 +34,7 @@ internal class SoundGroup
         Priority = priority;
         IsLooped = isLooped;
 
+        // Загружаем все вариации звука из подпапки.
         _soundEffects = content.MassLoadContent<SoundEffect>($"Sounds/8bit/{sound}")
             .Values
             .Select(soundEffect => soundEffect.CreateInstance())

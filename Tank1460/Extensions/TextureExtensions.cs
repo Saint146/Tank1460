@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -44,6 +45,35 @@ public static class TextureExtensions
     public static Texture2D RecolorAsCopy(this Texture2D texture, Texture2D recolorTexture)
     {
         return RecolorAsCopy(texture, RecolorTextureToMap(recolorTexture));
+    }
+
+    /// <summary>
+    /// "Смешать" две текстуры по цветам, найдя средние цвета между ними.
+    /// Используется для смешения текстур для перекрашивания, при этом 
+    /// </summary>
+    /// <remarks>
+    /// В оригинальной игре для имитации этого использовалось переключение цвета танков каждый кадр.
+    /// </remarks>
+    public static Texture2D MixAverage(this Texture2D texture, Texture2D otherTexture)
+    {
+        if (texture.Bounds != otherTexture.Bounds)
+            throw new Exception($"Textures cannot be mixed due to different sizes ({texture.Bounds} vs {otherTexture.Bounds}");
+
+        var data = new Color[texture.Width * texture.Height];
+        var otherData = new Color[texture.Width * texture.Height];
+        texture.GetData(data);
+        otherTexture.GetData(otherData);
+
+        var newTexture = new Texture2D(texture.GraphicsDevice, texture.Width, texture.Height);
+
+        for (var i = 0; i < data.Length; i++)
+        {
+            data[i] = data[i].Mix(otherData[i]);
+        }
+
+        newTexture.SetData(data);
+
+        return newTexture;
     }
 
     private static Dictionary<Color, Color> RecolorTextureToMap(Texture2D recolorTexture)
