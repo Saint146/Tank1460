@@ -21,6 +21,8 @@ public abstract class Tank : MoveableLevelObject
 
     protected TankType Type { get; private set; }
 
+    protected TankColor Color { get; private set; }
+
     protected ObjectDirection Direction { get; private set; } = ObjectDirection.Up;
 
     protected bool IsFrontTileBlocked { get; private set; } = true;
@@ -41,15 +43,13 @@ public abstract class Tank : MoveableLevelObject
     private int _maxShells;
     private ShellDamage _shellDamage;
     private ShellSpeed _shellSpeed;
-    private readonly TankColor _color;
     private int _bonusCount;
 
     protected Tank(Level level, TankType type, TankColor color, int bonusCount) : base(level, 0.75f)
     {
         State = TankState.Spawning;
-        _color = color;
         _bonusCount = bonusCount;
-        SetType(type);
+        SetTypeAndColor(type, color);
     }
 
     protected Tank(Level level, TankType type, TankColor color) : this(level, type, color, 0)
@@ -213,10 +213,30 @@ public abstract class Tank : MoveableLevelObject
         Type = type;
         RefreshTankProperties();
 
-        // Каждый раз при смене типа подгружается новая анимация.
-        // TODO: Возможно, сделать у самих анимаций возможность подгружать новые текстуры, чтобы не пересоздавать объект? Так можно заодно и не начинать мигание заново.
-        _animations = LoadAnimationsForType(Level.Content, Type, _color, _bonusCount > 0);
+        _animations = LoadAnimationsForType(Level.Content, Type, Color, _bonusCount > 0);
+        PlayCurrentAnimation();
+    }
 
+    protected void SetColor(TankColor color)
+    {
+        Color = color;
+
+        RefreshTankProperties();
+
+        _animations = LoadAnimationsForType(Level.Content, Type, Color, _bonusCount > 0);
+        PlayCurrentAnimation();
+    }
+
+    protected void SetTypeAndColor(TankType type, TankColor color)
+    {
+        Type = type;
+        Color = color;
+
+        RefreshTankProperties();
+
+        // Каждый раз при смене подгружается новая анимация.
+        // TODO: Возможно, сделать у самих анимаций возможность подгружать новые текстуры, чтобы не пересоздавать объект? Так можно заодно и не начинать мигание заново.
+        _animations = LoadAnimationsForType(Level.Content, Type, Color, _bonusCount > 0);
         PlayCurrentAnimation();
     }
 
@@ -228,13 +248,7 @@ public abstract class Tank : MoveableLevelObject
     {
     }
 
-    private void PlayCurrentAnimation()
-    {
-        //if (_animations is null)
-        //    return;
-
-        Sprite.PlayAnimation(_animations[Direction]);
-    }
+    private void PlayCurrentAnimation() => Sprite.PlayAnimation(_animations[Direction]);
 
     private void RefreshTankProperties()
     {

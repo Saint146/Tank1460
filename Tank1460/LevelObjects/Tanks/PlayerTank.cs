@@ -15,6 +15,9 @@ public class PlayerTank : Tank
     private bool _godMode;
 #endif
 
+    /// <summary>
+    /// Цвет танка в зависимости от номера игрока.
+    /// </summary>
     private static readonly Dictionary<int, TankColor> PlayerNumberToColorMap = new()
     {
         { 1, TankColor.Yellow },
@@ -34,7 +37,7 @@ public class PlayerTank : Tank
 
 #if DEBUG
         if (_godMode)
-            spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Color.Black);
+            spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Microsoft.Xna.Framework.Color.Black);
 #endif
     }
 

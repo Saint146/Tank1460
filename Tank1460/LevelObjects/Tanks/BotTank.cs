@@ -2,7 +2,9 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
+using System.Collections.Generic;
 using System.Diagnostics;
+using Tank1460.Audio;
 using Tank1460.Extensions;
 using Tank1460.LevelObjects.Tiles;
 
@@ -17,11 +19,26 @@ public class BotTank : Tank
     private bool _skipThink;
     private readonly int _index;
     private TankOrder _botOrder;
+    private int _hp;
 
-    public BotTank(Level level, TankType type, int bonusCount, int index, int periodIndex) : base(level, type, TankColor.Gray, bonusCount)
+    /// <summary>
+    /// Цвет танка в зависимости от хп.
+    /// </summary>
+    private static readonly Dictionary<int, TankColor> HpToColorMap = new()
     {
+        { 1, TankColor.Gray },
+        { 2, TankColor.Yellow | TankColor.Green },
+        { 3, TankColor.Gray | TankColor.Yellow },
+        { 4, TankColor.Gray | TankColor.Green }
+    };
+    
+    public BotTank(Level level, TankType type, int hp, int bonusCount, int index, int periodIndex) : base(level, type, HpToTankColor(hp), bonusCount)
+    {
+        _hp = hp;
         _index = index;
         PeriodIndex = periodIndex;
+
+        // Понеслись!
         _botOrder = ObjectDirectionExtensions.GetRandomDirection().ToTankOrder();
     }
 
@@ -37,10 +54,10 @@ public class BotTank : Tank
             case 0:
                 break;
             case 1:
-                spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Color.Yellow);
+                spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Microsoft.Xna.Framework.Color.Yellow);
                 break;
             default:
-                spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Color.Red);
+                spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Microsoft.Xna.Framework.Color.Red);
                 break;
         }
 #endif
@@ -71,9 +88,33 @@ public class BotTank : Tank
 
     protected override void HandleDamaged(Tank damagedBy)
     {
-        Debug.Assert(damagedBy is PlayerTank);
-        Explode(damagedBy);
+        Debug.Assert(damagedBy is PlayerTank, "Боты не могут бить друг друга.");
+
+        if (_hp <= 1)
+        {
+            Explode(damagedBy);
+            return;
+        }
+
+        Level.SoundPlayer.Play(Sound.HitHurt);
+        SetHp(_hp - 1);
     }
+
+    private static TankColor HpToTankColor(int hp)
+    {
+        Debug.Assert(hp is > 0 and <= 4);
+        return HpToColorMap[hp];
+    }
+
+    private void SetHp(int newHp)
+    {
+        Debug.Assert(newHp is > 0 and <= 4);
+        _hp = newHp;
+
+        SetColor(HpToTankColor(newHp));
+    }
+
+    #region --- AI ---
 
     private ObjectDirection? DecideNewTarget()
     {
@@ -146,4 +187,6 @@ public class BotTank : Tank
         Debug.Assert(deltaY != 0);
         return deltaY < 0 ? ObjectDirection.Up : ObjectDirection.Down;
     }
+
+    #endregion
 }

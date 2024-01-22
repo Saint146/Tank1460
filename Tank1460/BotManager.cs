@@ -155,12 +155,12 @@ public class BotManager
         var botNumber = _totalSpawns - SpawnsRemaining;
 
         bool hasBonus;
-        if(_level.Structure?.BotBonusNumbers is null)
-            hasBonus = Rng.Next(1) == 0;
+        if (_level.Structure?.BotBonusNumbers is null)
+            hasBonus = Rng.Next(4) == 0;
         else
             hasBonus = _level.Structure.BotBonusNumbers.Contains(botNumber);
 
-        var bot = new BotTank(_level, type, hasBonus ? 1:0, SpawnsRemaining, _periodIndex);
+        var bot = new BotTank(_level, type, type == TankType.Type7 ? 4 : 1, hasBonus ? 1 : 0, SpawnsRemaining, _periodIndex);
         bot.Spawn(position);
         _bots.Add(bot);
         _botsAlive++;

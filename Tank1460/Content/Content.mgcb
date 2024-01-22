@@ -199,18 +199,6 @@
 /processorParam:Quality=Best
 /build:Sounds/8bit/Tick/4.ogg
 
-#begin Sprites/_R/Tank/Brown.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/_R/Tank/Brown.png
-
 #begin Sprites/_R/Tank/Gray.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -234,18 +222,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/_R/Tank/Green.png
-
-#begin Sprites/_R/Tank/Olive.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/_R/Tank/Olive.png
 
 #begin Sprites/_R/Tank/Red.png
 /importer:TextureImporter
