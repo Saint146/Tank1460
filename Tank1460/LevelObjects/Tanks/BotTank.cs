@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using MonoGame.Extended;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Tank1460.Audio;
@@ -53,10 +52,12 @@ public class BotTank : Tank
             case 0:
                 break;
             case 1:
-                spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Microsoft.Xna.Framework.Color.Yellow);
+                var targetPlayer = Level.GetTargetPlayerForBot(_index);
+                spriteBatch.DrawDebugArrow(BoundingRectangle, Microsoft.Xna.Framework.Color.Gold, targetPlayer?.BoundingRectangle.Center);
                 break;
             default:
-                spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Microsoft.Xna.Framework.Color.Red);
+                var targetFalcon = Level.GetTargetFalconForBot(_index);
+                spriteBatch.DrawDebugArrow(BoundingRectangle, Microsoft.Xna.Framework.Color.Red, targetFalcon?.BoundingRectangle.Center);
                 break;
         }
 #endif

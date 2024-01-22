@@ -5,7 +5,14 @@ namespace Tank1460.SaveLoad;
 
 public class SettingsData
 {
+    public GameSettingsData Game { get; set; }
+
     public ScreenSettingsData Screen { get; set; }
+}
+
+public class GameSettingsData
+{
+    public bool CustomCursor { get; set; }
 }
 
 public class ScreenSettingsData

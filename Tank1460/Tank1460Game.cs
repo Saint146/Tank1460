@@ -11,9 +11,6 @@ using Tank1460.SaveLoad;
 
 namespace Tank1460;
 
-/// <summary>
-/// This is the main type for your game.
-/// </summary>
 public class Tank1460Game : Game
 {
     private const int Fps = 60;
@@ -28,6 +25,8 @@ public class Tank1460Game : Game
     public static bool ShowObjectsBoundaries;
     public static bool ShowBotsPeriods = true;
 #endif
+
+    internal GameState State { get; private set; }
 
     private Rectangle GetLevelBounds() =>
         _level?.Bounds ?? new Rectangle(0, 0, 26 * Tile.DefaultWidth, 26 * Tile.DefaultHeight);
@@ -86,96 +85,27 @@ public class Tank1460Game : Game
     public Tank1460Game()
     {
         Window.Title = "Tank 1460";
+        Window.AllowUserResizing = true;
+        Content.RootDirectory = "Content";
+        IsFixedTimeStep = true;
 
         _graphics = new GraphicsDeviceManager(this);
+        _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
 
+#pragma warning disable CS0162
         if (Fps != 60)
-#pragma warning disable CS0162 // Unreachable code detected
         {
             _graphics.SynchronizeWithVerticalRetrace = false;
-            IsFixedTimeStep = false;
+            //IsFixedTimeStep = false; // Вроде бы и без этого работает
             TargetElapsedTime = TimeSpan.FromMilliseconds(1000.0 / Fps);
         }
 #pragma warning restore CS0162
-
-        Content.RootDirectory = "Content";
-
-        _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
-
-        Window.AllowUserResizing = true;
-
-        IsFixedTimeStep = true;
-        CustomCursorEnabled = true;
     }
 
-    private void LoadSettings()
-    {
-        var settings = _saveLoadManager.LoadSettings();
-
-        var position = settings?.Screen?.Position;
-        var size = settings?.Screen?.Size;
-        var isMaximized = settings?.Screen?.IsMaximized;
-
-        // Позиция окна.
-        if (position.HasValue)
-            Window.Position = position.Value.ToPoint();
-
-        // Размер окна.
-        if (size.HasValue)
-        {
-            _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale), size.Value.ToPoint());
-        }
-
-        // Развернутое окно.
-        if (isMaximized is true)
-            Window.Maximize();
-
-        _graphics.HardwareModeSwitch = false;
-
-        // Режим экрана.
-        _graphics.IsFullScreen = settings?.Screen?.Mode switch
-        {
-            ScreenMode.Borderless => true,
-            _ => false
-        };
-
-        _graphics.ApplyChanges();
-        ScalePresentationArea();
-    }
-
-    private void SaveSettings()
-    {
-        var settings = new SettingsData
-        {
-            Screen = new ScreenSettingsData
-            {
-                Mode = _graphics.IsFullScreen ? ScreenMode.Borderless : ScreenMode.Window,
-                Position = ScreenPoint.FromPoint(Window.Position),
-                Size = ScreenPoint.FromPoint(Window.ClientBounds.Size),
-                IsMaximized = Window.IsMaximized()
-            }
-        };
-
-        _saveLoadManager.SaveSettings(settings);
-    }
-
-    /// <summary>
-    /// Allows the game to perform any initialization it needs to before starting to run.
-    /// This is where it can query for any required services and load any non-graphic
-    /// related content.  Calling base.Initialize will enumerate through any components
-    /// and initialize them as well.
-    /// </summary>
     protected override void Initialize()
     {
-        //var form = (Form)Form.FromHandle(Window.Handle);
-        //form.WindowState = FormWindowState.Maximized;
-        //
-        //Window.Position = new Point(0, 0);
-        //SDL_MaximizeWindow(Window.Handle);
-
-        LoadSettings();
-
         base.Initialize();
+        LoadSettings();
     }
 
     protected override void LoadContent()
@@ -188,50 +118,15 @@ public class Tank1460Game : Game
 
         ScalePresentationArea();
 
-        LoadLevel(1);
+        State = GameState.Ready;
     }
 
-    private void ScalePresentationArea()
-    {
-        _backbufferWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
-        _backbufferHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
-
-        var horScaling = _backbufferWidth / BaseScreenSize.X;
-        var verScaling = _backbufferHeight / BaseScreenSize.Y;
-        _scale = MathHelper.Min(horScaling, verScaling);
-        var screenScalingFactor = new Vector3(_scale, _scale, 1);
-        var scaleTransformation = Matrix.CreateScale(screenScalingFactor);
-
-        var xShift = (horScaling - _scale) * BaseScreenSize.X / 2;
-        var yShift = (verScaling - _scale) * BaseScreenSize.Y / 2;
-        var shiftTransformation = Matrix.CreateTranslation(xShift, yShift, 0);
-
-        _globalTransformation = _levelTransformation * scaleTransformation * shiftTransformation;
-    }
-
-    /// <summary>
-    /// UnloadContent will be called once per game and is the place to unload
-    /// game-specific content.
-    /// </summary>
-    protected override void UnloadContent()
-    {
-        _level?.Dispose();
-        base.UnloadContent();
-    }
-
-    /// <summary>
-    /// Allows the game to run logic such as updating the world,
-    /// checking for collisions, gathering input, and playing audio.
-    /// </summary>
-    /// <param name="gameTime">Provides a snapshot of timing values.</param>
     protected override void Update(GameTime gameTime)
     {
         // Если размер экрана изменился.
         if (_backbufferHeight != GraphicsDevice.PresentationParameters.BackBufferHeight ||
             _backbufferWidth != GraphicsDevice.PresentationParameters.BackBufferWidth)
             ScalePresentationArea();
-
-        HandleInput();
 
         if (_customCursorEnabled)
         {
@@ -248,9 +143,86 @@ public class Tank1460Game : Game
             _isCustomCursorVisible = false;
         }
 
+        ProcessGameState(gameTime);
+
+        HandleInput();
+
         _level?.Update(gameTime, _keyboardState);
 
         base.Update(gameTime);
+    }
+
+    protected override void Draw(GameTime gameTime)
+    {
+        GraphicsDevice.Clear(GameBackColor);
+
+        _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _globalTransformation);
+
+        if (_level is not null)
+        {
+            _level.Draw(gameTime, _spriteBatch);
+
+            var hudPosition = /*PreLevelIndent +*/new Point(GetLevelBounds().Width + PostLevelIndent.X - 1, 0); // ну вот так в оригинале, на один пиксель сдвинуто левее сетки
+            _levelHud.Draw(_level, _spriteBatch, hudPosition);
+        }
+
+        _spriteBatch.End();
+
+        if (_isCustomCursorVisible)
+        {
+            _unscalableSpriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp);
+            _cursor.Draw(gameTime, _unscalableSpriteBatch);
+            _unscalableSpriteBatch.End();
+        }
+
+        base.Draw(gameTime);
+    }
+
+    protected override void OnExiting(object sender, EventArgs args)
+    {
+        try
+        {
+            SaveSettings();
+        }
+        catch (Exception ex)
+        {
+            Debug.Fail(ex.ToString());
+        }
+        finally
+        {
+            base.OnExiting(sender, args);
+        }
+    }
+
+    protected override void UnloadContent()
+    {
+        _level?.Dispose();
+        base.UnloadContent();
+    }
+
+    private void ProcessGameState(GameTime gameTime)
+    {
+        switch (State)
+        {
+            case GameState.Initializing:
+                break;
+
+            case GameState.Ready:
+                LoadLevel(1);
+                break;
+
+            case GameState.InLevel:
+                break;
+
+            case GameState.CurtainOpening:
+                break;
+
+            case GameState.CurtainClosing:
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 
     private void HandleInput()
@@ -317,49 +289,86 @@ public class Tank1460Game : Game
         _level = new Level(Services, levelStructure, levelNumber);
         _levelNumber = levelNumber;
 
+        State = GameState.InLevel;
+
         _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
         _graphics.ApplyChanges();
         ScalePresentationArea();
     }
 
-    protected override void OnExiting(object sender, EventArgs args)
+    private void LoadSettings()
     {
-        try
+        var settings = _saveLoadManager.LoadSettings();
+
+        // Кастомный курсор.
+        CustomCursorEnabled = settings?.Game?.CustomCursor ?? true;
+
+        var position = settings?.Screen?.Position;
+        var size = settings?.Screen?.Size;
+        var isMaximized = settings?.Screen?.IsMaximized;
+
+        // Позиция окна.
+        if (position.HasValue)
+            Window.Position = position.Value.ToPoint();
+
+        // Размер окна.
+        if (size.HasValue)
         {
-            SaveSettings();
+            _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale), size.Value.ToPoint());
         }
-        catch (Exception ex)
+
+        // Развернутое окно.
+        if (isMaximized is true)
+            Window.Maximize();
+
+        _graphics.HardwareModeSwitch = false;
+
+        // Режим экрана.
+        _graphics.IsFullScreen = settings?.Screen?.Mode switch
         {
-            Debug.Fail(ex.ToString());
-        }
-        finally
-        {
-            base.OnExiting(sender, args);
-        }
+            ScreenMode.Borderless => true,
+            _ => false
+        };
+
+        _graphics.ApplyChanges();
+        ScalePresentationArea();
     }
 
-    /// <summary>
-    /// This is called when the game should draw itself.
-    /// </summary>
-    /// <param name="gameTime">Provides a snapshot of timing values.</param>
-    protected override void Draw(GameTime gameTime)
+    private void SaveSettings()
     {
-        GraphicsDevice.Clear(GameBackColor);
-
-        _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _globalTransformation);
-        _level.Draw(gameTime, _spriteBatch);
-
-        var hudPosition = /*PreLevelIndent +*/ new Point(GetLevelBounds().Width + PostLevelIndent.X - 1, 0); // ну вот так в оригинале, на один пиксель сдвинуто левее сетки
-        _levelHud.Draw(_level, _spriteBatch, hudPosition);
-        _spriteBatch.End();
-
-        if (_isCustomCursorVisible)
+        var settings = new SettingsData
         {
-            _unscalableSpriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp);
-            _cursor.Draw(gameTime, _unscalableSpriteBatch);
-            _unscalableSpriteBatch.End();
-        }
+            Game = new GameSettingsData
+            {
+                CustomCursor = CustomCursorEnabled
+            },
+            Screen = new ScreenSettingsData
+            {
+                Mode = _graphics.IsFullScreen ? ScreenMode.Borderless : ScreenMode.Window,
+                Position = ScreenPoint.FromPoint(Window.Position),
+                Size = ScreenPoint.FromPoint(Window.ClientBounds.Size),
+                IsMaximized = Window.IsMaximized()
+            }
+        };
 
-        base.Draw(gameTime);
+        _saveLoadManager.SaveSettings(settings);
+    }
+
+    private void ScalePresentationArea()
+    {
+        _backbufferWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
+        _backbufferHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
+
+        var horScaling = _backbufferWidth / BaseScreenSize.X;
+        var verScaling = _backbufferHeight / BaseScreenSize.Y;
+        _scale = MathHelper.Min(horScaling, verScaling);
+        var screenScalingFactor = new Vector3(_scale, _scale, 1);
+        var scaleTransformation = Matrix.CreateScale(screenScalingFactor);
+
+        var xShift = (horScaling - _scale) * BaseScreenSize.X / 2;
+        var yShift = (verScaling - _scale) * BaseScreenSize.Y / 2;
+        var shiftTransformation = Matrix.CreateTranslation(xShift, yShift, 0);
+
+        _globalTransformation = _levelTransformation * scaleTransformation * shiftTransformation;
     }
 }

@@ -32,8 +32,6 @@ public class Level : IDisposable
 
     public PlayerSpawner GetPlayerSpawner(int playerNumber) => _playerSpawners[playerNumber];
 
-    public List<Falcon> Falcons { get; } = new();
-
     public BotManager BotManager { get; }
 
     public BonusManager BonusManager { get; }
@@ -60,6 +58,9 @@ public class Level : IDisposable
     // В оригинале именно так: зависит лишь от режима,
     // а не от того, жив ли второй игрок. Даже если уровень стартует, когда один уже без жизней, всё равно будет шесть.
     private int MaxAliveBots() => (_playersInGame.Length + 1) * 2;
+
+    private List<Falcon> Falcons { get; } = new();
+
     private List<PlayerTank> PlayerTanks { get; } = new();
     private readonly Dictionary<int, PlayerSpawner> _playerSpawners = new();
     private const int MaxPlayerCount = 2;
