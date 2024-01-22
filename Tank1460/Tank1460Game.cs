@@ -133,16 +133,11 @@ public class Tank1460Game : Game
         _graphics.HardwareModeSwitch = false;
 
         // Режим экрана.
-        switch (settings?.Screen?.Mode)
+        _graphics.IsFullScreen = settings?.Screen?.Mode switch
         {
-            case ScreenMode.Borderless:
-                _graphics.IsFullScreen = true;
-                break;
-
-            default:
-                _graphics.IsFullScreen = false;
-                break;
-        }
+            ScreenMode.Borderless => true,
+            _ => false
+        };
 
         _graphics.ApplyChanges();
         ScalePresentationArea();

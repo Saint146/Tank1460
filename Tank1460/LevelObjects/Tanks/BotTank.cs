@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Tank1460.Audio;
 using Tank1460.Extensions;
-using Tank1460.LevelObjects.Tiles;
 
 namespace Tank1460.LevelObjects.Tanks;
 
@@ -31,7 +30,7 @@ public class BotTank : Tank
         { 3, TankColor.Gray | TankColor.Yellow },
         { 4, TankColor.Gray | TankColor.Green }
     };
-    
+
     public BotTank(Level level, TankType type, int hp, int bonusCount, int index, int periodIndex) : base(level, type, HpToTankColor(hp), bonusCount)
     {
         _hp = hp;
@@ -116,13 +115,24 @@ public class BotTank : Tank
 
     #region --- AI ---
 
+    private ObjectDirection? CheckTileReach()
+    {
+        if (IsTankCenteredOnTile() && Rng.Next(16) == 0)
+            return DecideNewTarget();
+
+        if (IsFrontTileBlocked && Rng.Next(4) == 0)
+            return IsTankCenteredOnTile() ? ChangeDirection() : Direction.Invert();
+
+        return null;
+    }
+
     private ObjectDirection? DecideNewTarget()
     {
         return PeriodIndex switch
         {
             0 => ObjectDirectionExtensions.GetRandomDirection(),
             1 => Hunt(Level.GetTargetPlayerForBot(_index)),
-            _ => Hunt(Level.Falcon)
+            _ => Hunt(Level.GetTargetFalconForBot(_index))
         };
     }
 
@@ -134,38 +144,16 @@ public class BotTank : Tank
         return Rng.Next(2) == 0 ? Direction.Clockwise() : Direction.CounterClockwise();
     }
 
-    private ObjectDirection? CheckTileReach()
-    {
-        if (IsTankCenteredOnTile() && Rng.Next(16) == 0)
-            return DecideNewTarget();
-
-        if (IsFrontTileBlocked && Rng.Next(4) == 0)
-        {
-            return IsTankCenteredOnTile() ? ChangeDirection() : Direction.Invert();
-        }
-
-        return null;
-    }
-
     private ObjectDirection? Hunt(LevelObject target)
     {
-        if (target is null || (!IsTankCenteredOnTile() && Rng.Next(2) == 0))
-        {
+        if (target is null)
             return CheckTileReach();
-        }
 
-        var deltaX = target.Position.X / Tile.DefaultWidth - Position.X / Tile.DefaultWidth;
-        var deltaY = target.Position.Y / Tile.DefaultWidth - Position.Y / Tile.DefaultWidth;
+        var deltaX = target.Position.X - Position.X;
+        var deltaY = target.Position.Y - Position.Y;
 
         if (deltaX != 0 && deltaY != 0)
-        {
-            if (Rng.Next(2) == 0)
-                DeltaXToDirection(deltaX);
-            else
-                DeltaYToDirection(deltaY);
-
-            return null;
-        }
+            return Rng.Next(2) == 0 ? DeltaXToDirection(deltaX) : DeltaYToDirection(deltaY);
 
         if (deltaX != 0)
             return DeltaXToDirection(deltaX);

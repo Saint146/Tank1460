@@ -40,7 +40,7 @@ public class PlayerSpawner
         _spawnIsDue = true;
     }
 
-    public void HandlePlayerDeath(PlayerTank playerTank)
+    public void HandleTankDestroyed(PlayerTank playerTank)
     {
         if (_playerTank != playerTank)
         {

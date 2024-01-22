@@ -18,53 +18,29 @@ namespace Tank1460;
 
 public class Level : IDisposable
 {
+    // TODO: Паблик Морозов во все поля
+
     public int PlayerLivesRemaining(int playerNumber) => _playerSpawners[playerNumber].LivesRemaining;
 
     public bool IsPlayerInGame(int playerNumber) => _playersInGame.Contains(playerNumber);
 
-    private readonly int[] _playersInGame = { 1, 2 };
-
     public int BotSpawnsRemaining => BotManager?.SpawnsRemaining ?? 0;
 
-    public bool BotsCanGrabBonuses = true;
+    public bool BotsCanGrabBonuses { get; } = true;
 
     public int PlayerCount => _playerSpawners.Count;
 
-    internal LevelStructure Structure { get; }
-
-    private readonly List<Tile> _tiles = new();
-    //private Texture2D[] layers;
-
-    private List<LevelObject>[,] _tileObjectMap;
-
-    private List<PlayerTank> PlayerTanks { get; } = new();
-
-    private readonly Dictionary<int, PlayerSpawner> _playerSpawners = new();
-
-    internal ISoundPlayer SoundPlayer;
-
     public PlayerSpawner GetPlayerSpawner(int playerNumber) => _playerSpawners[playerNumber];
 
-    private const int MaxPlayerCount = 2;
-
-    public Falcon Falcon { get; private set; }
-
-    private readonly List<Explosion> _explosions = new();
+    public List<Falcon> Falcons { get; } = new();
 
     public BotManager BotManager { get; }
+
     public BonusManager BonusManager { get; }
 
     public List<Shell> Shells = new();
 
     public ContentManagerEx Content { get; }
-
-    private const int TotalBots = 20;
-
-    // В оригинале именно так: зависит лишь от режима,
-    // а не от того, жив ли второй игрок. Даже если уровень стартует, когда один уже без жизней, всё равно будет шесть.
-    private int MaxAliveBots() => (_playersInGame.Length + 1) * 2;
-
-    private const int MaxBonusesOnScreen = 1;
 
     public int LevelNumber { get; }
 
@@ -72,9 +48,27 @@ public class Level : IDisposable
 
     public Rectangle Bounds { get; private set; }
 
+    internal ISoundPlayer SoundPlayer;
+
+    internal LevelStructure Structure { get; }
+
+    private readonly int[] _playersInGame = { 1, 2 };
+    private readonly List<Tile> _tiles = new();
+    //private Texture2D[] layers;
+    private List<LevelObject>[,] _tileObjectMap;
+
+    // В оригинале именно так: зависит лишь от режима,
+    // а не от того, жив ли второй игрок. Даже если уровень стартует, когда один уже без жизней, всё равно будет шесть.
+    private int MaxAliveBots() => (_playersInGame.Length + 1) * 2;
+    private List<PlayerTank> PlayerTanks { get; } = new();
+    private readonly Dictionary<int, PlayerSpawner> _playerSpawners = new();
+    private const int MaxPlayerCount = 2;
+    private readonly List<Explosion> _explosions = new();
+    private const int TotalBots = 20;
+    private const int MaxBonusesOnScreen = 1;
+
     // TODO: State
     private bool _isGamePaused;
-
     public bool IsGamePaused
     {
         get => _isGamePaused;
@@ -113,20 +107,6 @@ public class Level : IDisposable
 
     public void AddPlayer(PlayerTank playerTank) => PlayerTanks.Add(playerTank);
 
-    private void RemovePlayer(PlayerTank playerTank)
-    {
-        PlayerTanks.Remove(playerTank);
-        var playerSpawner = _playerSpawners[playerTank.PlayerNumber];
-
-        if (playerSpawner is null)
-        {
-            Debug.Fail($"Cannot find player spawner for player {playerTank.PlayerNumber}.");
-            return;
-        }
-
-        playerSpawner.HandlePlayerDeath(playerTank);
-    }
-
     public PlayerTank GetTargetPlayerForBot(int botIndex)
     {
         return PlayerTanks.Count switch
@@ -137,113 +117,20 @@ public class Level : IDisposable
         };
     }
 
-    private void LoadTiles(TileType[,] tileTypes)
+    public Falcon GetTargetFalconForBot(int botIndex)
     {
-        var width = tileTypes.GetLength(0);
-        var height = tileTypes.GetLength(1);
+        var aliveFalcons = Falcons.Where(falcon => falcon.IsAlive).ToList();
 
-        _tileObjectMap = new List<LevelObject>[width, height];
-        for (var y = 0; y < height; y++)
-            for (var x = 0; x < width; x++)
-                _tileObjectMap[x, y] = new List<LevelObject>();
-
-        for (var y = 0; y < height; y++)
+        return aliveFalcons.Count switch
         {
-            for (var x = 0; x < width; x++)
-            {
-                var tile = CreateTile(tileTypes[x, y], x, y);
-                if (tile is null)
-                    continue;
-
-                _tiles.Add(tile);
-                tile.Spawn(new Point(x * Tile.DefaultWidth, y * Tile.DefaultHeight));
-            }
-        }
-
-        TileBounds = new Rectangle(0, 0, width, height);
-        Bounds = TileBounds.Multiply(new Point(Tile.DefaultWidth, Tile.DefaultHeight));
-
-        if (_playerSpawners.Count is < 1 or > MaxPlayerCount)
-            throw new NotSupportedException($"A level must have 1 to {MaxPlayerCount} starting point(s).");
-
-        if (Falcon == null)
-            throw new NotSupportedException("A level must have the falcon.");
-
-        BotManager.ForceSpawn();
-    }
-
-    private Tile CreateTile(TileType tileType, int x, int y)
-    {
-        return tileType switch
-        {
-            // Blank space
-            TileType.Empty => null,
-
-            // Brick
-            TileType.Brick => new BrickTile(this),
-
-            // Concrete
-            TileType.Concrete => new ConcreteTile(this),
-
-            // Water
-            TileType.Water => new WaterTile(this),
-
-            // Forest
-            TileType.Forest => new ForestTile(this),
-
-            // Ice
-            TileType.Ice => new IceTile(this),
-
-            // Player 1 start point
-            TileType.Player1Spawn => CreatePlayerSpawn(x, y, 1),
-
-            // Player 2 start point
-            TileType.Player2Spawn => CreatePlayerSpawn(x, y, 2),
-
-            // Bot spawn point
-            TileType.BotSpawn => CreateBotSpawn(x, y),
-
-            // Falcon
-            TileType.Falcon => CreateFalcon(x, y),
-
-            // Unknown tile type character
-            _ => throw new NotSupportedException()
+            0 => null,
+            1 => aliveFalcons[0],
+            _ => aliveFalcons[botIndex % aliveFalcons.Count]
         };
     }
-
-    private Tile CreateBotSpawn(int x, int y)
-    {
-        BotManager.AddSpawnPoint(x, y);
-        return null;
-    }
-
-    private Tile CreatePlayerSpawn(int x, int y, int playerNumber)
-    {
-        if (_playerSpawners.ContainsKey(playerNumber))
-            throw new NotSupportedException($"A level may only have one player {playerNumber} spawn.");
-
-        var playerSpawner = new PlayerSpawner(this, x, y, playerNumber);
-        _playerSpawners.Add(playerNumber, playerSpawner);
-
-        if (!IsPlayerInGame(playerNumber))
-            playerSpawner.Disable();
-
-        return null;
-    }
-
-    private Tile CreateFalcon(int x, int y)
-    {
-        if (Falcon != null)
-            throw new NotSupportedException("A level may only have one falcon.");
-
-        Falcon = new Falcon(this);
-        Falcon.Spawn(new Point(x * Tile.DefaultWidth, y * Tile.DefaultHeight));
-
-        return null;
-    }
-
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         Content.Unload();
     }
 
@@ -261,7 +148,8 @@ public class Level : IDisposable
         foreach (var player in PlayerTanks)
             player.Draw(gameTime, spriteBatch);
 
-        Falcon.Draw(gameTime, spriteBatch);
+        foreach (var falcon in Falcons)
+            falcon.Draw(gameTime, spriteBatch);
 
         foreach (var explosion in _explosions)
             explosion.Draw(gameTime, spriteBatch);
@@ -314,6 +202,112 @@ public class Level : IDisposable
         return closeObjects;
     }
 
+
+    private void LoadTiles(TileType[,] tileTypes)
+    {
+        var width = tileTypes.GetLength(0);
+        var height = tileTypes.GetLength(1);
+
+        _tileObjectMap = new List<LevelObject>[width, height];
+        for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
+                _tileObjectMap[x, y] = new List<LevelObject>();
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var tile = LoadTile(tileTypes[x, y], x, y);
+                if (tile is null)
+                    continue;
+
+                _tiles.Add(tile);
+                tile.Spawn(new Point(x * Tile.DefaultWidth, y * Tile.DefaultHeight));
+            }
+        }
+
+        TileBounds = new Rectangle(0, 0, width, height);
+        Bounds = TileBounds.Multiply(new Point(Tile.DefaultWidth, Tile.DefaultHeight));
+
+        if (_playerSpawners.Count is < 1 or > MaxPlayerCount)
+            throw new NotSupportedException($"A level must have 1 to {MaxPlayerCount} starting point(s).");
+
+        if (Falcons.Count == 0)
+            throw new NotSupportedException("A level must have the falcon.");
+    }
+
+    private void HandlePlayerTankDestroyed(PlayerTank playerTank)
+    {
+        PlayerTanks.Remove(playerTank);
+        var playerSpawner = _playerSpawners[playerTank.PlayerNumber];
+
+        if (playerSpawner is null)
+        {
+            Debug.Fail($"Cannot find player spawner for player {playerTank.PlayerNumber}.");
+            return;
+        }
+
+        playerSpawner.HandleTankDestroyed(playerTank);
+    }
+
+    private Tile LoadTile(TileType tileType, int x, int y)
+    {
+        return tileType switch
+        {
+            TileType.Empty => null,
+
+            TileType.Brick => new BrickTile(this),
+
+            TileType.Concrete => new ConcreteTile(this),
+
+            TileType.Water => new WaterTile(this),
+
+            TileType.Forest => new ForestTile(this),
+
+            TileType.Ice => new IceTile(this),
+
+            TileType.Player1Spawn => CreatePlayerSpawn(x, y, 1),
+
+            TileType.Player2Spawn => CreatePlayerSpawn(x, y, 2),
+
+            TileType.BotSpawn => CreateBotSpawn(x, y),
+
+            TileType.Falcon => CreateFalcon(x, y),
+
+            _ => throw new NotSupportedException()
+        };
+    }
+
+    private Tile CreateBotSpawn(int x, int y)
+    {
+        BotManager.AddSpawnPoint(x, y);
+        return null;
+    }
+
+    private Tile CreatePlayerSpawn(int x, int y, int playerNumber)
+    {
+        if (_playerSpawners.ContainsKey(playerNumber))
+            throw new NotSupportedException($"A level may only have one player {playerNumber} spawn.");
+
+        var playerSpawner = new PlayerSpawner(this, x, y, playerNumber);
+        _playerSpawners.Add(playerNumber, playerSpawner);
+
+        if (!IsPlayerInGame(playerNumber))
+            playerSpawner.Disable();
+
+        return null;
+    }
+
+    private Tile CreateFalcon(int x, int y)
+    {
+        var falcon = new Falcon(this);
+        Falcons.Add(falcon);
+
+        falcon.Spawn(new Point(x * Tile.DefaultWidth, y * Tile.DefaultHeight));
+
+        return null;
+    }
+
     private bool DetectOutOfBoundsCollisionSimple(Rectangle tileRect)
     {
         if (tileRect.Top < TileBounds.Top)
@@ -337,11 +331,12 @@ public class Level : IDisposable
 
         if (!IsGamePaused)
         {
-            PlayerTanks.FindAll(p => p.ToRemove).ForEach(RemovePlayer);
+            PlayerTanks.FindAll(p => p.ToRemove).ForEach(HandlePlayerTankDestroyed);
             foreach (var player in PlayerTanks)
                 player.Update(gameTime, keyboardState);
 
-            Falcon.Update(gameTime, keyboardState);
+            foreach (var falcon in Falcons)
+                falcon.Update(gameTime, keyboardState);
 
             BotManager.Update(gameTime, keyboardState);
 
@@ -380,7 +375,8 @@ public class Level : IDisposable
 
     public void HandleFalconDestroyed(Falcon falcon)
     {
-        GameOver();
+        if (!Falcons.Any(f => f.IsAlive))
+            GameOver();
     }
 
     private void GameOver()

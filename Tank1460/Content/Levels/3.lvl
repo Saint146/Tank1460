@@ -5,16 +5,16 @@
 		##XX..QQ......XX..XX..XXX##XXXXXXXXX####QQXXXX##XX....
 		##XX..QQ......XX..XX..XXX##XXXXXXXXX####QQXXXX##XX....
 		##XX..######XXXX..XXQQXXXXXXXX..QQ##XX..XX..XX..XX...#
-		##XX..######XXXX..XXQQXX........QQ##XX..XX..XX..XX...#
-		##....XX....XXXX~~QQ....//QQXX~~QQ..XX..XX..~~~~XX~~##
-		##....XX....XXXX~~QQ....//QQXX~~QQ..XX..XX..~~~~XX~~#.
-		##....XXXXXXXXXX~~QQ..XX//QQXX~~QQ..XX..XX..~~~~XX~~##
-		##....XXXX..XXXX~~QQ..XX//QQXX~~QQ..XX..XX..~~~~XX~~#.
-		##....XX..XXQQ....XX##XXQQ~~XX..XX..XXXXXX..XXQQXX~~##
-		##....XX..XXQQ....XX##XXQQ~~XX..XX..XXXXXX..XXQQXX~##.
-		##XX..XX..XXXXXX..~~.....XX.................XXXXX~~#..
-		##XX..XX..XXXXXX..~~....XXXX.........XXXX...XXXX~~~##.
-		~~XX..XX......QQ.....1.XXs.XX.2.X..XX.......XXX~~Q##R.
-		~~XX..XX...X..QQ.......XX..XX...............XX~~~Q#...
+		##XX..######XXXX..XXQQXX........QQ##XXQQXX..XX..XX...#
+		##....XX....XXXX~~QQ....//QQXX~~QQ..XXs.XX..~.....~~##
+		##....XX....XXXX~~QQ....//QQXX~~QQ..XX..XX..~.....~~#.
+		##....XXXXXXXXXX~~QQ..XX//QQXX~~QQ..XXXXXX..~.....~~##
+		##....XXXX..XXXX~~QQ..XX//QQXX~~QQ..XX..XX..~...XX~~#.
+		##....XX..XXQQ....XX##XXQQ~~XX..XX..............XX~~##
+		##....XX..XXQQ....XX##XXQQ~~XX..XX......X#X.....XX~##.
+		##XX..XX..XXXXXX..~~.....XX...........XX#X....XXX~~#..
+		##XX..XX..XXXXXX..~~....XXXX.........XXXX....XXX~~###.
+		~~XX..XX......QQ.....1.XXs.XX.2.X..XX........XX~~Q##R.
+		~~XX..XX...X..QQ.......XX..XX...............XX~~~~#...
 	</tiles>
 </level>

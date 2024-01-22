@@ -46,7 +46,7 @@ public class BotManager
 
         _respawnInterval = (190 - level.LevelNumber * 4 - (level.PlayerCount - 1) * 20) * Tank1460Game.OneFrameSpan;
         _periodLength = _respawnInterval * 8;
-        ResetSpawnTimer();
+        SpawnIsReady();
     }
 
     private void ResetSpawnTimer()
@@ -179,11 +179,6 @@ public class BotManager
             _pointIndex = 0;
 
         return _points[_pointIndex];
-    }
-
-    public void ForceSpawn()
-    {
-        TrySpawnBot();
     }
 
     private void HandleBotDestroyed(BotTank botTank)

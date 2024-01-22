@@ -21,6 +21,8 @@ public class Falcon : LevelObject
 
     public override CollisionType CollisionType => CollisionType.ShootableAndImpassable;
 
+    public bool IsAlive => State == FalconState.Normal;
+
     protected override void LoadContent()
     {
         foreach (FalconState state in Enum.GetValues(typeof(FalconState)))
