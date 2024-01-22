@@ -46,6 +46,8 @@ public class Level : IDisposable
 
     public Rectangle Bounds { get; private set; }
 
+    public bool IsLoaded => State != LevelState.Loading;
+
     internal ISoundPlayer SoundPlayer;
 
     internal LevelStructure Structure { get; }
@@ -68,24 +70,21 @@ public class Level : IDisposable
     private const int TotalBots = 20;
     private const int MaxBonusesOnScreen = 1;
 
-    // TODO: State
-    private bool _isGamePaused;
-    public bool IsGamePaused
+    private LevelState _state = LevelState.Loading;
+    internal LevelState State
     {
-        get => _isGamePaused;
+        get => _state;
         private set
         {
-            if (_isGamePaused != value)
+            if (value == LevelState.Paused && _state != LevelState.Paused)
             {
-                if (value)
-                    SoundPlayer.PauseAndPushState();
-                else
-                    SoundPlayer.ResumeAndPopState();
-            }
-
-            _isGamePaused = value;
-            if (value)
+                SoundPlayer.PauseAndPushState();
                 SoundPlayer.Play(Sound.Pause);
+            }
+            else if (value != LevelState.Paused && _state == LevelState.Paused)
+                    SoundPlayer.ResumeAndPopState();
+
+            _state = value;
         }
     }
 
@@ -102,6 +101,7 @@ public class Level : IDisposable
         LoadTiles(levelStructure.Tiles);
 
         SoundPlayer.Play(Sound.Intro);
+        State = LevelState.Intro;
     }
 
     public void AddExplosion(Explosion explosion) => _explosions.Add(explosion);
@@ -129,6 +129,55 @@ public class Level : IDisposable
             _ => aliveFalcons[botIndex % aliveFalcons.Count]
         };
     }
+
+    public void Update(GameTime gameTime, KeyboardState keyboardState)
+    {
+        HandleInput();
+
+        if (State is not LevelState.Loading and not LevelState.Intro and not LevelState.Paused)
+        {
+            PlayerTanks.FindAll(p => p.ToRemove).ForEach(HandlePlayerTankDestroyed);
+            foreach (var player in PlayerTanks)
+                player.Update(gameTime, keyboardState);
+
+            foreach (var falcon in Falcons)
+                falcon.Update(gameTime, keyboardState);
+
+            BotManager.Update(gameTime, keyboardState);
+
+            foreach (var shell in Shells)
+                shell.Update(gameTime, keyboardState);
+            Shells.RemoveAll(s => s.ToRemove);
+
+            foreach (var explosion in _explosions)
+                explosion.Update(gameTime, keyboardState);
+            _explosions.RemoveAll(e => e.ToRemove);
+
+            _tiles.RemoveAll(t => t.ToRemove);
+            foreach (var tile in _tiles)
+                tile.Update(gameTime, keyboardState);
+
+            foreach (var playerSpawner in _playerSpawners.Values)
+                playerSpawner.Update(gameTime);
+
+            BonusManager.Update(gameTime, keyboardState);
+        }
+
+        SoundPlayer.Perform(gameTime);
+    }
+
+    public bool IsTileFree(Point tilePoint)
+    {
+        var tileObjects = _tileObjectMap.ElementAtOrDefault(tilePoint.X, tilePoint.Y);
+        return tileObjects?.All(o => !o.CollisionType.HasFlag(CollisionType.Impassable)) == true;
+    }
+
+    public void HandleFalconDestroyed(Falcon falcon)
+    {
+        if (!Falcons.Any(f => f.IsAlive))
+            GameOver();
+    }
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);
@@ -177,6 +226,16 @@ public class Level : IDisposable
         oldTileBounds.EnumerateArray(_tileObjectMap, tileLevelObjects => { tileLevelObjects.Remove(levelObject); });
 
         newTileBounds?.EnumerateArray(_tileObjectMap, tileLevelObjects => { tileLevelObjects.Add(levelObject); });
+    }
+
+    public void HandleAllBotsDestroyed()
+    {
+    }
+
+    public void Start()
+    {
+        Debug.Assert(State == LevelState.Intro);
+        State = LevelState.Running;
     }
 
     public void HandleObjectRemoved(LevelObject levelObject)
@@ -326,66 +385,20 @@ public class Level : IDisposable
         return false;
     }
 
-    public void Update(GameTime gameTime, KeyboardState keyboardState)
-    {
-        HandleInput();
-
-        if (!IsGamePaused)
-        {
-            PlayerTanks.FindAll(p => p.ToRemove).ForEach(HandlePlayerTankDestroyed);
-            foreach (var player in PlayerTanks)
-                player.Update(gameTime, keyboardState);
-
-            foreach (var falcon in Falcons)
-                falcon.Update(gameTime, keyboardState);
-
-            BotManager.Update(gameTime, keyboardState);
-
-            foreach (var shell in Shells)
-                shell.Update(gameTime, keyboardState);
-            Shells.RemoveAll(s => s.ToRemove);
-
-            foreach (var explosion in _explosions)
-                explosion.Update(gameTime, keyboardState);
-            _explosions.RemoveAll(e => e.ToRemove);
-
-            _tiles.RemoveAll(t => t.ToRemove);
-            foreach (var tile in _tiles)
-                tile.Update(gameTime, keyboardState);
-
-            foreach (var playerSpawner in _playerSpawners.Values)
-                playerSpawner.Update(gameTime);
-
-            BonusManager.Update(gameTime, keyboardState);
-        }
-
-        SoundPlayer.Perform(gameTime);
-    }
-
     private void HandleInput()
     {
-        if (KeyboardEx.HasBeenPressed(Keys.Space))
-            IsGamePaused = !IsGamePaused;
-    }
+        // TODO: Вообще говоря, не всегда правда.
+        if (State is not LevelState.Running and not LevelState.Paused)
+            return;
 
-    public bool IsTileFree(Point tilePoint)
-    {
-        var tileObjects = _tileObjectMap.ElementAtOrDefault(tilePoint.X, tilePoint.Y);
-        return tileObjects?.All(o => !o.CollisionType.HasFlag(CollisionType.Impassable)) == true;
-    }
-
-    public void HandleFalconDestroyed(Falcon falcon)
-    {
-        if (!Falcons.Any(f => f.IsAlive))
-            GameOver();
+        if (KeyboardEx.HasBeenPressed(Keys.Space) || KeyboardEx.HasBeenPressed(Keys.X))
+        {
+            State = State == LevelState.Running ? LevelState.Paused : LevelState.Running;
+        }
     }
 
     private void GameOver()
     {
 
-    }
-
-    public void HandleAllBotsDestroyed()
-    {
     }
 }

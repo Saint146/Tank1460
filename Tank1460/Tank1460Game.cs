@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using MonoGame.Extended;
 using Tank1460.Extensions;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tiles;
@@ -47,7 +48,7 @@ public class Tank1460Game : Game
         // Отступ после худа
         PostHudIndent;
 
-    private static Color GameBackColor { get; } = new(0x7f7f7f);
+    private static Color GameBackColor { get; } = new(0x7f, 0x7f, 0x7f);
 
     private LevelHud _levelHud;
 
@@ -62,9 +63,10 @@ public class Tank1460Game : Game
         }
     }
 
+    private bool _isScalingPixelPerfect = true;
+
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
-    private SpriteBatch _unscalableSpriteBatch;
 
     private readonly Matrix _levelTransformation = Matrix.CreateTranslation(PostLevelIndent.X, PostLevelIndent.Y, 0);
     private Matrix _globalTransformation;
@@ -74,7 +76,10 @@ public class Tank1460Game : Game
     private int _backbufferWidth, _backbufferHeight;
     private bool _isCustomCursorVisible;
 
-    private int _levelNumber;
+    private const int OpenedCurtainPosition = 0;
+    private const int ClosedCurtainPosition = 30;
+    private int _curtainPosition = OpenedCurtainPosition;
+
     private Level _level;
 
     private KeyboardState _keyboardState;
@@ -111,7 +116,6 @@ public class Tank1460Game : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        _unscalableSpriteBatch = new SpriteBatch(GraphicsDevice);
 
         _levelHud = new LevelHud(Content);
         _cursor = new Cursor(Content);
@@ -166,13 +170,15 @@ public class Tank1460Game : Game
             _levelHud.Draw(_level, _spriteBatch, hudPosition);
         }
 
+        DrawCurtain(_spriteBatch);
+
         _spriteBatch.End();
 
         if (_isCustomCursorVisible)
         {
-            _unscalableSpriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp);
-            _cursor.Draw(gameTime, _unscalableSpriteBatch);
-            _unscalableSpriteBatch.End();
+            _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp);
+            _cursor.Draw(gameTime, _spriteBatch);
+            _spriteBatch.End();
         }
 
         base.Draw(gameTime);
@@ -215,6 +221,15 @@ public class Tank1460Game : Game
                 break;
 
             case GameState.CurtainOpening:
+                if (!_level.IsLoaded)
+                    break;
+
+                if (_curtainPosition < OpenedCurtainPosition)
+                {
+                    _level.Start();
+                    State = GameState.InLevel;
+                }
+
                 break;
 
             case GameState.CurtainClosing:
@@ -251,6 +266,12 @@ public class Tank1460Game : Game
         if (KeyboardEx.HasBeenPressed(Keys.F7))
             CustomCursorEnabled = !CustomCursorEnabled;
 
+        if (KeyboardEx.HasBeenPressed(Keys.F8))
+        {
+            _isScalingPixelPerfect = !_isScalingPixelPerfect;
+            ScalePresentationArea();
+        }
+
         if (_keyboardState.IsKeyDown(Keys.LeftShift))
         {
             foreach (var digit in Enumerable.Range(0, 10))
@@ -276,24 +297,39 @@ public class Tank1460Game : Game
 #endif
     }
 
-    private void LoadNextLevel()
-    {
-        LoadLevel(_levelNumber + 1);
-    }
-
     private void LoadLevel(int levelNumber)
     {
         _level?.Dispose();
+
         var levelStructure = new LevelStructure($"Content/Levels/{levelNumber}.lvl");
-
         _level = new Level(Services, levelStructure, levelNumber);
-        _levelNumber = levelNumber;
 
-        State = GameState.InLevel;
+        // TODO: Вынести в сеттер State
+        State = GameState.CurtainOpening;
+        _curtainPosition = ClosedCurtainPosition;
 
         _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
         _graphics.ApplyChanges();
         ScalePresentationArea();
+    }
+
+    private void DrawCurtain(SpriteBatch spriteBatch)
+    {
+        if (State is not GameState.CurtainOpening or GameState.CurtainClosing)
+            return;
+
+        var screenHeight = BaseScreenSize.Y;
+
+        var curtainHeight = screenHeight * (_curtainPosition - OpenedCurtainPosition) /
+                            (ClosedCurtainPosition - OpenedCurtainPosition) / 2;
+        var curtainWidth = BaseScreenSize.X;
+
+        spriteBatch.FillRectangle(0, 0, curtainWidth, curtainHeight, GameBackColor);
+        spriteBatch.FillRectangle(0, screenHeight - curtainHeight, curtainWidth, curtainHeight, GameBackColor);
+
+        // TODO: Это смотрится очень подозрительно, с другой стороны, мы специально ждём,
+        // чтобы пользователь увидел весь эффект с начала и до конца. Так что пусть сидит и смотрит!
+        _curtainPosition--;
     }
 
     private void LoadSettings()
@@ -302,6 +338,8 @@ public class Tank1460Game : Game
 
         // Кастомный курсор.
         CustomCursorEnabled = settings?.Game?.CustomCursor ?? true;
+
+        _isScalingPixelPerfect = settings?.Graphics?.PixelPerfectScaling ?? true;
 
         var position = settings?.Screen?.Position;
         var size = settings?.Screen?.Size;
@@ -313,9 +351,7 @@ public class Tank1460Game : Game
 
         // Размер окна.
         if (size.HasValue)
-        {
             _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale), size.Value.ToPoint());
-        }
 
         // Развернутое окно.
         if (isMaximized is true)
@@ -342,6 +378,10 @@ public class Tank1460Game : Game
             {
                 CustomCursor = CustomCursorEnabled
             },
+            Graphics = new GraphicsSettingsData
+            {
+                PixelPerfectScaling = _isScalingPixelPerfect
+            },
             Screen = new ScreenSettingsData
             {
                 Mode = _graphics.IsFullScreen ? ScreenMode.Borderless : ScreenMode.Window,
@@ -362,6 +402,8 @@ public class Tank1460Game : Game
         var horScaling = _backbufferWidth / BaseScreenSize.X;
         var verScaling = _backbufferHeight / BaseScreenSize.Y;
         _scale = MathHelper.Min(horScaling, verScaling);
+        if (_isScalingPixelPerfect)
+            _scale = (int)_scale;
         var screenScalingFactor = new Vector3(_scale, _scale, 1);
         var scaleTransformation = Matrix.CreateScale(screenScalingFactor);
 

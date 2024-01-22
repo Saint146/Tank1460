@@ -2,7 +2,10 @@
 
 internal enum LevelState
 {
+    Loading,
+    Intro,
     Running,
+    Paused,
     WinDelay,
     LostDelay,
     WinScoreScreen,

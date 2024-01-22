@@ -7,12 +7,19 @@ public class SettingsData
 {
     public GameSettingsData Game { get; set; }
 
+    public GraphicsSettingsData Graphics { get; set; }
+
     public ScreenSettingsData Screen { get; set; }
 }
 
 public class GameSettingsData
 {
     public bool CustomCursor { get; set; }
+}
+
+public class GraphicsSettingsData
+{
+    public bool PixelPerfectScaling { get; set; }
 }
 
 public class ScreenSettingsData

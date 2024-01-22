@@ -59,11 +59,6 @@ public class LevelHud
 
         currentLocation.Y += 3 * Tile.DefaultHeight;
         DrawLevelIndex(spriteBatch, currentLocation, level.LevelNumber);
-
-        if (level.IsGamePaused)
-        {
-
-        }
     }
 
     private void DrawBotSpawnsRemaining(SpriteBatch spriteBatch, Vector2 location, int count)
