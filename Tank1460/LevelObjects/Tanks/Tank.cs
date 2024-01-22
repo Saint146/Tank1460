@@ -41,7 +41,7 @@ public abstract class Tank : MoveableLevelObject
     private readonly List<Shell> _shells = new();
     private readonly TankEffects _activeEffects = new();
     private int _maxShells;
-    private ShellDamage _shellDamage;
+    private ShellProperties _shellProperties;
     private ShellSpeed _shellSpeed;
     private int _bonusCount;
 
@@ -256,7 +256,7 @@ public abstract class Tank : MoveableLevelObject
 
         SetMovingSpeed(properties.TankSpeed);
         _maxShells = properties.MaxShells;
-        _shellDamage = properties.ShellDamage;
+        _shellProperties = properties.ShellProperties;
         _shellSpeed = properties.ShellSpeed;
     }
 
@@ -274,7 +274,7 @@ public abstract class Tank : MoveableLevelObject
     private void Shoot(GameTime gameTime)
     {
         _lastFireTime = gameTime.TotalGameTime.TotalSeconds;
-        var shell = new Shell(Level, Direction, _shellSpeed, this, _shellDamage);
+        var shell = new Shell(Level, Direction, _shellSpeed, this, _shellProperties);
         shell.SpawnViaCenterPosition(BoundingRectangle.GetEdgeCenter(Direction));
         _shells.Add(shell);
 

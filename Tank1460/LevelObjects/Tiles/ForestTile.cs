@@ -17,7 +17,7 @@ public class ForestTile : DestructibleTile
     public override void HandleShot(Shell shell)
     {
         base.HandleShot(shell);
-        if (shell.Damage == ShellDamage.ArmorPiercing)
+        if (shell.Properties.HasFlag(ShellProperties.Pruning))
             Reduce(shell.Direction, DefaultHeight);
     }
 }

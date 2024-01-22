@@ -8,6 +8,8 @@ namespace Tank1460;
 
 public class LevelHud
 {
+    public static readonly int HudWidth = 3 * Tile.DefaultWidth;
+
     private Font _font, _redFont;
 
     private Texture2D _bot, _player, _levelFlag;
@@ -31,9 +33,9 @@ public class LevelHud
 
     }
 
-    public void Draw(Level level, SpriteBatch spriteBatch, Vector2 location)
+    public void Draw(Level level, SpriteBatch spriteBatch, Point location)
     {
-        var currentLocation = location;
+        var currentLocation = location.ToVector2();
 
         DrawBotSpawnsRemaining(spriteBatch, currentLocation, Math.Min(level.BotSpawnsRemaining, 20));
 

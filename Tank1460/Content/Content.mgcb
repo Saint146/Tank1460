@@ -22,6 +22,9 @@
 #begin Levels/2.lvl
 /copy:Levels/2.lvl
 
+#begin Levels/3.lvl
+/copy:Levels/3.lvl
+
 #begin Levels/9.lvl
 /copy:Levels/9.lvl
 

@@ -20,6 +20,6 @@ public class BrickTile : DestructibleTile
         if (shell.ShotBy is PlayerTank)
             Level.SoundPlayer.Play(Sound.HitDestroy);
 
-        Reduce(shell.Direction, DefaultHeight / (shell.Damage == ShellDamage.ArmorPiercing ? 1 : 2));
+        Reduce(shell.Direction, DefaultHeight / (shell.Properties.HasFlag(ShellProperties.ArmorPiercing) ? 1 : 2));
     }
 }

@@ -16,28 +16,39 @@ namespace Tank1460;
 /// </summary>
 public class Tank1460Game : Game
 {
-    private const int FPS = 60;
+    private const int Fps = 60;
 
     /// <summary>
     /// Длительность одного кадра в секундах.
     /// TODO: Убрать необходимость всем указывать время или скорость с использованием этой константы. Лучше, чтобы всё было в кадрах и пикселях на кадр.
     /// </summary>
-    public const double OneFrameSpan = 1.0 / FPS;
+    public const double OneFrameSpan = 1.0 / Fps;
 
 #if DEBUG
     public static bool ShowObjectsBoundaries;
     public static bool ShowBotsPeriods = true;
 #endif
 
-    private const int LevelLeftInTiles = 1;
-    private const int LevelTopInTiles = 1;
-    const int LevelWidthInTiles = 26;
-    const int LevelHeightInTiles = 26;
+    private Rectangle GetLevelBounds() =>
+        _level?.Bounds ?? new Rectangle(0, 0, 26 * Tile.DefaultWidth, 26 * Tile.DefaultHeight);
 
-    const int ScreenWidthInTiles = LevelLeftInTiles + LevelWidthInTiles + 4;
-    const int ScreenHeightInTiles = LevelTopInTiles + LevelHeightInTiles + 1;
+    private static Point PreLevelIndent { get; } = new(2 * Tile.DefaultWidth, Tile.DefaultHeight);
+    private static Point PostLevelIndent { get; } = new(Tile.DefaultWidth, Tile.DefaultHeight);
+    private static Point PostHudIndent { get; } = new(Tile.DefaultWidth, 0);
 
-    private readonly Color HUDBackColor = new(0x7f7f7f);
+    private Point BaseScreenSize =>
+        // Отступ слева и сверху
+        PreLevelIndent +
+        // Сам уровень
+        GetLevelBounds().Size +
+        // Отступ справа и снизу
+        PostLevelIndent +
+        // Ширина худа
+        new Point(LevelHud.HudWidth, 0) +
+        // Отступ после худа
+        PostHudIndent;
+
+    private static Color GameBackColor { get; } = new(0x7f7f7f);
 
     private LevelHud _levelHud;
 
@@ -56,18 +67,15 @@ public class Tank1460Game : Game
     private SpriteBatch _spriteBatch;
     private SpriteBatch _unscalableSpriteBatch;
 
-    private readonly Vector2 _baseScreenSize = new(ScreenWidthInTiles * Tile.DefaultWidth, ScreenHeightInTiles * Tile.DefaultHeight);
-
-    private readonly Matrix _levelTransformation = Matrix.CreateTranslation(LevelLeftInTiles * Tile.DefaultWidth, LevelTopInTiles * Tile.DefaultHeight, 0);
+    private readonly Matrix _levelTransformation = Matrix.CreateTranslation(PostLevelIndent.X, PostLevelIndent.Y, 0);
     private Matrix _globalTransformation;
     private float _scale = 1.0f;
+    private const int DefaultScale = 3;
 
     private int _backbufferWidth, _backbufferHeight;
     private bool _isCustomCursorVisible;
 
-    private const int NumberOfLevels = 2;
-
-    private int _levelNumber = 0;
+    private int _levelNumber;
     private Level _level;
 
     private KeyboardState _keyboardState;
@@ -81,20 +89,18 @@ public class Tank1460Game : Game
 
         _graphics = new GraphicsDeviceManager(this);
 
-        if (FPS != 60)
-        {
+        if (Fps != 60)
 #pragma warning disable CS0162 // Unreachable code detected
+        {
             _graphics.SynchronizeWithVerticalRetrace = false;
             IsFixedTimeStep = false;
-            TargetElapsedTime = TimeSpan.FromMilliseconds(1000.0 / FPS);
-#pragma warning restore CS0162 // Unreachable code detected
+            TargetElapsedTime = TimeSpan.FromMilliseconds(1000.0 / Fps);
         }
+#pragma warning restore CS0162
 
         Content.RootDirectory = "Content";
 
-        const int defaultScale = 3;
-        _graphics.PreferredBackBufferWidth = defaultScale * (int)_baseScreenSize.X;
-        _graphics.PreferredBackBufferHeight = defaultScale * (int)_baseScreenSize.Y;
+        _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
 
         Window.AllowUserResizing = true;
 
@@ -115,10 +121,9 @@ public class Tank1460Game : Game
             Window.Position = position.Value.ToPoint();
 
         // Размер окна.
-        if (size.HasValue && size.Value.X >= _baseScreenSize.X && size.Value.Y >= _baseScreenSize.Y)
+        if (size.HasValue)
         {
-            _graphics.PreferredBackBufferWidth = size.Value.X;
-            _graphics.PreferredBackBufferHeight = size.Value.Y;
+            _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale), size.Value.ToPoint());
         }
 
         // Развернутое окно.
@@ -134,13 +139,13 @@ public class Tank1460Game : Game
                 _graphics.IsFullScreen = true;
                 break;
 
-            case ScreenMode.Window:
             default:
                 _graphics.IsFullScreen = false;
                 break;
         }
 
         _graphics.ApplyChanges();
+        ScalePresentationArea();
     }
 
     private void SaveSettings()
@@ -188,7 +193,7 @@ public class Tank1460Game : Game
 
         ScalePresentationArea();
 
-        LoadNextLevel();
+        LoadLevel(1);
     }
 
     private void ScalePresentationArea()
@@ -196,14 +201,14 @@ public class Tank1460Game : Game
         _backbufferWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
         _backbufferHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
 
-        var horScaling = _backbufferWidth / _baseScreenSize.X;
-        var verScaling = _backbufferHeight / _baseScreenSize.Y;
+        var horScaling = _backbufferWidth / BaseScreenSize.X;
+        var verScaling = _backbufferHeight / BaseScreenSize.Y;
         _scale = MathHelper.Min(horScaling, verScaling);
         var screenScalingFactor = new Vector3(_scale, _scale, 1);
         var scaleTransformation = Matrix.CreateScale(screenScalingFactor);
 
-        var xShift = (horScaling - _scale) * _baseScreenSize.X / 2;
-        var yShift = (verScaling - _scale) * _baseScreenSize.Y / 2;
+        var xShift = (horScaling - _scale) * BaseScreenSize.X / 2;
+        var yShift = (verScaling - _scale) * BaseScreenSize.Y / 2;
         var shiftTransformation = Matrix.CreateTranslation(xShift, yShift, 0);
 
         _globalTransformation = _levelTransformation * scaleTransformation * shiftTransformation;
@@ -306,7 +311,7 @@ public class Tank1460Game : Game
 
     private void LoadNextLevel()
     {
-        LoadLevel(_levelNumber % NumberOfLevels + 1);
+        LoadLevel(_levelNumber + 1);
     }
 
     private void LoadLevel(int levelNumber)
@@ -316,6 +321,10 @@ public class Tank1460Game : Game
 
         _level = new Level(Services, levelStructure, levelNumber);
         _levelNumber = levelNumber;
+
+        _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
+        _graphics.ApplyChanges();
+        ScalePresentationArea();
     }
 
     protected override void OnExiting(object sender, EventArgs args)
@@ -340,13 +349,12 @@ public class Tank1460Game : Game
     /// <param name="gameTime">Provides a snapshot of timing values.</param>
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(HUDBackColor);
+        GraphicsDevice.Clear(GameBackColor);
 
         _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _globalTransformation);
         _level.Draw(gameTime, _spriteBatch);
 
-        var hudPosition = Level.GetTileBounds(LevelLeftInTiles + LevelWidthInTiles, LevelTopInTiles).Location.ToVector2();
-        hudPosition.X -= 1;
+        var hudPosition = /*PreLevelIndent +*/ new Point(GetLevelBounds().Width + PostLevelIndent.X - 1, 0); // ну вот так в оригинале, на один пиксель сдвинуто левее сетки
         _levelHud.Draw(_level, _spriteBatch, hudPosition);
         _spriteBatch.End();
 

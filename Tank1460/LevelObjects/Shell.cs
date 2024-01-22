@@ -18,15 +18,15 @@ public class Shell : MoveableLevelObject
     private Explosion _explosion;
     public readonly ObjectDirection Direction;
     private bool _skipCollisionCheck;
-    public readonly ShellDamage Damage;
+    public readonly ShellProperties Properties;
 
-    public Shell(Level level, ObjectDirection direction, ShellSpeed shellSpeed, Tank shotBy, ShellDamage damage) : base(level, shellSpeed == ShellSpeed.Normal ? 2.0f : 4.0f)
+    public Shell(Level level, ObjectDirection direction, ShellSpeed shellSpeed, Tank shotBy, ShellProperties properties) : base(level, shellSpeed == ShellSpeed.Normal ? 2.0f : 4.0f)
     {
         Level.Shells.Add(this);
 
         Direction = direction;
         ShotBy = shotBy;
-        Damage = damage;
+        Properties = properties;
     }
 
     public override CollisionType CollisionType => State == ShellState.Normal ? CollisionType.Shootable : CollisionType.None;

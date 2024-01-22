@@ -35,4 +35,6 @@ public static class PointExtensions
 
         return new Point(x, y);
     }
+
+    public static Point Multiply(this Point point, int multiplier) => new(point.X * multiplier, point.Y * multiplier);
 }

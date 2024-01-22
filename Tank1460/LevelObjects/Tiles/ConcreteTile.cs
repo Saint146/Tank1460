@@ -17,7 +17,7 @@ public class ConcreteTile : DestructibleTile
     public override void HandleShot(Shell shell)
     {
         base.HandleShot(shell);
-        if (shell.Damage == ShellDamage.ArmorPiercing)
+        if (shell.Properties.HasFlag(ShellProperties.ArmorPiercing))
         {
             Level.SoundPlayer.Play(Sound.HitDestroy);
             Reduce(shell.Direction, DefaultHeight);

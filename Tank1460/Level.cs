@@ -68,8 +68,9 @@ public class Level : IDisposable
 
     public int LevelNumber { get; }
 
-    public Rectangle TileBounds;
-    public Rectangle Bounds;
+    public Rectangle TileBounds { get; private set; }
+
+    public Rectangle Bounds { get; private set; }
 
     // TODO: State
     private bool _isGamePaused;
