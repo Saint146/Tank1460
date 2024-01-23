@@ -14,9 +14,9 @@ class WaterTile : Tile
 
     protected override IAnimation GetAnimation() => new Animation(Level.Content.Load<Texture2D>(@"Sprites/Tiles/Water"), 32.0 * Tank1460Game.OneFrameSpan, true);
 
-    public override void Update(GameTime gameTime, KeyboardState keyboardState)
+    public override void Update(GameTime gameTime)
     {
-        base.Update(gameTime, keyboardState);
+        base.Update(gameTime);
         Sprite.ProcessAnimation(gameTime);
     }
 }

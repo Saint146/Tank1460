@@ -39,7 +39,7 @@ public class Bonus : LevelObject
                 break;
 
             case BonusType.OneUp:
-                Level.GetPlayerSpawner(playerTank.PlayerNumber).AddOneUp();
+                Level.GetPlayerSpawner(playerTank.PlayerIndex).AddOneUp();
                 break;
 
             case BonusType.Pistol:
@@ -71,9 +71,9 @@ public class Bonus : LevelObject
         }
     }
 
-    public override void Update(GameTime gameTime, KeyboardState keyboardState)
+    public override void Update(GameTime gameTime)
     {
-        base.Update(gameTime, keyboardState);
+        base.Update(gameTime);
         Sprite.ProcessAnimation(gameTime);
 
         HandleCollisions();

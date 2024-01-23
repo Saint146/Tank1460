@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection.Emit;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -13,6 +15,12 @@ public class LevelHud
     private Font _font, _redFont;
 
     private Texture2D _bot, _player, _levelFlag;
+
+    private Dictionary<PlayerIndex, char> _playerNames = new()
+    {
+        { PlayerIndex.One, '│' },
+        { PlayerIndex.Two, '║' }
+    };
 
     public LevelHud(ContentManager content)
     {
@@ -40,24 +48,12 @@ public class LevelHud
         DrawBotSpawnsRemaining(spriteBatch, currentLocation, Math.Min(level.BotSpawnsRemaining, 20));
 
         currentLocation.Y += 14 * Tile.DefaultHeight;
-        if (level.IsPlayerInGame(1))
+        foreach (var playerIndex in level.PlayersInGame)
         {
-            _font.Draw("│", spriteBatch, currentLocation with { X = currentLocation.X - 1 });
-            _font.Draw("P", spriteBatch, currentLocation with { X = currentLocation.X + Tile.DefaultWidth });
-            DrawPlayerLives(spriteBatch, currentLocation with { Y = currentLocation.Y + Tile.DefaultHeight },
-                level.PlayerLivesRemaining(1));
+            DrawPlayerLives(spriteBatch, currentLocation, _playerNames[playerIndex], level.PlayerLivesRemaining(playerIndex));
+            currentLocation.Y += 3 * Tile.DefaultHeight;
         }
 
-        currentLocation.Y += 3 * Tile.DefaultHeight;
-        if (level.IsPlayerInGame(2))
-        {
-            _font.Draw("║", spriteBatch, currentLocation with { X = currentLocation.X - 1 });
-            _font.Draw("P", spriteBatch, currentLocation with { X = currentLocation.X + Tile.DefaultWidth });
-            DrawPlayerLives(spriteBatch, currentLocation with { Y = currentLocation.Y + Tile.DefaultHeight },
-                level.PlayerLivesRemaining(2));
-        }
-
-        currentLocation.Y += 3 * Tile.DefaultHeight;
         DrawLevelIndex(spriteBatch, currentLocation, level.LevelNumber);
     }
 
@@ -79,13 +75,15 @@ public class LevelHud
             spriteBatch.Draw(_bot, currentLocation, Color.White);
     }
 
-    private void DrawPlayerLives(SpriteBatch spriteBatch, Vector2 location, int lives)
+    private void DrawPlayerLives(SpriteBatch spriteBatch, Vector2 location, char playerName, int lives)
     {
         if (--lives < 0)
             lives = 0;
 
+        _font.Draw(playerName.ToString(), spriteBatch, location with { X = location.X - 1 });
+        _font.Draw("P", spriteBatch, location with { X = location.X + Tile.DefaultWidth });
         spriteBatch.Draw(_player, location, Color.White);
-        _font.Draw($"{lives}", spriteBatch, location with { X = location.X + Tile.DefaultWidth });
+        _font.Draw($"{lives}", spriteBatch, location with { X = location.X + Tile.DefaultWidth, Y = location.Y + Tile.DefaultHeight });
     }
 
     private void DrawLevelIndex(SpriteBatch spriteBatch, Vector2 location, int levelIndex)

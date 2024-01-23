@@ -1,7 +1,10 @@
-﻿[*.{cs,vb}]
+[*.{cs,vb}]
 
 # IDE0300: Simplify collection initialization
 dotnet_style_prefer_collection_expression = false
 
 # IDE0290: Use primary constructor
 dotnet_diagnostic.IDE0290.severity = none
+
+# ReSharper properties
+resharper_align_multiline_calls_chain = true

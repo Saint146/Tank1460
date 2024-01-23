@@ -22,9 +22,9 @@ public abstract class Explosion : LevelObject
         _animation = new Animation(Level.Content.Load<Texture2D>(TexturePath()), FrameTime(), false);
     }
 
-    public override void Update(GameTime gameTime, KeyboardState keyboardState)
+    public override void Update(GameTime gameTime)
     {
-        base.Update(gameTime, keyboardState);
+        base.Update(gameTime);
         Sprite.ProcessAnimation(gameTime);
 
         if (Sprite.HasAnimationEnded)

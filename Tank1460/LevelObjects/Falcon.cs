@@ -43,9 +43,9 @@ public class Falcon : LevelObject
         Sprite.PlayAnimation(_animations[State]);
     }
 
-    public override void Update(GameTime gameTime, KeyboardState keyboardState)
+    public override void Update(GameTime gameTime)
     {
-        base.Update(gameTime, keyboardState);
+        base.Update(gameTime);
 
         switch (State)
         {

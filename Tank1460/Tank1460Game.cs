@@ -1,14 +1,17 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using MonoGame.Extended;
 using Tank1460.Extensions;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tiles;
+using Tank1460.PlayerInput;
 using Tank1460.SaveLoad;
+using Tank1460.SaveLoad.Settings;
 
 namespace Tank1460;
 
@@ -50,9 +53,8 @@ public class Tank1460Game : Game
 
     private static Color GameBackColor { get; } = new(0x7f, 0x7f, 0x7f);
 
-    private LevelHud _levelHud;
-
     private bool _customCursorEnabled;
+
     internal bool CustomCursorEnabled
     {
         get => _customCursorEnabled;
@@ -67,6 +69,10 @@ public class Tank1460Game : Game
 
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
+    private readonly SaveLoadManager _saveLoadManager = new();
+    private Level _level;
+    private LevelHud _levelHud;
+    private Cursor _cursor;
 
     private readonly Matrix _levelTransformation = Matrix.CreateTranslation(PostLevelIndent.X, PostLevelIndent.Y, 0);
     private Matrix _globalTransformation;
@@ -80,12 +86,12 @@ public class Tank1460Game : Game
     private const int ClosedCurtainPosition = 30;
     private int _curtainPosition = OpenedCurtainPosition;
 
-    private Level _level;
-
+    private readonly PlayerInputHandler _playerInputHandler;
+    private MouseState _mouseState;
     private KeyboardState _keyboardState;
-    private Cursor _cursor;
+    private Dictionary<int, GamePadState> _gamePadStates;
 
-    private readonly SaveLoadManager _saveLoadManager = new();
+    private readonly PlayerIndex[] _allPlayers = { PlayerIndex.One, PlayerIndex.Two };
 
     public Tank1460Game()
     {
@@ -96,6 +102,8 @@ public class Tank1460Game : Game
 
         _graphics = new GraphicsDeviceManager(this);
         _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
+
+        _playerInputHandler = new PlayerInputHandler(_allPlayers);
 
 #pragma warning disable CS0162
         if (Fps != 60)
@@ -132,26 +140,15 @@ public class Tank1460Game : Game
             _backbufferWidth != GraphicsDevice.PresentationParameters.BackBufferWidth)
             ScalePresentationArea();
 
-        if (_customCursorEnabled)
-        {
-            // Курсор не обновляет свое состояние, если он отключен или вне экрана.
-            var mouseState = Mouse.GetState();
-            _isCustomCursorVisible = mouseState.X >= 0 && mouseState.Y >= 0 && mouseState.X < _backbufferWidth &&
-                                     mouseState.Y < _backbufferHeight;
+        var inputs = HandleInput();
 
-            if (_isCustomCursorVisible)
-                _cursor.Update(gameTime, mouseState, _scale);
-        }
-        else
-        {
-            _isCustomCursorVisible = false;
-        }
+        if (_isCustomCursorVisible)
+            _cursor.Update(gameTime, _mouseState, _scale);
 
         ProcessGameState(gameTime);
 
-        HandleInput();
-
-        _level?.Update(gameTime, _keyboardState);
+        _level?.HandleInput(inputs);
+        _level?.Update(gameTime);
 
         base.Update(gameTime);
     }
@@ -240,9 +237,23 @@ public class Tank1460Game : Game
         }
     }
 
-    private void HandleInput()
+    private void MoveCurtain()
+    {
+        _curtainPosition = State switch
+        {
+            GameState.CurtainClosing => _curtainPosition + 1,
+            GameState.CurtainOpening => _curtainPosition - 1,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    private PlayerInputCollection HandleInput()
     {
         _keyboardState = KeyboardEx.GetState();
+        _mouseState = Mouse.GetState();
+        _gamePadStates = _playerInputHandler.GetActiveGamePadIndexes().ToDictionary(index => index, GamePad.GetState);
+
+        var inputs = _playerInputHandler.HandleInput(_keyboardState, _gamePadStates);
 
         if (_keyboardState.IsKeyDown(Keys.Escape))
             Exit();
@@ -295,6 +306,14 @@ public class Tank1460Game : Game
             explosion.Spawn(Level.GetTileBounds(x, y).Location);
         }
 #endif
+
+        if (_customCursorEnabled)
+            // Курсор не обновляет свое состояние, если он отключен или вне экрана.
+            _isCustomCursorVisible = _mouseState.X >= 0 && _mouseState.Y >= 0 && _mouseState.X < _backbufferWidth && _mouseState.Y < _backbufferHeight;
+        else
+            _isCustomCursorVisible = false;
+
+        return inputs;
     }
 
     private void LoadLevel(int levelNumber)
@@ -302,7 +321,7 @@ public class Tank1460Game : Game
         _level?.Dispose();
 
         var levelStructure = new LevelStructure($"Content/Levels/{levelNumber}.lvl");
-        _level = new Level(Services, levelStructure, levelNumber);
+        _level = new Level(Services, levelStructure, levelNumber, _allPlayers);
 
         // TODO: Вынести в сеттер State
         State = GameState.CurtainOpening;
@@ -329,15 +348,18 @@ public class Tank1460Game : Game
 
         // TODO: Это смотрится очень подозрительно, с другой стороны, мы специально ждём,
         // чтобы пользователь увидел весь эффект с начала и до конца. Так что пусть сидит и смотрит!
-        _curtainPosition--;
+        MoveCurtain();
     }
 
     private void LoadSettings()
     {
         var settings = _saveLoadManager.LoadSettings();
 
+        // Настройки управления.
+        _playerInputHandler.LoadControlSettings(settings?.Controls);
+
         // Кастомный курсор.
-        CustomCursorEnabled = settings?.Game?.CustomCursor ?? true;
+        CustomCursorEnabled = settings?.Controls?.CustomCursor ?? true;
 
         _isScalingPixelPerfect = settings?.Graphics?.PixelPerfectScaling ?? true;
 
@@ -372,17 +394,18 @@ public class Tank1460Game : Game
 
     private void SaveSettings()
     {
-        var settings = new SettingsData
+        var settings = new UserSettings
         {
-            Game = new GameSettingsData
+            Controls = new ControlsSettings
             {
-                CustomCursor = CustomCursorEnabled
+                CustomCursor = CustomCursorEnabled,
+                PlayerControls = _playerInputHandler.SaveSettings()
             },
-            Graphics = new GraphicsSettingsData
+            Graphics = new GraphicsSettings
             {
                 PixelPerfectScaling = _isScalingPixelPerfect
             },
-            Screen = new ScreenSettingsData
+            Screen = new ScreenSettings
             {
                 Mode = _graphics.IsFullScreen ? ScreenMode.Borderless : ScreenMode.Window,
                 Position = ScreenPoint.FromPoint(Window.Position),

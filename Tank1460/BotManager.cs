@@ -82,10 +82,10 @@ public class BotManager
         SpawnsRemaining++;
     }
 
-    public void Update(GameTime gameTime, KeyboardState keyboardState)
+    public void Update(GameTime gameTime)
     {
 #if DEBUG
-        if (keyboardState.IsKeyDown(Keys.LeftControl))
+        if (KeyboardEx.IsPressed(Keys.LeftControl))
         {
             foreach (var digit in Enumerable.Range(0, 10))
             {
@@ -104,7 +104,7 @@ public class BotManager
 
         _bots.FindAll(e => e.ToRemove).ForEach(HandleBotDestroyed);
         foreach (var bot in _bots)
-            bot.Update(gameTime, keyboardState);
+            bot.Update(gameTime);
 
         var elapsedSeconds = gameTime.ElapsedGameTime.TotalSeconds;
         _periodTime += elapsedSeconds;

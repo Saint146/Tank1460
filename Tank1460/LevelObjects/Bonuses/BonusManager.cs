@@ -75,12 +75,12 @@ public class BonusManager
             bonus.Draw(gameTime, spriteBatch);
     }
 
-    public void Update(GameTime gameTime, KeyboardState keyboardState)
+    public void Update(GameTime gameTime)
     {
 #if DEBUG
-        if (keyboardState.IsKeyDown(Keys.LeftControl))
+        if (KeyboardEx.IsPressed(Keys.LeftControl))
         {
-            if (KeyboardEx.HasBeenPressed(Keys.B) || (keyboardState.IsKeyDown(Keys.LeftShift) && keyboardState.IsKeyDown(Keys.B)))
+            if (KeyboardEx.HasBeenPressed(Keys.B) || (KeyboardEx.IsPressed(Keys.LeftShift) && KeyboardEx.IsPressed(Keys.B)))
             {
                 Spawn();
             }
@@ -90,6 +90,6 @@ public class BonusManager
         _bonuses.RemoveAll(bonus => bonus.ToRemove);
 
         foreach (var bonus in _bonuses)
-            bonus.Update(gameTime, keyboardState);
+            bonus.Update(gameTime);
     }
 }

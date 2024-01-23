@@ -14,6 +14,7 @@ public static class KeyboardEx
         return _currentKeyState;
     }
 
+    // TODO: Спрятать эти методы, чтобы управление только спускалось по иерархии сверху вниз по-честному
     public static bool IsPressed(Keys key)
     {
         return _currentKeyState.IsKeyDown(key);

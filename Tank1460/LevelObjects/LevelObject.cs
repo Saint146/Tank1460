@@ -59,7 +59,7 @@ public abstract class LevelObject
 
     protected abstract IAnimation GetDefaultAnimation();
 
-    public virtual void Update(GameTime gameTime, KeyboardState keyboardState)
+    public virtual void Update(GameTime gameTime)
     {
     }
 

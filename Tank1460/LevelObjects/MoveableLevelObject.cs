@@ -33,7 +33,7 @@ public abstract class MoveableLevelObject : LevelObject
         SetMovingSpeed(movingSpeed);
     }
 
-    public override void Update(GameTime gameTime, KeyboardState keyboardState)
+    public override void Update(GameTime gameTime)
     {
         // Совершаем движение (бывает, что и не одно), если можно и нужно.
         _time += gameTime.ElapsedGameTime.TotalSeconds;
@@ -43,7 +43,7 @@ public abstract class MoveableLevelObject : LevelObject
             TryMove();
         }
 
-        base.Update(gameTime, keyboardState);
+        base.Update(gameTime);
 
         // Очищаем движение перед следующим тактом.
         MovingDirection = null;

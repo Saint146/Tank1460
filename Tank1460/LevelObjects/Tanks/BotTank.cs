@@ -63,7 +63,7 @@ public class BotTank : Tank
 #endif
     }
 
-    protected override TankOrder Think(GameTime gameTime, KeyboardState keyboardState)
+    protected override TankOrder Think(GameTime gameTime)
     {
         // По умолчанию движемся туда же, куда и двигались, даже когда не думаем.
         var newOrder = _botOrder.GetMovementOnly();

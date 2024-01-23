@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using Tank1460.SaveLoad.Settings;
 
 namespace Tank1460.SaveLoad;
 
@@ -12,14 +13,14 @@ internal class SaveLoadManager
 
     private static readonly JsonSerializerOptions defaultOptions = new (){ WriteIndented = true };
 
-    public void SaveSettings(SettingsData settings)
+    public void SaveSettings(UserSettings userSettings)
     {
-        Save(settings, settingsFileName);
+        Save(userSettings, settingsFileName);
     }
 
-    public SettingsData LoadSettings()
+    public UserSettings LoadSettings()
     {
-        var settings = Load<SettingsData>(settingsFileName);
+        var settings = Load<UserSettings>(settingsFileName);
         return settings;
     }
 

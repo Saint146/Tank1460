@@ -20,17 +20,15 @@ public class Level : IDisposable
 {
     // TODO: Паблик Морозов во все поля
 
-    public int PlayerLivesRemaining(int playerNumber) => _playerSpawners[playerNumber].LivesRemaining;
-
-    public bool IsPlayerInGame(int playerNumber) => _playersInGame.Contains(playerNumber);
+    public int PlayerLivesRemaining(PlayerIndex playerIndex) => PlayerSpawners[playerIndex].LivesRemaining;
 
     public int BotSpawnsRemaining => BotManager?.SpawnsRemaining ?? 0;
 
     public bool BotsCanGrabBonuses { get; } = true;
 
-    public int PlayerCount => _playerSpawners.Count;
+    public int PlayerCount => PlayerSpawners.Count;
 
-    public PlayerSpawner GetPlayerSpawner(int playerNumber) => _playerSpawners[playerNumber];
+    public PlayerSpawner GetPlayerSpawner(PlayerIndex playerIndex) => PlayerSpawners[playerIndex];
 
     public BotManager BotManager { get; }
 
@@ -48,27 +46,31 @@ public class Level : IDisposable
 
     public bool IsLoaded => State != LevelState.Loading;
 
+    internal PlayerIndex[] PlayersInGame { get; }
+
     internal ISoundPlayer SoundPlayer;
 
     internal LevelStructure Structure { get; }
 
-    private readonly int[] _playersInGame = { 1, 2 };
     private readonly List<Tile> _tiles = new();
     //private Texture2D[] layers;
     private List<LevelObject>[,] _tileObjectMap;
 
     // В оригинале именно так: зависит лишь от режима,
     // а не от того, жив ли второй игрок. Даже если уровень стартует, когда один уже без жизней, всё равно будет шесть.
-    private int MaxAliveBots() => (_playersInGame.Length + 1) * 2;
+    private int MaxAliveBots() => (PlayersInGame.Length + 1) * 2;
 
     private List<Falcon> Falcons { get; } = new();
 
     private List<PlayerTank> PlayerTanks { get; } = new();
-    private readonly Dictionary<int, PlayerSpawner> _playerSpawners = new();
+    private Dictionary<PlayerIndex, PlayerSpawner> PlayerSpawners { get; } = new();
     private const int MaxPlayerCount = 2;
     private readonly List<Explosion> _explosions = new();
     private const int TotalBots = 20;
     private const int MaxBonusesOnScreen = 1;
+#if DEBUG
+    private bool _cheatGodMode;
+#endif
 
     private LevelState _state = LevelState.Loading;
     internal LevelState State
@@ -82,16 +84,17 @@ public class Level : IDisposable
                 SoundPlayer.Play(Sound.Pause);
             }
             else if (value != LevelState.Paused && _state == LevelState.Paused)
-                    SoundPlayer.ResumeAndPopState();
+                SoundPlayer.ResumeAndPopState();
 
             _state = value;
         }
     }
 
-    public Level(IServiceProvider serviceProvider, LevelStructure levelStructure, int levelNumber)
+    public Level(IServiceProvider serviceProvider, LevelStructure levelStructure, int levelNumber, PlayerIndex[] playersInGame)
     {
         Structure = levelStructure;
         LevelNumber = levelNumber;
+        PlayersInGame = playersInGame;
 
         Content = new ContentManagerEx(serviceProvider, "Content");
 
@@ -130,37 +133,67 @@ public class Level : IDisposable
         };
     }
 
-    public void Update(GameTime gameTime, KeyboardState keyboardState)
+    public void HandleInput(PlayerInputCollection playersInputs)
     {
-        HandleInput();
+        // TODO: Вообще говоря, не всегда правда.
+        if (State is not LevelState.Running and not LevelState.Paused)
+            return;
 
+        foreach (var playerTank in PlayerTanks)
+            playerTank.HandleInput(playersInputs[playerTank.PlayerIndex]);
+
+        if (KeyboardEx.HasBeenPressed(Keys.Space) || KeyboardEx.HasBeenPressed(Keys.X))
+        {
+            State = State == LevelState.Running ? LevelState.Paused : LevelState.Running;
+        }
+
+#if DEBUG
+        if (KeyboardEx.HasBeenPressed(Keys.F10))
+        {
+            _cheatGodMode = !_cheatGodMode;
+            PlayerTanks.ForEach(tank => tank.GodMode = _cheatGodMode);
+        }
+
+        if (KeyboardEx.HasBeenPressed(Keys.PageUp))
+            PlayerTanks.ForEach(tank => tank.UpgradeUp());
+
+        if (KeyboardEx.HasBeenPressed(Keys.PageDown))
+            PlayerTanks.ForEach(tank => tank.UpgradeDown());
+
+        if (KeyboardEx.HasBeenPressed(Keys.Enter))
+            PlayerTanks.ForEach(tank => tank.Explode(tank));
+#endif
+    }
+
+    public void Update(GameTime gameTime)
+    {
         if (State is not LevelState.Loading and not LevelState.Intro and not LevelState.Paused)
         {
             PlayerTanks.FindAll(p => p.ToRemove).ForEach(HandlePlayerTankDestroyed);
             foreach (var player in PlayerTanks)
-                player.Update(gameTime, keyboardState);
+                player.Update(gameTime);
 
             foreach (var falcon in Falcons)
-                falcon.Update(gameTime, keyboardState);
+                falcon.Update(gameTime);
 
-            BotManager.Update(gameTime, keyboardState);
+            BotManager.Update(gameTime);
 
             foreach (var shell in Shells)
-                shell.Update(gameTime, keyboardState);
+                shell.Update(gameTime);
             Shells.RemoveAll(s => s.ToRemove);
 
             foreach (var explosion in _explosions)
-                explosion.Update(gameTime, keyboardState);
+                explosion.Update(gameTime);
             _explosions.RemoveAll(e => e.ToRemove);
 
             _tiles.RemoveAll(t => t.ToRemove);
             foreach (var tile in _tiles)
-                tile.Update(gameTime, keyboardState);
+                tile.Update(gameTime);
 
-            foreach (var playerSpawner in _playerSpawners.Values)
+            foreach (var playerSpawner in PlayerSpawners.Values)
                 playerSpawner.Update(gameTime);
 
-            BonusManager.Update(gameTime, keyboardState);
+            BonusManager.Update(gameTime);
         }
 
         SoundPlayer.Perform(gameTime);
@@ -289,7 +322,7 @@ public class Level : IDisposable
         TileBounds = new Rectangle(0, 0, width, height);
         Bounds = TileBounds.Multiply(new Point(Tile.DefaultWidth, Tile.DefaultHeight));
 
-        if (_playerSpawners.Count is < 1 or > MaxPlayerCount)
+        if (PlayerSpawners.Count is < 1 or > MaxPlayerCount)
             throw new NotSupportedException($"A level must have 1 to {MaxPlayerCount} starting point(s).");
 
         if (Falcons.Count == 0)
@@ -299,11 +332,11 @@ public class Level : IDisposable
     private void HandlePlayerTankDestroyed(PlayerTank playerTank)
     {
         PlayerTanks.Remove(playerTank);
-        var playerSpawner = _playerSpawners[playerTank.PlayerNumber];
+        var playerSpawner = PlayerSpawners[playerTank.PlayerIndex];
 
         if (playerSpawner is null)
         {
-            Debug.Fail($"Cannot find player spawner for player {playerTank.PlayerNumber}.");
+            Debug.Fail($"Cannot find player spawner for player {playerTank.PlayerIndex}.");
             return;
         }
 
@@ -326,9 +359,9 @@ public class Level : IDisposable
 
             TileType.Ice => new IceTile(this),
 
-            TileType.Player1Spawn => CreatePlayerSpawn(x, y, 1),
+            TileType.Player1Spawn => CreatePlayerSpawn(x, y, PlayerIndex.One),
 
-            TileType.Player2Spawn => CreatePlayerSpawn(x, y, 2),
+            TileType.Player2Spawn => CreatePlayerSpawn(x, y, PlayerIndex.Two),
 
             TileType.BotSpawn => CreateBotSpawn(x, y),
 
@@ -344,15 +377,15 @@ public class Level : IDisposable
         return null;
     }
 
-    private Tile CreatePlayerSpawn(int x, int y, int playerNumber)
+    private Tile CreatePlayerSpawn(int x, int y, PlayerIndex playerIndex)
     {
-        if (_playerSpawners.ContainsKey(playerNumber))
-            throw new NotSupportedException($"A level may only have one player {playerNumber} spawn.");
+        if (PlayerSpawners.ContainsKey(playerIndex))
+            throw new NotSupportedException($"A level may only have one player {playerIndex} spawn.");
 
-        var playerSpawner = new PlayerSpawner(this, x, y, playerNumber);
-        _playerSpawners.Add(playerNumber, playerSpawner);
+        var playerSpawner = new PlayerSpawner(this, x, y, playerIndex);
+        PlayerSpawners.Add(playerIndex, playerSpawner);
 
-        if (!IsPlayerInGame(playerNumber))
+        if (!PlayersInGame.Contains(playerIndex))
             playerSpawner.Disable();
 
         return null;
@@ -383,18 +416,6 @@ public class Level : IDisposable
             return true;
 
         return false;
-    }
-
-    private void HandleInput()
-    {
-        // TODO: Вообще говоря, не всегда правда.
-        if (State is not LevelState.Running and not LevelState.Paused)
-            return;
-
-        if (KeyboardEx.HasBeenPressed(Keys.Space) || KeyboardEx.HasBeenPressed(Keys.X))
-        {
-            State = State == LevelState.Running ? LevelState.Paused : LevelState.Running;
-        }
     }
 
     private void GameOver()

@@ -7,7 +7,7 @@ namespace Tank1460;
 
 public class PlayerSpawner
 {
-    public int PlayerNumber { get; }
+    public PlayerIndex PlayerIndex { get; }
     private readonly Level _level;
     private readonly int _x;
     private readonly int _y;
@@ -20,9 +20,9 @@ public class PlayerSpawner
     private PlayerTank _playerTank;
     private bool _enabled = true;
 
-    public PlayerSpawner(Level level, int x, int y, int playerNumber)
+    public PlayerSpawner(Level level, int x, int y, PlayerIndex playerIndex)
     {
-        PlayerNumber = playerNumber;
+        PlayerIndex = playerIndex;
         _level = level;
         _x = x;
         _y = y;
@@ -44,7 +44,7 @@ public class PlayerSpawner
     {
         if (_playerTank != playerTank)
         {
-            Debug.Fail($"Player spawner #{PlayerNumber} cannot handle a death of player tank with a different number #{playerTank.PlayerNumber}");
+            Debug.Fail($"Player spawner {PlayerIndex} cannot handle a death of player tank with a different number {playerTank.PlayerIndex}");
             return;
         }
 
@@ -92,7 +92,7 @@ public class PlayerSpawner
             return;
 
         var bounds = Level.GetTileBounds(_x, _y);
-        _playerTank = new PlayerTank(_level, PlayerNumber);
+        _playerTank = new PlayerTank(_level, PlayerIndex);
         _playerTank.Spawn(new Point(bounds.Left, bounds.Top));
         _level.AddPlayer(_playerTank);
     }

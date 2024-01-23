@@ -56,7 +56,7 @@ public abstract class Tank : MoveableLevelObject
     {
     }
 
-    public sealed override void Update(GameTime gameTime, KeyboardState keyboardState)
+    public sealed override void Update(GameTime gameTime)
     {
         Debug.Assert(State != TankState.Unknown);
         switch (State)
@@ -85,7 +85,7 @@ public abstract class Tank : MoveableLevelObject
                 CalcIsFrontTileBlocked();
 
                 // Даём танку подумать и обрабатываем придуманный приказ.
-                var order = Think(gameTime, keyboardState);
+                var order = Think(gameTime);
 
                 if (order.HasFlag(TankOrder.Shoot))
                     TryShoot(gameTime);
@@ -100,7 +100,7 @@ public abstract class Tank : MoveableLevelObject
                 break;
         }
 
-        base.Update(gameTime, keyboardState);
+        base.Update(gameTime);
         _activeEffects.Update(gameTime);
         _shells.RemoveAll(s => s.ToRemove);
     }
@@ -185,7 +185,7 @@ public abstract class Tank : MoveableLevelObject
         Level.SoundPlayer.Loop(this is PlayerTank ? Sound.MovePlayer : Sound.MoveBot);
     }
 
-    protected void Explode(Tank destroyedBy)
+    public void Explode(Tank destroyedBy)
     {
         State = TankState.Exploding;
         _explosion = new BigExplosion(Level);
@@ -240,7 +240,7 @@ public abstract class Tank : MoveableLevelObject
         PlayCurrentAnimation();
     }
 
-    protected abstract TankOrder Think(GameTime gameTime, KeyboardState keyboardState);
+    protected abstract TankOrder Think(GameTime gameTime);
 
     protected abstract void HandleDamaged(Tank damagedBy);
 

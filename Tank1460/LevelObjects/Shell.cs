@@ -49,7 +49,7 @@ public class Shell : MoveableLevelObject
         base.Draw(gameTime, spriteBatch);
     }
 
-    public override void Update(GameTime gameTime, KeyboardState keyboardState)
+    public override void Update(GameTime gameTime)
     {
         if (ToRemove)
             return;
@@ -68,7 +68,7 @@ public class Shell : MoveableLevelObject
                 break;
         }
 
-        base.Update(gameTime, keyboardState);
+        base.Update(gameTime);
     }
 
     protected override bool CanMove() => State == ShellState.Normal && !ToRemove;
