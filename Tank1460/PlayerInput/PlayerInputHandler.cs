@@ -52,6 +52,28 @@ internal class PlayerInputHandler
                 if (gamePadState.IsButtonDown(button))
                     playersInputs[playerIndex] |= input;
             }
+
+            // TODO: Сделать выбор только одной команды по дельте - какая больше, туда и едем, чтобы было более плавное переключение.
+            // Возможно, надо поменять GamePadDeadzone на Circular
+            switch (gamePadState.ThumbSticks.Left.X)
+            {
+                case < 0:
+                    playersInputs[playerIndex] |= PlayerInputs.Left;
+                    break;
+                case > 0:
+                    playersInputs[playerIndex] |= PlayerInputs.Right;
+                    break;
+            }
+
+            switch (gamePadState.ThumbSticks.Left.Y)
+            {
+                case < 0:
+                    playersInputs[playerIndex] |= PlayerInputs.Down;
+                    break;
+                case > 0:
+                    playersInputs[playerIndex] |= PlayerInputs.Up;
+                    break;
+            }
         }
 
         return playersInputs;
@@ -62,6 +84,7 @@ internal class PlayerInputHandler
         // Считываем настройки клавиатуры.
         _keyboardControlsByPlayer = (userSettings?.PlayerControls).EmptyIfNull()
                                                                  .Where(controls => controls.Keyboard is not null)
+                                                                 .DistinctBy(controls => controls.PlayerIndex)
                                                                  .ToDictionary(controls => controls.PlayerIndex, controls => controls.Keyboard);
 
         // Если игрок остался без настроек, а у нас для него есть дефолтные, прописываем их ему.
@@ -119,6 +142,9 @@ internal class PlayerInputHandler
         bindings.Clear();
         foreach (var (playerIndex, controls) in keyboardControlsByPlayer)
         {
+            if (!Enum.IsDefined(playerIndex))
+                continue;
+
             foreach (var binding in controls.Bindings)
             {
                 foreach (var key in binding.Keys)

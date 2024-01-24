@@ -233,7 +233,7 @@ public class Tank1460Game : Game
                 break;
 
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(State));
         }
     }
 

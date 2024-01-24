@@ -34,7 +34,7 @@ public class Level : IDisposable
 
     public BonusManager BonusManager { get; }
 
-    public List<Shell> Shells = new();
+    public List<Shell> Shells { get; } = new();
 
     public ContentManagerEx Content { get; }
 
@@ -48,7 +48,7 @@ public class Level : IDisposable
 
     internal PlayerIndex[] PlayersInGame { get; }
 
-    internal ISoundPlayer SoundPlayer;
+    internal ISoundPlayer SoundPlayer { get; }
 
     internal LevelStructure Structure { get; }
 

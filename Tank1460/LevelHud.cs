@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection.Emit;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -16,7 +15,7 @@ public class LevelHud
 
     private Texture2D _bot, _player, _levelFlag;
 
-    private Dictionary<PlayerIndex, char> _playerNames = new()
+    private static readonly Dictionary<PlayerIndex, char> PlayerNames = new()
     {
         { PlayerIndex.One, '│' },
         { PlayerIndex.Two, '║' }
@@ -50,7 +49,7 @@ public class LevelHud
         currentLocation.Y += 14 * Tile.DefaultHeight;
         foreach (var playerIndex in level.PlayersInGame)
         {
-            DrawPlayerLives(spriteBatch, currentLocation, _playerNames[playerIndex], level.PlayerLivesRemaining(playerIndex));
+            DrawPlayerLives(spriteBatch, currentLocation, PlayerNames[playerIndex], level.PlayerLivesRemaining(playerIndex));
             currentLocation.Y += 3 * Tile.DefaultHeight;
         }
 
@@ -82,13 +81,13 @@ public class LevelHud
 
         _font.Draw(playerName.ToString(), spriteBatch, location with { X = location.X - 1 });
         _font.Draw("P", spriteBatch, location with { X = location.X + Tile.DefaultWidth });
-        spriteBatch.Draw(_player, location, Color.White);
+        spriteBatch.Draw(_player, location with { Y = location.Y + Tile.DefaultHeight }, Color.White);
         _font.Draw($"{lives}", spriteBatch, location with { X = location.X + Tile.DefaultWidth, Y = location.Y + Tile.DefaultHeight });
     }
 
     private void DrawLevelIndex(SpriteBatch spriteBatch, Vector2 location, int levelIndex)
     {
-        spriteBatch.Draw(_levelFlag, location, Color.White);
+        spriteBatch.Draw(_levelFlag, location with { X = location.X - 1 }, Color.White);
         _font.Draw($"{levelIndex,2}", spriteBatch, location with { Y = location.Y + 2 * Tile.DefaultWidth });
     }
 }

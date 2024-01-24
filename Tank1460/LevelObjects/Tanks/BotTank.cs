@@ -44,7 +44,7 @@ public class BotTank : Tank
     {
         base.Draw(gameTime, spriteBatch);
 #if DEBUG
-        if (!Tank1460Game.ShowBotsPeriods)
+        if (!Tank1460Game.ShowBotsPeriods || State is not TankState.Normal)
             return;
 
         switch (PeriodIndex)

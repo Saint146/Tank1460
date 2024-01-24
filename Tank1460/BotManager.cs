@@ -11,6 +11,8 @@ namespace Tank1460;
 
 public class BotManager
 {
+    public int SpawnsRemaining { get; private set; }
+
     private readonly List<BotTank> _bots = new();
 
     private readonly Level _level;
@@ -20,7 +22,6 @@ public class BotManager
     private double _timeToSpawnRemaining;
     private bool _spawnIsDue;
 
-    public int SpawnsRemaining { get; private set; }
     private readonly int _totalSpawns;
     private readonly Queue<TankType> _tankTypes;
     private int _botsAlive = 0;
