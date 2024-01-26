@@ -11,12 +11,13 @@ public class BotTank : Tank
 {
     public int PeriodIndex { get; set; }
 
+    internal int Hp { get; private set; }
+
     protected override int[] SpawnAnimationTimesInFrames() => new[] { 4, 4, 4, 6, 4, 4, 6, 4, 4, 6, 4, 4, 2 };
 
     private bool _skipThink;
     private readonly int _index;
     private TankOrder _botOrder;
-    private int _hp;
 
     /// <summary>
     /// Цвет танка в зависимости от хп.
@@ -31,7 +32,7 @@ public class BotTank : Tank
 
     public BotTank(Level level, TankType type, int hp, int bonusCount, int index, int periodIndex) : base(level, type, HpToTankColor(hp), bonusCount)
     {
-        _hp = hp;
+        Hp = hp;
         _index = index;
         PeriodIndex = periodIndex;
 
@@ -103,14 +104,14 @@ public class BotTank : Tank
     {
         Debug.Assert(damagedBy is PlayerTank, "Боты не могут бить друг друга.");
 
-        if (_hp <= 1)
+        if (Hp <= 1)
         {
             Explode(damagedBy);
             return;
         }
 
         Level.SoundPlayer.Play(Sound.HitHurt);
-        SetHp(_hp - 1);
+        SetHp(Hp - 1);
     }
 
     private static TankColor HpToTankColor(int hp)
@@ -119,10 +120,10 @@ public class BotTank : Tank
         return HpToColorMap[hp];
     }
 
-    private void SetHp(int newHp)
+    public void SetHp(int newHp)
     {
         Debug.Assert(newHp is > 0 and <= 4);
-        _hp = newHp;
+        Hp = newHp;
 
         SetColor(HpToTankColor(newHp));
     }

@@ -14,7 +14,6 @@ public class Ship : TankEffect
     {
         _color = color;
         LoadContent(level.Content);
-        ToRemove = false;
     }
 
     private void LoadContent(ContentManagerEx content)

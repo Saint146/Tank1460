@@ -4,7 +4,11 @@
 dotnet_style_prefer_collection_expression = false
 
 # IDE0290: Use primary constructor
-dotnet_diagnostic.IDE0290.severity = none
+dotnet_diagnostic.ide0290.severity = none
 
 # ReSharper properties
+resharper_align_multiline_argument = true
 resharper_align_multiline_calls_chain = true
+resharper_csharp_align_multiline_parameter = true
+resharper_csharp_wrap_arguments_style = chop_if_long
+resharper_csharp_wrap_parameters_style = chop_if_long

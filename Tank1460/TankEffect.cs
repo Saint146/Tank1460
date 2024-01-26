@@ -5,7 +5,16 @@ namespace Tank1460;
 
 public abstract class TankEffect
 {
-    public bool ToRemove;
+    protected TankEffect()
+    {
+    }
+
+    public bool ToRemove { get; private set; } = false;
+
+    public void Remove()
+    {
+        ToRemove = true;
+    }
 
     public abstract void Update(GameTime gameTime);
 

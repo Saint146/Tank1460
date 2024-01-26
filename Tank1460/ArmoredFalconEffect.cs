@@ -13,18 +13,17 @@ internal class ArmoredFalconEffect : LevelEffect
     private double _currentEffectTime;
     private double _time;
 
-    private readonly Queue<(bool IsArmorUp, double Time)> _effectTimes;
+    private readonly Queue<(bool IsArmorUp, double fullEffectTime)> _effectTimes;
     private readonly Dictionary<Falcon, Dictionary<Point, TileType>> _oldTiles;
     private bool _isArmorUp;
 
     private const int FlashesCount = 6;
     private const double FlashesTime = 16 * Tank1460Game.OneFrameSpan;
-    private const double InitialEffectTime = 1280 * Tank1460Game.OneFrameSpan - FlashesCount * 2 * FlashesTime;
 
-    public ArmoredFalconEffect(Level level) : base(level)
+    public ArmoredFalconEffect(Level level, double effectTime) : base(level)
     {
         _oldTiles = ScanOldTiles(level);
-        _effectTimes = CreateEffectTimes();
+        _effectTimes = CreateEffectTimes(effectTime);
 
         _currentEffectTime = 0.0;
         _time = 0.0;
@@ -57,14 +56,15 @@ internal class ArmoredFalconEffect : LevelEffect
     /// <summary>
     /// Заполнить длительности эффектов.
     /// </summary>
-    private static Queue<(bool IsArmorUp, double Time)> CreateEffectTimes()
+    private static Queue<(bool IsArmorUp, double effectTime)> CreateEffectTimes(double fullEffectTime)
     {
-        var effectTimes = new Queue<(bool IsArmorUp, double Time)>();
+        var effectTimes = new Queue<(bool IsArmorUp, double fullEffectTime)>();
 
+       var initialEffectTime = fullEffectTime - FlashesCount * 2 * FlashesTime;
 
-        Debug.Assert(InitialEffectTime >= 0);
+        Debug.Assert(initialEffectTime > 0);
 
-        effectTimes.Enqueue((true, InitialEffectTime));
+        effectTimes.Enqueue((true, initialEffectTime));
         Enumerable.Range(1, FlashesCount).ForEach(_ =>
         {
             effectTimes.Enqueue((false, FlashesTime));
@@ -122,7 +122,7 @@ internal class ArmoredFalconEffect : LevelEffect
             _time -= _currentEffectTime;
 
             _isArmorUp = newEffect.IsArmorUp;
-            _currentEffectTime = newEffect.Time;
+            _currentEffectTime = newEffect.fullEffectTime;
         }
 
         if (_isArmorUp)

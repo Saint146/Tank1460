@@ -30,6 +30,10 @@ public class BotManager
     private int _periodIndex = 0;
     private double _periodTime = 0.0;
 
+    private bool _paralyzeIsActive = false;
+    private double _paralyzeTime;
+    private double _paralyzeEffectTime;
+
 #if !DEBUG
     private readonly double _periodLength;
     private const double PeriodResetTime = 16384.0 * Tank1460Game.OneFrameSpan;
@@ -80,6 +84,16 @@ public class BotManager
         }
 #endif
 
+        if (_paralyzeIsActive)
+        {
+            _paralyzeTime += gameTime.ElapsedGameTime.TotalSeconds;
+            if (_paralyzeTime > _paralyzeEffectTime)
+            {
+                _paralyzeIsActive = false;
+                _botTanks.ForEach(tank => tank.IsImmobile = tank.IsPacifist = false);
+            }
+        }
+
         _botTanks.FindAll(e => e.ToRemove).ForEach(HandleBotDestroyed);
         foreach (var bot in _botTanks)
             bot.Update(gameTime);
@@ -109,6 +123,13 @@ public class BotManager
         _botTanks.ForEach(botTank => botTank.Explode(playerTank));
     }
 
+    public void AddParalyze(double effectTime)
+    {
+        _paralyzeIsActive = true;
+        _paralyzeTime = 0.0;
+        _paralyzeEffectTime = effectTime;
+        _botTanks.ForEach(tank => tank.IsImmobile = tank.IsPacifist = true);
+    }
 
     private void ResetSpawnTimer()
     {
@@ -170,6 +191,9 @@ public class BotManager
             hasBonus = _level.Structure.BotBonusNumbers.Contains(botNumber);
 
         var bot = new BotTank(_level, type, type == TankType.Type7 ? 4 : 1, hasBonus ? 1 : 0, SpawnsRemaining, _periodIndex);
+        if (_paralyzeIsActive)
+            bot.IsImmobile = bot.IsPacifist = true;
+
         bot.Spawn(position);
         _botTanks.Add(bot);
         _botsAlive++;

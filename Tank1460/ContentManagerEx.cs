@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended.Content;
 using Tank1460.Extensions;
 
 namespace Tank1460;
@@ -36,7 +39,7 @@ public class ContentManagerEx : ContentManager
         ArgumentException.ThrowIfNullOrWhiteSpace(textureName);
         ArgumentException.ThrowIfNullOrWhiteSpace(recolorTextureName);
 
-        var key = $"{textureName.Replace('\\', '/')}:{recolorTextureName.Replace('\\', '/')}";
+        var key = $"{textureName.Replace('\\', '/')}{RecolorSeparator}{recolorTextureName.Replace('\\', '/')}";
         if (_dynamicTextures.TryGetValue(key, out var texture))
             return texture;
 
@@ -57,7 +60,7 @@ public class ContentManagerEx : ContentManager
         ArgumentException.ThrowIfNullOrWhiteSpace(recolorTexture1Name);
         ArgumentException.ThrowIfNullOrWhiteSpace(recolorTexture2Name);
 
-        var key = $"{textureName.Replace('\\', '/')}:{recolorTexture1Name.Replace('\\', '/')}*{recolorTexture2Name.Replace('\\', '/')}";
+        var key = $"{textureName.Replace('\\', '/')}{RecolorSeparator}{recolorTexture1Name.Replace('\\', '/')}{MixSeparator}{recolorTexture2Name.Replace('\\', '/')}";
         if (_dynamicTextures.TryGetValue(key, out var texture))
             return texture;
 
@@ -94,6 +97,19 @@ public class ContentManagerEx : ContentManager
         return texture;
     }
 
+    public Texture2D LoadColoredTexture(Color color, int width, int height)
+    {
+        Debug.Assert(width > 0 && height > 0);
+
+        // Во всех обычных текстурах не может быть обратного слэша.
+        var key = $"\\{color.PackedValue}.{width}*{height}";
+        if (_dynamicTextures.TryGetValue(key, out var texture))
+            return texture;
+
+        _dynamicTextures[key] = texture = TextureExtensions.CreateColoredTexture(this.GetGraphicsDevice(), color, width, height);
+        return texture;
+    }
+
     public Dictionary<string, T> MassLoadContent<T>(string contentFolder)
     {
         var dir = new DirectoryInfo(Path.Combine(RootDirectory, contentFolder));
@@ -113,6 +129,7 @@ public class ContentManagerEx : ContentManager
     }
 
     private const char MixSeparator = ',';
+    private const char RecolorSeparator = ':';
 
     /// <summary>
     /// Не кэширует.

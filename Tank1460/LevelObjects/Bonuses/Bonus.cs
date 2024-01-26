@@ -14,6 +14,10 @@ public class Bonus : LevelObject
 
     private IAnimation _animation;
 
+    private const int ArmorTimeInFrames = 640;
+    private const int ShovelTimeInFrames = 1280;
+    private const int ClockOnBotsTimeInFrames = 640;
+
     public Bonus(Level level, BonusType type) : base(level)
     {
         Type = type;
@@ -35,7 +39,7 @@ public class Bonus : LevelObject
         switch (Type)
         {
             case BonusType.Armor:
-                playerTank.AddTimedInvulnerability(640 * Tank1460Game.OneFrameSpan);
+                playerTank.AddTimedInvulnerability(ArmorTimeInFrames * Tank1460Game.OneFrameSpan);
                 break;
 
             case BonusType.OneUp:
@@ -60,9 +64,12 @@ public class Bonus : LevelObject
 
             case BonusType.Shovel:
                 Level.RemoveAllEffects<UnprotectedFalconEffect>();
-                Level.AddExclusiveEffect(new ArmoredFalconEffect(Level));
+                Level.AddExclusiveEffect(new ArmoredFalconEffect(Level, ShovelTimeInFrames * Tank1460Game.OneFrameSpan));
                 break;
 
+            case BonusType.Clock:
+                Level.BotManager.AddParalyze(ClockOnBotsTimeInFrames * Tank1460Game.OneFrameSpan);
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -75,11 +82,26 @@ public class Bonus : LevelObject
         switch (Type)
         {
             case BonusType.Armor:
-                botTank.AddTimedInvulnerability(640 * Tank1460Game.OneFrameSpan);
-                break;
+                //botTank.AddTimedInvulnerability(armorTimeInFrames * Tank1460Game.OneFrameSpan);
+                //break;
 
             case BonusType.OneUp:
-                Level.BotManager.AddOneUp();
+                //Level.BotManager.AddOneUp();
+                foreach (var tank in Level.BotManager.BotTanks)
+                {
+                    if (tank.BonusCount > 0)
+                    {
+                        tank.SetBonusCount(0);
+                        // Тут он и перерисуется.
+                        tank.SetHp(4);
+                    }
+                    else
+                    {
+                        tank.SetBonusCount(4);
+                        // Тут он и перерисуется.
+                        tank.SetHp(tank.Hp + 3);
+                    }
+                }
                 break;
             case BonusType.Grenade:
                 Level.PlayerTanks.ForEach(playerTank => playerTank.Explode(botTank));
@@ -100,6 +122,10 @@ public class Bonus : LevelObject
             case BonusType.Shovel:
                 Level.RemoveAllEffects<ArmoredFalconEffect>();
                 Level.AddExclusiveEffect(new UnprotectedFalconEffect(Level));
+                break;
+
+            case BonusType.Clock:
+                Level.PlayerTanks.ForEach(playerTank => playerTank.AddTimedImmobility());
                 break;
 
             default:

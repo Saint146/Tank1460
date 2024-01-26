@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Tank1460.Audio;
+using Tank1460.Extensions;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
@@ -82,7 +83,7 @@ public class Shell : MoveableLevelObject
         if (State != ShellState.Normal)
             return;
 
-            // Имитация оригинала: пропускаем каждый второй кадр
+        // Имитация оригинала: пропускаем каждый второй кадр
         _skipCollisionCheck = !_skipCollisionCheck;
         if (_skipCollisionCheck)
             return;
@@ -91,7 +92,21 @@ public class Shell : MoveableLevelObject
         if (collisions.Count == 0)
             return;
 
-        foreach (var levelObject in collisions)
+        var (shellCollisions, nonShellCollisions) = collisions.SplitByCondition(levelObject => levelObject is Shell);
+
+        // Коллизии с другими снарядами в приоритете, чтобы не было случая, когда два танка в упор поражают друг друга.
+        foreach (var otherShell in shellCollisions)
+        {
+            // Две противоборствующие пули самоуничтожаются.
+            if (otherShell.ToRemove || !(ShotBy is BotTank ^ ((Shell)otherShell).ShotBy is BotTank)) continue;
+
+            Remove();
+            otherShell.Remove();
+            return;
+        }
+
+        // Обрабатываем остальные коллизии с одинаковым приоритетом и возможностью поразить сразу несколько целей (например, два тайла рядом).
+        foreach (var levelObject in nonShellCollisions)
         {
             if (levelObject is null)
             {
@@ -100,56 +115,54 @@ public class Shell : MoveableLevelObject
                     Level.SoundPlayer.Play(Sound.HitDull);
 
                 Explode();
-                break;
+                return;
             }
 
             if (!levelObject.CollisionType.HasFlag(CollisionType.Shootable) || levelObject.ToRemove)
                 continue;
 
-            if (levelObject is Shell shell)
+            switch (levelObject)
             {
-                // Две противоборствующие пули самоуничтожаются.
-                if (ShotBy is BotTank ^ shell.ShotBy is BotTank)
-                {
-                    Remove();
-                    shell.Remove();
+                case Tile tile:
+                    var shouldExplode = tile.HandleShot(this);
+                    if (shouldExplode)
+                        Explode();
                     break;
-                }
-            }
 
-            if (levelObject is Tile tile)
-            {
-                var shouldExplode = tile.HandleShot(this);
+                case PlayerTank playerTank:
+                    if (ShotBy is PlayerTank)
+                    {
+                        // Свой снаряд пропускаем.
+                        if (playerTank != ShotBy)
+                        {
+                            // Другой танк игрока получает дебафф.
+                            Explode();
+                            playerTank.AddTimedImmobility();
+                        }
+                        break;
+                    }
 
-                if (shouldExplode)
                     Explode();
-                
-                // break нет, потому что одной пулей можно покоцать сразу несколько (читай: два) тайла.
-            }
-            else if (levelObject is PlayerTank player)
-            {
-                Explode();
-                player.HandleShot(this);
-                break;
-            }
-            else if (levelObject is Falcon falcon)
-            {
-                Explode();
-                falcon.HandleShot(this);
-                break;
-            }
-            else if (levelObject is BotTank botTank)
-            {
-                if (ShotBy is PlayerTank)
-                {
-                    Explode();
-                    botTank.HandleShot(this);
+                    playerTank.HandleShot(this);
                     break;
-                }
+
+                case Falcon falcon:
+                    Explode();
+                    falcon.HandleShot(this);
+                    break;
+
+                case BotTank botTank:
+                    if (ShotBy is PlayerTank)
+                    {
+                        Explode();
+                        botTank.HandleShot(this);
+                    }
+                    // Пули ботов пролетают сквозь других ботов.
+                    break;
             }
         }
     }
-    
+
     private void Explode()
     {
         if (State != ShellState.Normal)

@@ -3,7 +3,7 @@
 public enum BonusType
 {
     Armor,
-    //Clock,
+    Clock,
     Grenade,
     OneUp,
     Pistol,

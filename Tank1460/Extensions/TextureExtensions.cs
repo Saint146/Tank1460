@@ -67,9 +67,7 @@ public static class TextureExtensions
         var newTexture = new Texture2D(texture.GraphicsDevice, texture.Width, texture.Height);
 
         for (var i = 0; i < data.Length; i++)
-        {
             data[i] = data[i].Mix(otherData[i]);
-        }
 
         newTexture.SetData(data);
 
@@ -88,5 +86,18 @@ public static class TextureExtensions
             recolorMap[recolorData[i]] = recolorData[i + offset];
 
         return recolorMap;
+    }
+
+    public static Texture2D CreateColoredTexture(GraphicsDevice graphicsDevice, Color color, int width, int height)
+    {
+        var texture = new Texture2D(graphicsDevice, width, height);
+        var data = new Color[width * height];
+
+        for (var i = 0; i < data.Length; i++)
+            data[i] = color;
+
+        texture.SetData(data);
+
+        return texture;
     }
 }

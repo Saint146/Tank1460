@@ -13,11 +13,24 @@ namespace Tank1460.LevelObjects.Tanks;
 
 public abstract class Tank : MoveableLevelObject
 {
-    public TankState State { get; set; }
+    public TankState State { get; private set; }
+
+    /// <summary>
+    /// Запрет на движение.
+    /// </summary>
+    public bool IsImmobile { get; set; }
+
+    /// <summary>
+    /// Запрет на стрельбу.
+    /// </summary>
+    public bool IsPacifist { get; set; }
 
     public override CollisionType CollisionType =>
         State == TankState.Normal ? CollisionType.ShootableAndImpassable : CollisionType.None;
+
     public bool HasShip { get; private set; }
+
+    public int BonusCount { get; private set; }
 
     protected TankType Type { get; private set; }
 
@@ -43,13 +56,14 @@ public abstract class Tank : MoveableLevelObject
     private int _maxShells;
     private ShellProperties _shellProperties;
     private ShellSpeed _shellSpeed;
-    private int _bonusCount;
 
     protected Tank(Level level, TankType type, TankColor color, int bonusCount) : base(level, 0.75f)
     {
         State = TankState.Spawning;
-        _bonusCount = bonusCount;
+        BonusCount = bonusCount;
         SetTypeAndColor(type, color);
+        _activeEffects.EffectAdded += ActiveEffects_EffectAdded;
+        _activeEffects.EffectRemoved += ActiveEffects_EffectRemoved; 
     }
 
     protected Tank(Level level, TankType type, TankColor color) : this(level, type, color, 0)
@@ -84,11 +98,17 @@ public abstract class Tank : MoveableLevelObject
 
                 CalcIsFrontTileBlocked();
 
-                // Даём танку подумать и обрабатываем придуманный приказ.
+                // Даём танку подумать и обрабатываем придуманный приказ. Но если всё запрещено, то и думать нечего.
+                if (IsImmobile && IsPacifist)
+                    break;
+
                 var order = Think(gameTime);
 
-                if (order.HasFlag(TankOrder.Shoot))
+                if (order.HasFlag(TankOrder.Shoot) && !IsPacifist)
                     TryShoot(gameTime);
+
+                if (IsImmobile)
+                    break;
 
                 var newDirection = order.ToDirection();
                 if (newDirection is not null)
@@ -111,6 +131,20 @@ public abstract class Tank : MoveableLevelObject
         _activeEffects.AddExclusive(new Invulnerability(Level, invulnerabilityTime));
     }
 
+    public void AddTimedImmobility()
+    {
+        // Время не начинается снова и не накапливается.
+        if (_activeEffects.HasEffect<Immobility>())
+            return;
+
+        _activeEffects.Add(new Immobility(272 * Tank1460Game.OneFrameSpan));
+    }
+
+    public void SetBonusCount(int newBonusCount)
+    {
+        BonusCount = newBonusCount;
+    }
+
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         if (State != TankState.Normal && State != TankState.Spawning)
@@ -128,9 +162,9 @@ public abstract class Tank : MoveableLevelObject
         if (State != TankState.Normal)
             return;
 
-        if (_bonusCount > 0)
+        if (BonusCount > 0)
         {
-            _bonusCount--;
+            BonusCount--;
             Level.BonusManager.Spawn();
         }
 
@@ -148,8 +182,8 @@ public abstract class Tank : MoveableLevelObject
     {
         HasShip = true;
         _activeEffects.AddExclusive(new Ship(Level, Color));
-        if (_bonusCount > 0)
-            _bonusCount++;
+        if (BonusCount > 0)
+            BonusCount++;
     }
 
     protected void RemoveShip()
@@ -166,34 +200,54 @@ public abstract class Tank : MoveableLevelObject
     }
 
     private static Dictionary<ObjectDirection, IAnimation> LoadAnimationsForType(ContentManagerEx content,
-        TankType type, TankColor color, bool isFlashingBonus)
+                                                                                 TankType type,
+                                                                                 TankColor color,
+                                                                                 TankFlashingType flashingType)
     {
         var oneTypeAnimations = new Dictionary<ObjectDirection, IAnimation>();
 
         foreach (ObjectDirection direction in Enum.GetValues(typeof(ObjectDirection)))
-            oneTypeAnimations[direction] = LoadAnimationsForDirection(content, type, color, isFlashingBonus, direction);
+            oneTypeAnimations[direction] = LoadAnimationsForDirection(content, type, color, flashingType, direction);
 
         return oneTypeAnimations;
     }
 
-    private static IAnimation LoadAnimationsForDirection(ContentManagerEx content, TankType type, TankColor color,
-        bool isFlashingBonus, ObjectDirection direction)
+    private static IAnimation LoadAnimationsForDirection(ContentManagerEx content,
+                                                         TankType type,
+                                                         TankColor color,
+                                                         TankFlashingType flashingType,
+                                                         ObjectDirection direction)
     {
         // Загружаем обычные текстуры в любом случае.
-        var plainTexture = content.LoadRecoloredTexture(
-            $"Sprites/Tank/Type{(int)type}/{direction}",
-            $"Sprites/_R/Tank/{color}");
+        var plainTexture = content.LoadRecoloredTexture($"Sprites/Tank/Type{(int)type}/{direction}",
+                                                        $"Sprites/_R/Tank/{color}");
 
-        if (!isFlashingBonus)
-            return new Animation(plainTexture, true);
+        // В случае мигания подгружаем вторые нужные текстуры и подключаем "двумерную" анимацию.
+        Texture2D bonusTexture;
+        switch(flashingType)
+        {
+            case TankFlashingType.None:
+                return new Animation(plainTexture, true);
 
-        // Но только в случае бонуса подгружаем нужную текстуру и подключаем "двумерную" анимацию.
-        var bonusTexture = content.LoadRecoloredTexture(
-            $"Sprites/Tank/Type{(int)type}/{direction}",
-            $"Sprites/_R/Tank/Red");
+            case TankFlashingType.Bonus:
+                bonusTexture = content.LoadRecoloredTexture($"Sprites/Tank/Type{(int)type}/{direction}",
+                                                            $"Sprites/_R/Tank/Red");
+                break;
 
-        return new ShiftingAnimation(new[] { bonusTexture, plainTexture }, double.MaxValue, true,
-            8 * Tank1460Game.OneFrameSpan);
+            case TankFlashingType.Immobile:
+                bonusTexture = content.LoadColoredTexture(Microsoft.Xna.Framework.Color.Transparent,
+                                                          plainTexture.Bounds.Width,
+                                                          plainTexture.Bounds.Height);
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(flashingType), flashingType, null);
+        }
+        
+        return new ShiftingAnimation(new[] { bonusTexture, plainTexture },
+                                     double.MaxValue,
+                                     true,
+                                     8 * Tank1460Game.OneFrameSpan);
     }
 
     protected override IAnimation GetDefaultAnimation() => _spawnAnimation;
@@ -227,7 +281,8 @@ public abstract class Tank : MoveableLevelObject
     {
         // При повороте танка на 90° округляем его координаты до клетки (механика из оригинальной игры для более удобного прохождения между препятствиями)
         if (newDirection.Has90DegreesDifference(Direction))
-            Position = new Point((int)Math.Round((double)Position.X / Tile.DefaultWidth) * Tile.DefaultWidth, (int)Math.Round((double)Position.Y / Tile.DefaultHeight) * Tile.DefaultHeight);
+            Position = new Point((int)Math.Round((double)Position.X / Tile.DefaultWidth) * Tile.DefaultWidth,
+                (int)Math.Round((double)Position.Y / Tile.DefaultHeight) * Tile.DefaultHeight);
 
         Direction = newDirection;
         PlayCurrentAnimation();
@@ -238,7 +293,7 @@ public abstract class Tank : MoveableLevelObject
         Type = type;
         RefreshTankProperties();
 
-        _animations = LoadAnimationsForType(Level.Content, Type, Color, _bonusCount > 0);
+        ReloadAnimations();
         PlayCurrentAnimation();
     }
 
@@ -246,7 +301,7 @@ public abstract class Tank : MoveableLevelObject
     {
         Color = color;
 
-        _animations = LoadAnimationsForType(Level.Content, Type, Color, _bonusCount > 0);
+        ReloadAnimations();
         PlayCurrentAnimation();
     }
 
@@ -257,9 +312,7 @@ public abstract class Tank : MoveableLevelObject
 
         RefreshTankProperties();
 
-        // Каждый раз при смене подгружается новая анимация.
-        // TODO: Возможно, сделать у самих анимаций возможность подгружать новые текстуры, чтобы не пересоздавать объект? Так можно заодно и не начинать мигание заново.
-        _animations = LoadAnimationsForType(Level.Content, Type, Color, _bonusCount > 0);
+        ReloadAnimations();
         PlayCurrentAnimation();
     }
 
@@ -277,6 +330,17 @@ public abstract class Tank : MoveableLevelObject
     }
 
     private void PlayCurrentAnimation() => Sprite.PlayAnimation(_animations[Direction]);
+
+    private void ReloadAnimations()
+    {
+        // Каждый раз при смене подгружается новая анимация.
+        // TODO: Возможно, сделать у самих анимаций возможность подгружать новые текстуры, чтобы не пересоздавать объект? Так можно заодно и не начинать мигание заново.
+        // TODO: Каждый раз искать по всем эффектам это перебор.
+        var flashingType = _activeEffects.HasEffect<Immobility>()
+            ? TankFlashingType.Immobile
+            : BonusCount > 0 ? TankFlashingType.Bonus : TankFlashingType.None;
+        _animations = LoadAnimationsForType(Level.Content, Type, Color, flashingType);
+    }
 
     private void RefreshTankProperties()
     {
@@ -330,5 +394,36 @@ public abstract class Tank : MoveableLevelObject
             TurnTo(newDirection);
             MovingDirection = null;
         }
+    }
+
+    private void ActiveEffects_EffectAdded(TankEffect effect)
+    {
+        switch (effect)
+        {
+            case Immobility:
+                IsImmobile = true;
+                ReloadAnimations();
+                PlayCurrentAnimation();
+                break;
+        }
+    }
+
+    private void ActiveEffects_EffectRemoved(TankEffect effect)
+    {
+        switch (effect)
+        {
+            case Immobility:
+                IsImmobile = false;
+                ReloadAnimations();
+                PlayCurrentAnimation();
+                break;
+        }
+    }
+
+    private enum TankFlashingType
+    {
+        None,
+        Bonus,
+        Immobile
     }
 }
