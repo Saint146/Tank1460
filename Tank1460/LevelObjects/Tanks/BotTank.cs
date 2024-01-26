@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Tank1460.Audio;
@@ -38,6 +37,20 @@ public class BotTank : Tank
 
         // Понеслись!
         _botOrder = ObjectDirectionExtensions.GetRandomDirection().ToTankOrder();
+    }
+
+    public void GiveArmorPiercingShells()
+    {
+        SetShellProperties(ShellProperties.ArmorPiercing);
+    }
+
+    public void TransformIntoType3()
+    {
+        // TODO: Тут два раза обновляются текстуры
+        SetHp(4);
+        SetType(TankType.Type3);
+        var defaultBotSpeed = TankPropertiesProvider.Get(TankType.Type4).TankSpeed;
+        SetMovingSpeed(defaultBotSpeed);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -79,7 +92,7 @@ public class BotTank : Tank
             newOrder = newThoughtDirection.Value.ToTankOrder();
 
         // Стреляй, Глеб Егорыч!
-        if (Rng.Next(16) == 0)
+        if (Rng.Next(32) == 0)
             newOrder |= TankOrder.Shoot;
 
         _botOrder = newOrder;

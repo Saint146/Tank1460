@@ -14,7 +14,7 @@ public class ConcreteTile : DestructibleTile
 
     protected override IAnimation GetAnimation() => new Animation(Level.Content.Load<Texture2D>(@"Sprites/Tiles/Concrete"), false);
 
-    public override void HandleShot(Shell shell)
+    public override bool HandleShot(Shell shell)
     {
         base.HandleShot(shell);
         if (shell.Properties.HasFlag(ShellProperties.ArmorPiercing))
@@ -26,5 +26,7 @@ public class ConcreteTile : DestructibleTile
         {
             Level.SoundPlayer.Play(Sound.HitDull);
         }
+
+        return true;
     }
 }

@@ -9,9 +9,11 @@ public abstract class Tile : LevelObject
 
     protected abstract IAnimation GetAnimation();
 
-    public virtual void HandleShot(Shell shell)
-    {
-    }
+    /// <summary>
+    /// Среагировать на попадание снаряда.
+    /// </summary>
+    /// <returns>Должен ли снаряд взорваться от попадания.</returns>
+    public virtual bool HandleShot(Shell shell) => false;
 
     protected Tile(Level level) : base(level)
     {

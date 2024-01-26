@@ -46,6 +46,8 @@ public class Level : IDisposable
 
     public bool IsLoaded => State != LevelState.Loading;
 
+    public IReadOnlyList<PlayerTank> PlayerTanks => _playerTanks;
+
     internal PlayerIndex[] PlayersInGame { get; }
 
     internal ISoundPlayer SoundPlayer { get; }
@@ -62,7 +64,8 @@ public class Level : IDisposable
 
     private List<Falcon> Falcons { get; } = new();
 
-    private List<PlayerTank> PlayerTanks { get; } = new();
+    private readonly List<PlayerTank> _playerTanks = new();
+
     private Dictionary<PlayerIndex, PlayerSpawner> PlayerSpawners { get; } = new();
     private const int MaxPlayerCount = 2;
     private readonly List<Explosion> _explosions = new();
@@ -109,15 +112,15 @@ public class Level : IDisposable
 
     public void AddExplosion(Explosion explosion) => _explosions.Add(explosion);
 
-    public void AddPlayer(PlayerTank playerTank) => PlayerTanks.Add(playerTank);
+    public void AddPlayer(PlayerTank playerTank) => _playerTanks.Add(playerTank);
 
     public PlayerTank GetTargetPlayerForBot(int botIndex)
     {
-        return PlayerTanks.Count switch
+        return _playerTanks.Count switch
         {
             0 => null,
-            1 => botIndex % 2 == 0 ? null : PlayerTanks[0],
-            _ => PlayerTanks[botIndex % PlayerTanks.Count]
+            1 => botIndex % 2 == 0 ? null : _playerTanks[0],
+            _ => _playerTanks[botIndex % _playerTanks.Count]
         };
     }
 
@@ -139,7 +142,7 @@ public class Level : IDisposable
         if (State is not LevelState.Running and not LevelState.Paused)
             return;
 
-        foreach (var playerTank in PlayerTanks)
+        foreach (var playerTank in _playerTanks)
             playerTank.HandleInput(playersInputs[playerTank.PlayerIndex]);
 
         if (KeyboardEx.HasBeenPressed(Keys.Space) || KeyboardEx.HasBeenPressed(Keys.X))
@@ -151,17 +154,17 @@ public class Level : IDisposable
         if (KeyboardEx.HasBeenPressed(Keys.F10))
         {
             _cheatGodMode = !_cheatGodMode;
-            PlayerTanks.ForEach(tank => tank.GodMode = _cheatGodMode);
+            _playerTanks.ForEach(tank => tank.GodMode = _cheatGodMode);
         }
 
         if (KeyboardEx.HasBeenPressed(Keys.PageUp))
-            PlayerTanks.ForEach(tank => tank.UpgradeUp());
+            _playerTanks.ForEach(tank => tank.UpgradeUp());
 
         if (KeyboardEx.HasBeenPressed(Keys.PageDown))
-            PlayerTanks.ForEach(tank => tank.UpgradeDown());
+            _playerTanks.ForEach(tank => tank.UpgradeDown());
 
         if (KeyboardEx.HasBeenPressed(Keys.Enter))
-            PlayerTanks.ForEach(tank => tank.Explode(tank));
+            _playerTanks.ForEach(tank => tank.Explode(tank));
 #endif
     }
 
@@ -169,8 +172,8 @@ public class Level : IDisposable
     {
         if (State is not LevelState.Loading and not LevelState.Intro and not LevelState.Paused)
         {
-            PlayerTanks.FindAll(p => p.ToRemove).ForEach(HandlePlayerTankDestroyed);
-            foreach (var player in PlayerTanks)
+            _playerTanks.FindAll(p => p.ToRemove).ForEach(HandlePlayerTankDestroyed);
+            foreach (var player in _playerTanks)
                 player.Update(gameTime);
 
             foreach (var falcon in Falcons)
@@ -199,10 +202,10 @@ public class Level : IDisposable
         SoundPlayer.Perform(gameTime);
     }
 
-    public bool IsTileFree(Point tilePoint)
+    public bool CanTankPassThroughTile(Tank tank, Point tilePoint)
     {
         var tileObjects = _tileObjectMap.ElementAtOrDefault(tilePoint.X, tilePoint.Y);
-        return tileObjects?.All(o => !o.CollisionType.HasFlag(CollisionType.Impassable)) == true;
+        return tileObjects?.All(o => !o.CollisionType.HasFlag(CollisionType.Impassable) && (!o.CollisionType.HasFlag(CollisionType.PassablyOnlyByShip) || tank.HasShip)) == true;
     }
 
     public void HandleFalconDestroyed(Falcon falcon)
@@ -326,12 +329,12 @@ public class Level : IDisposable
             throw new NotSupportedException($"A level must have 1 to {MaxPlayerCount} starting point(s).");
 
         if (Falcons.Count == 0)
-            throw new NotSupportedException("A level must have the falcon.");
+            throw new NotSupportedException("A level must have at least one falcon.");
     }
 
     private void HandlePlayerTankDestroyed(PlayerTank playerTank)
     {
-        PlayerTanks.Remove(playerTank);
+        _playerTanks.Remove(playerTank);
         var playerSpawner = PlayerSpawners[playerTank.PlayerIndex];
 
         if (playerSpawner is null)

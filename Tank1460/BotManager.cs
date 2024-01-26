@@ -12,8 +12,9 @@ namespace Tank1460;
 public class BotManager
 {
     public int SpawnsRemaining { get; private set; }
+    public IReadOnlyList<BotTank> BotTanks => _botTanks;
 
-    private readonly List<BotTank> _bots = new();
+    private readonly List<BotTank> _botTanks = new();
 
     private readonly Level _level;
     private readonly List<(int x, int y)> _points = new();
@@ -49,30 +50,6 @@ public class BotManager
         _periodLength = _respawnInterval * 8;
         SpawnIsReady();
     }
-
-    private void ResetSpawnTimer()
-    {
-        _timeToSpawnRemaining = _respawnInterval;
-        _spawnIsDue = false;
-    }
-
-    private void SpawnIsReady()
-    {
-        _spawnIsDue = true;
-    }
-
-    private static Queue<TankType> ComposeTankTypeQueue(IReadOnlyList<(TankType, int)> structureBotTypes)
-    {
-        Queue<TankType> result = new();
-        if (structureBotTypes is null)
-            return result;
-
-        foreach (var (type, count) in structureBotTypes)
-            Enumerable.Range(1, count).ForEach(_ => result.Enqueue(type));
-
-        return result;
-    }
-
     public void AddSpawnPoint(int x, int y)
     {
         _points.Add((x, y));
@@ -103,8 +80,8 @@ public class BotManager
         }
 #endif
 
-        _bots.FindAll(e => e.ToRemove).ForEach(HandleBotDestroyed);
-        foreach (var bot in _bots)
+        _botTanks.FindAll(e => e.ToRemove).ForEach(HandleBotDestroyed);
+        foreach (var bot in _botTanks)
             bot.Update(gameTime);
 
         var elapsedSeconds = gameTime.ElapsedGameTime.TotalSeconds;
@@ -125,12 +102,43 @@ public class BotManager
         TrySpawnBot();
     }
 
+    public void Draw(GameTime gameTime, SpriteBatch spriteBatch) => _botTanks.ForEach(e => e.Draw(gameTime, spriteBatch));
+
+    public void ExplodeAll(PlayerTank playerTank)
+    {
+        _botTanks.ForEach(botTank => botTank.Explode(playerTank));
+    }
+
+
+    private void ResetSpawnTimer()
+    {
+        _timeToSpawnRemaining = _respawnInterval;
+        _spawnIsDue = false;
+    }
+
+    private void SpawnIsReady()
+    {
+        _spawnIsDue = true;
+    }
+
+    private static Queue<TankType> ComposeTankTypeQueue(IReadOnlyList<(TankType, int)> structureBotTypes)
+    {
+        Queue<TankType> result = new();
+        if (structureBotTypes is null)
+            return result;
+
+        foreach (var (type, count) in structureBotTypes)
+            Enumerable.Range(1, count).ForEach(_ => result.Enqueue(type));
+
+        return result;
+    }
+
     private void SetPeriodIndex(int periodIndex)
     {
         if (_periodIndex != periodIndex)
         {
             _periodIndex = periodIndex;
-            _bots.ForEach(e => e.PeriodIndex = periodIndex);
+            _botTanks.ForEach(e => e.PeriodIndex = periodIndex);
         }
     }
 
@@ -163,7 +171,7 @@ public class BotManager
 
         var bot = new BotTank(_level, type, type == TankType.Type7 ? 4 : 1, hasBonus ? 1 : 0, SpawnsRemaining, _periodIndex);
         bot.Spawn(position);
-        _bots.Add(bot);
+        _botTanks.Add(bot);
         _botsAlive++;
 
         ResetSpawnTimer();
@@ -184,11 +192,9 @@ public class BotManager
 
     private void HandleBotDestroyed(BotTank botTank)
     {
-        _bots.Remove(botTank);
+        _botTanks.Remove(botTank);
         _botsAlive--;
         if (_botsAlive <= 0 && SpawnsRemaining <= 0)
             _level.HandleAllBotsDestroyed();
     }
-
-    public void Draw(GameTime gameTime, SpriteBatch spriteBatch) => _bots.ForEach(e => e.Draw(gameTime, spriteBatch));
 }

@@ -14,12 +14,16 @@ public class BrickTile : DestructibleTile
 
     protected override IAnimation GetAnimation() => new Animation(Level.Content.Load<Texture2D>(@"Sprites/Tiles/Brick"), false);
 
-    public override void HandleShot(Shell shell)
+    public override bool HandleShot(Shell shell)
     {
         base.HandleShot(shell);
-        if (shell.ShotBy is PlayerTank)
+
+        var isArmorPiercing = shell.Properties.HasFlag(ShellProperties.ArmorPiercing);
+        if (shell.ShotBy is PlayerTank || isArmorPiercing)
             Level.SoundPlayer.Play(Sound.HitDestroy);
 
-        Reduce(shell.Direction, DefaultHeight / (shell.Properties.HasFlag(ShellProperties.ArmorPiercing) ? 1 : 2));
+        Reduce(shell.Direction, DefaultHeight / (isArmorPiercing ? 1 : 2));
+
+        return true;
     }
 }

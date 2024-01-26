@@ -1,7 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using System;
 using Tank1460.Audio;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tanks;
@@ -81,7 +79,10 @@ public class Shell : MoveableLevelObject
 
     private void HandleCollisions()
     {
-        // Имитация оригинала: пропускаем каждый второй кадр
+        if (State != ShellState.Normal)
+            return;
+
+            // Имитация оригинала: пропускаем каждый второй кадр
         _skipCollisionCheck = !_skipCollisionCheck;
         if (_skipCollisionCheck)
             return;
@@ -118,11 +119,12 @@ public class Shell : MoveableLevelObject
 
             if (levelObject is Tile tile)
             {
-                // Одной пулей можно покоцать сразу несколько (читай: два) тайла.
-                if (levelObject.CollisionType.HasFlag(CollisionType.Impassable))
-                    Explode();
+                var shouldExplode = tile.HandleShot(this);
 
-                tile.HandleShot(this);
+                if (shouldExplode)
+                    Explode();
+                
+                // break нет, потому что одной пулей можно покоцать сразу несколько (читай: два) тайла.
             }
             else if (levelObject is PlayerTank player)
             {
@@ -150,7 +152,7 @@ public class Shell : MoveableLevelObject
     
     private void Explode()
     {
-        if (State == ShellState.Exploding)
+        if (State != ShellState.Normal)
             return;
 
         State = ShellState.Exploding;

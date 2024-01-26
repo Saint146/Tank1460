@@ -2,8 +2,8 @@
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using Tank1460.Audio;
+using Tank1460.Extensions;
 using Tank1460.LevelObjects.Tanks;
 
 namespace Tank1460.LevelObjects.Bonuses;
@@ -50,6 +50,14 @@ public class Bonus : LevelObject
                 playerTank.UpgradeUp();
                 break;
 
+            case BonusType.Grenade:
+                Level.BotManager.ExplodeAll(playerTank);
+                break;
+
+            case BonusType.Ship:
+                playerTank.AddShip();
+                break;
+
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -68,6 +76,24 @@ public class Bonus : LevelObject
             case BonusType.OneUp:
                 Level.BotManager.AddOneUp();
                 break;
+            case BonusType.Grenade:
+                Level.PlayerTanks.ForEach(playerTank => playerTank.Explode(botTank));
+                break;
+
+            case BonusType.Pistol:
+                botTank.TransformIntoType3();
+                break;
+
+            case BonusType.Star:
+                Level.BotManager.BotTanks.ForEach(tank => tank.GiveArmorPiercingShells());
+                break;
+
+            case BonusType.Ship:
+                botTank.AddShip();
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
         }
     }
 
@@ -81,9 +107,9 @@ public class Bonus : LevelObject
 
     private void HandleCollisions()
     {
-        // Огромное поле для оптимизации, самое простое - сделать отдельный метод, учитывающий только танки и не подсчитывающий глубину коллизии.
+        // TODO: Тут надо всё оптимизировать, хотя бы сделать отдельный метод, учитывающий только танки.
         var allTankCollisions = Level.GetAllCollisionsSimple(this)
-            .Where(levelObject => levelObject is Tank)
+            .Where(levelObject => levelObject is Tank { State: TankState.Normal })
             .ToArray();
 
         if (allTankCollisions.Length == 0)
@@ -98,15 +124,15 @@ public class Bonus : LevelObject
             return;
         }
 
-        if (!Level.BotsCanGrabBonuses)
-            return;
-
-        var bot = allTankCollisions.OfType<BotTank>().FirstOrDefault();
-        if (bot is not null)
+        if (Level.BotsCanGrabBonuses)
         {
-            ApplyEffectOnBot(bot);
-            Remove();
-            return;
+            var bot = allTankCollisions.OfType<BotTank>().FirstOrDefault();
+            if (bot is not null)
+            {
+                ApplyEffectOnBot(bot);
+                Remove();
+                return;
+            }
         }
 
         throw new Exception("Unknown tank type.");

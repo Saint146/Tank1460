@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,6 +17,7 @@ public abstract class Tank : MoveableLevelObject
 
     public override CollisionType CollisionType =>
         State == TankState.Normal ? CollisionType.ShootableAndImpassable : CollisionType.None;
+    public bool HasShip { get; private set; }
 
     protected TankType Type { get; private set; }
 
@@ -100,9 +100,10 @@ public abstract class Tank : MoveableLevelObject
                 break;
         }
 
-        base.Update(gameTime);
         _activeEffects.Update(gameTime);
         _shells.RemoveAll(s => s.ToRemove);
+
+        base.Update(gameTime);
     }
 
     public void AddTimedInvulnerability(double invulnerabilityTime)
@@ -133,7 +134,28 @@ public abstract class Tank : MoveableLevelObject
             Level.BonusManager.Spawn();
         }
 
+        if (HasShip)
+        {
+            RemoveShip();
+            Level.SoundPlayer.Play(Sound.HitHurt);
+            return;
+        }
+
         HandleDamaged(shell.ShotBy);
+    }
+
+    public void AddShip()
+    {
+        HasShip = true;
+        _activeEffects.AddExclusive(new Ship(Level, Color));
+        if (_bonusCount > 0)
+            _bonusCount++;
+    }
+
+    protected void RemoveShip()
+    {
+        HasShip = false;
+        _activeEffects.RemoveAll<Ship>();
     }
 
     protected override void LoadContent()
@@ -187,6 +209,9 @@ public abstract class Tank : MoveableLevelObject
 
     public void Explode(Tank destroyedBy)
     {
+        if (State != TankState.Normal)
+            return;
+
         State = TankState.Exploding;
         _explosion = new BigExplosion(Level);
         _explosion.SpawnViaCenterPosition(BoundingRectangle.Center);
@@ -221,8 +246,6 @@ public abstract class Tank : MoveableLevelObject
     {
         Color = color;
 
-        RefreshTankProperties();
-
         _animations = LoadAnimationsForType(Level.Content, Type, Color, _bonusCount > 0);
         PlayCurrentAnimation();
     }
@@ -238,6 +261,11 @@ public abstract class Tank : MoveableLevelObject
         // TODO: Возможно, сделать у самих анимаций возможность подгружать новые текстуры, чтобы не пересоздавать объект? Так можно заодно и не начинать мигание заново.
         _animations = LoadAnimationsForType(Level.Content, Type, Color, _bonusCount > 0);
         PlayCurrentAnimation();
+    }
+
+    protected void SetShellProperties(ShellProperties newShellProperties)
+    {
+        _shellProperties = newShellProperties;
     }
 
     protected abstract TankOrder Think(GameTime gameTime);
@@ -287,7 +315,7 @@ public abstract class Tank : MoveableLevelObject
         if (!IsTankCenteredOnTile())
             IsFrontTileBlocked = false;
         else
-            IsFrontTileBlocked = TileRectangle.NearestTiles(Direction).GetAllPoints().Any(point => !Level.IsTileFree(point));
+            IsFrontTileBlocked = TileRectangle.NearestTiles(Direction).GetAllPoints().Any(point => !Level.CanTankPassThroughTile(this, point));
     }
 
     private void MoveTo(ObjectDirection newDirection)

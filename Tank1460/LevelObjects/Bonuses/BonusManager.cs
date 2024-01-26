@@ -62,8 +62,8 @@ public class BonusManager
     private (int x, int y) GetRandomBonusSpot()
     {
         // TODO: Проверить
-        var x = Rng.NextEven(_level.TileBounds.Left + 1, _level.TileBounds.Right);
-        var y = Rng.NextEven(_level.TileBounds.Top + 1, _level.TileBounds.Bottom);
+        var x = Rng.NextEven(_level.TileBounds.Left + 1, _level.TileBounds.Right) - 1;
+        var y = Rng.NextEven(_level.TileBounds.Top + 1, _level.TileBounds.Bottom) - 1;
         return (x, y);
     }
 
@@ -82,7 +82,7 @@ public class BonusManager
         {
             if (KeyboardEx.HasBeenPressed(Keys.B) || (KeyboardEx.IsPressed(Keys.LeftShift) && KeyboardEx.IsPressed(Keys.B)))
             {
-                Spawn();
+                Spawn(BonusType.Ship);
             }
         }
 #endif

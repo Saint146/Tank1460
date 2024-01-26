@@ -14,10 +14,12 @@ public class ForestTile : DestructibleTile
 
     protected override IAnimation GetAnimation() => new Animation(Level.Content.Load<Texture2D>(@"Sprites/Tiles/Forest"), false);
 
-    public override void HandleShot(Shell shell)
+    public override bool HandleShot(Shell shell)
     {
         base.HandleShot(shell);
         if (shell.Properties.HasFlag(ShellProperties.Pruning))
             Reduce(shell.Direction, DefaultHeight);
+
+        return false;
     }
 }

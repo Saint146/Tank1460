@@ -20,6 +20,11 @@ public class TankEffects
         _effects.Add(effect);
     }
 
+    public void RemoveAll<T>() where T : TankEffect
+    {
+        _effects.RemoveAll(e => e is T);
+    }
+    
     public void Update(GameTime gameTime)
     {
         _effects.ForEach(effect => effect.Update(gameTime));
