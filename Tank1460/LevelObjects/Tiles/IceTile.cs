@@ -7,6 +7,8 @@ public class IceTile : Tile
     public IceTile(Level level) : base(level)
     {
     }
+    public override TileType Type => TileType.Ice;
+
 
     public override CollisionType CollisionType => CollisionType.None;
 

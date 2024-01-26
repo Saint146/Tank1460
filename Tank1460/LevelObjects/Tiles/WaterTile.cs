@@ -8,6 +8,8 @@ class WaterTile : Tile
     public WaterTile(Level level) : base(level)
     {
     }
+    public override TileType Type => TileType.Water;
+
 
     public override CollisionType CollisionType => CollisionType.PassablyOnlyByShip;
 

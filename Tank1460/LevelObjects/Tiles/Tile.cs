@@ -15,12 +15,13 @@ public abstract class Tile : LevelObject
     /// <returns>Должен ли снаряд взорваться от попадания.</returns>
     public virtual bool HandleShot(Shell shell) => false;
 
+    public abstract TileType Type { get; }
+
     protected Tile(Level level) : base(level)
     {
     }
 
     public virtual TileView TileView => TileView.Default;
-
     protected override IAnimation GetDefaultAnimation() => _animation;
 
     protected override void LoadContent()

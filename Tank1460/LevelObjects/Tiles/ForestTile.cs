@@ -7,6 +7,8 @@ public class ForestTile : DestructibleTile
     public ForestTile(Level level) : base(level)
     {
     }
+    public override TileType Type => TileType.Forest;
+
 
     public override CollisionType CollisionType => CollisionType.Shootable;
 

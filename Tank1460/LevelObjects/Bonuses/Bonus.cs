@@ -35,7 +35,7 @@ public class Bonus : LevelObject
         switch (Type)
         {
             case BonusType.Armor:
-                playerTank.AddTimedInvulnerability(600 * Tank1460Game.OneFrameSpan);
+                playerTank.AddTimedInvulnerability(640 * Tank1460Game.OneFrameSpan);
                 break;
 
             case BonusType.OneUp:
@@ -58,6 +58,11 @@ public class Bonus : LevelObject
                 playerTank.AddShip();
                 break;
 
+            case BonusType.Shovel:
+                Level.RemoveAllEffects<UnprotectedFalconEffect>();
+                Level.AddExclusiveEffect(new ArmoredFalconEffect(Level));
+                break;
+
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -70,7 +75,7 @@ public class Bonus : LevelObject
         switch (Type)
         {
             case BonusType.Armor:
-                botTank.AddTimedInvulnerability(600 * Tank1460Game.OneFrameSpan);
+                botTank.AddTimedInvulnerability(640 * Tank1460Game.OneFrameSpan);
                 break;
 
             case BonusType.OneUp:
@@ -90,6 +95,11 @@ public class Bonus : LevelObject
 
             case BonusType.Ship:
                 botTank.AddShip();
+                break;
+
+            case BonusType.Shovel:
+                Level.RemoveAllEffects<ArmoredFalconEffect>();
+                Level.AddExclusiveEffect(new UnprotectedFalconEffect(Level));
                 break;
 
             default:

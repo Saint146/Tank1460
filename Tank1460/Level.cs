@@ -48,6 +48,8 @@ public class Level : IDisposable
 
     public IReadOnlyList<PlayerTank> PlayerTanks => _playerTanks;
 
+    public List<Falcon> Falcons { get; } = new();
+
     internal PlayerIndex[] PlayersInGame { get; }
 
     internal ISoundPlayer SoundPlayer { get; }
@@ -58,11 +60,12 @@ public class Level : IDisposable
     //private Texture2D[] layers;
     private List<LevelObject>[,] _tileObjectMap;
 
+    // TODO: возможно, одженерить.
+    private readonly List<LevelEffect> _levelEffects = new();
+
     // В оригинале именно так: зависит лишь от режима,
     // а не от того, жив ли второй игрок. Даже если уровень стартует, когда один уже без жизней, всё равно будет шесть.
     private int MaxAliveBots() => (PlayersInGame.Length + 1) * 2;
-
-    private List<Falcon> Falcons { get; } = new();
 
     private readonly List<PlayerTank> _playerTanks = new();
 
@@ -197,6 +200,9 @@ public class Level : IDisposable
                 playerSpawner.Update(gameTime);
 
             BonusManager.Update(gameTime);
+
+            _levelEffects.RemoveAll(effect => effect.ToRemove);
+            _levelEffects.ForEach(effect => effect.Update(gameTime));
         }
 
         SoundPlayer.Perform(gameTime);
@@ -274,8 +280,11 @@ public class Level : IDisposable
         State = LevelState.Running;
     }
 
-    public void HandleObjectRemoved(LevelObject levelObject)
+    public void HandleObjectRemoved(UpdateableObject o)
     {
+        if (o is not LevelObject levelObject)
+            return;
+
         HandleChangeTileBounds(levelObject, levelObject.TileRectangle, null);
     }
 
@@ -298,7 +307,35 @@ public class Level : IDisposable
         return closeObjects;
     }
 
+    internal void AddTile(Tile tile, int x, int y)
+    {
+        _tiles.Add(tile);
+        tile.Spawn(new Point(x * Tile.DefaultWidth, y * Tile.DefaultHeight));
+    }
 
+    internal Tile GetTile(int x, int y)
+    {
+        return (Tile)_tileObjectMap[x, y].SingleOrDefault(o => o is Tile);
+    }
+
+    internal void TryRemoveTileAt(int x, int y)
+    {
+        GetTile(x, y)?.Remove();
+    }
+
+    internal void AddExclusiveEffect(LevelEffect levelEffect)
+    {
+        _levelEffects.Where(e => e.GetType().IsInstanceOfType(levelEffect))
+                     .ForEach(e => e.Remove());
+
+        _levelEffects.Add(levelEffect);
+    }
+
+    internal void RemoveAllEffects<T>() where T : LevelEffect
+    {
+        _levelEffects.RemoveAll(e => e is T);
+    }
+    
     private void LoadTiles(TileType[,] tileTypes)
     {
         var width = tileTypes.GetLength(0);
@@ -317,8 +354,7 @@ public class Level : IDisposable
                 if (tile is null)
                     continue;
 
-                _tiles.Add(tile);
-                tile.Spawn(new Point(x * Tile.DefaultWidth, y * Tile.DefaultHeight));
+                AddTile(tile, x, y);
             }
         }
 
@@ -348,6 +384,7 @@ public class Level : IDisposable
 
     private Tile LoadTile(TileType tileType, int x, int y)
     {
+        // TODO: Убрать объекты из типов тайлов и заменить на фабричный метод.
         return tileType switch
         {
             TileType.Empty => null,

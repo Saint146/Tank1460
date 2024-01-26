@@ -9,6 +9,8 @@ public class ConcreteTile : DestructibleTile
     public ConcreteTile(Level level) : base(level)
     {
     }
+    public override TileType Type => TileType.Concrete;
+
 
     public override CollisionType CollisionType => CollisionType.ShootableAndImpassable;
 

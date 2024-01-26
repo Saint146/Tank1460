@@ -5,7 +5,7 @@ using Tank1460.Extensions;
 
 namespace Tank1460.LevelObjects;
 
-public abstract class LevelObject
+public abstract class LevelObject : UpdateableObject
 {
     public Point Position
     {
@@ -17,15 +17,15 @@ public abstract class LevelObject
         }
     }
 
-    private Point _position;
+    public Rectangle BoundingRectangle { get; private set; }
 
     public Rectangle TileRectangle { get; private set; }
 
-    public bool ToRemove { get; private set; } = false;
-
-    protected Level Level { get; private set; }
+    public virtual CollisionType CollisionType => CollisionType.None;
 
     protected TimedAnimationPlayer Sprite { get; } = new();
+
+    protected abstract IAnimation GetDefaultAnimation();
 
     protected Rectangle LocalBounds
     {
@@ -37,28 +37,9 @@ public abstract class LevelObject
         }
     }
 
-    private void CalculateBoundingRectangle()
-    {
-        BoundingRectangle = LocalBounds.Add(Position);
+    private Point _position;
 
-        var oldTileRectangle = TileRectangle;
-        TileRectangle = BoundingRectangle.RoundToTiles();
-
-        Level.HandleChangeTileBounds(this, oldTileRectangle, TileRectangle);
-    }
-
-    public virtual CollisionType CollisionType => CollisionType.None;
-
-    public Rectangle BoundingRectangle { get; private set; }
-
-    protected LevelObject(Level level)
-    {
-        Level = level;
-    }
-
-    protected abstract IAnimation GetDefaultAnimation();
-
-    public virtual void Update(GameTime gameTime)
+    protected LevelObject(Level level) : base(level)
     {
     }
 
@@ -71,13 +52,11 @@ public abstract class LevelObject
         {
             spriteBatch.DrawRectangle(BoundingRectangle, Color.Red);
             spriteBatch.DrawPoint(Position.X, Position.Y, Color.Magenta);
-            foreach(var tile in TileRectangle.GetAllPoints())
+            foreach (var tile in TileRectangle.GetAllPoints())
                 spriteBatch.DrawRectangle(Level.GetTileBounds(tile.X, tile.Y), new Color(0x22222222));
         }
 #endif
     }
-
-    protected abstract void LoadContent();
 
     public void Spawn(Point position)
     {
@@ -95,13 +74,15 @@ public abstract class LevelObject
         Position = new Point(centerPosition.X - LocalBounds.Width / 2, centerPosition.Y - LocalBounds.Height / 2);
     }
 
-    protected void Remove()
-    {
-        if (ToRemove)
-            return;
+    protected abstract void LoadContent();
 
-        ToRemove = true;
-        Level.HandleObjectRemoved(this);
-        Level = null;
+    private void CalculateBoundingRectangle()
+    {
+        BoundingRectangle = LocalBounds.Add(Position);
+
+        var oldTileRectangle = TileRectangle;
+        TileRectangle = BoundingRectangle.RoundToTiles();
+
+        Level.HandleChangeTileBounds(this, oldTileRectangle, TileRectangle);
     }
 }

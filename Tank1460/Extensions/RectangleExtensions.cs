@@ -112,11 +112,32 @@ public static class RectangleExtensions
         };
     }
 
+    /// <summary>
+    /// Вернуть все точки прямоугольника, включая внутренние.
+    /// </summary>
     public static IEnumerable<Point> GetAllPoints(this Rectangle rectangle)
     {
         for (var x = rectangle.Left; x < rectangle.Right; x++)
         for (var y = rectangle.Top; y < rectangle.Bottom; y++)
             yield return new Point(x, y);
+    }
+
+    /// <summary>
+    /// Вернуть все точки по контуру прямоугольника.
+    /// </summary>
+    public static IEnumerable<Point> GetOutlinePoints(this Rectangle rectangle)
+    {
+        for (var x = rectangle.Left; x < rectangle.Right; x++)
+        {
+            yield return new Point(x, rectangle.Top);
+            yield return new Point(x, rectangle.Bottom - 1);
+        }
+
+        for (var y = rectangle.Top; y < rectangle.Bottom; y++)
+        {
+            yield return new Point(rectangle.Left, y);
+            yield return new Point(rectangle.Right - 1, y);
+        }
     }
 
     /// <summary>

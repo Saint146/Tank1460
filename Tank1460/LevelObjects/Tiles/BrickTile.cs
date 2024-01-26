@@ -12,6 +12,8 @@ public class BrickTile : DestructibleTile
 
     public override CollisionType CollisionType => CollisionType.ShootableAndImpassable;
 
+    public override TileType Type => TileType.Brick;
+
     protected override IAnimation GetAnimation() => new Animation(Level.Content.Load<Texture2D>(@"Sprites/Tiles/Brick"), false);
 
     public override bool HandleShot(Shell shell)
