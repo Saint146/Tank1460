@@ -4,6 +4,7 @@ internal enum GameState
 {
     Initializing,
     Ready,
+    InMenu,
     InLevel,
     CurtainOpening,
     CurtainClosing

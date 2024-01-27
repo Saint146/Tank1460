@@ -8,12 +8,12 @@ using System.Diagnostics;
 using System.Linq;
 using Tank1460.Audio;
 using Tank1460.Extensions;
+using Tank1460.Input;
 using Tank1460.LevelObjects;
 using Tank1460.LevelObjects.Bonuses;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
-using static Tank1460.Level;
 
 namespace Tank1460;
 
@@ -218,7 +218,7 @@ public class Level : IDisposable
     public void HandleFalconDestroyed(Falcon falcon)
     {
         if (!Falcons.Any(f => f.IsAlive))
-            GameOver?.Invoke(this);
+            AllFalconsDestroyed();
     }
 
     public void Dispose()
@@ -441,6 +441,10 @@ public class Level : IDisposable
         return null;
     }
 
+    private void AllFalconsDestroyed()
+    {
+    }
+    
     private Tile CreateFalcon(int x, int y)
     {
         var falcon = new Falcon(this);

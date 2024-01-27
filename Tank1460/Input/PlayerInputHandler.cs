@@ -1,5 +1,4 @@
-﻿global using PlayerInputCollection = System.Collections.Generic.Dictionary<Microsoft.Xna.Framework.PlayerIndex, Tank1460.PlayerInput.PlayerInputs>;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
@@ -8,16 +7,18 @@ using System.Linq;
 using Tank1460.Extensions;
 using Tank1460.SaveLoad.Settings;
 
-namespace Tank1460.PlayerInput;
+namespace Tank1460.Input;
 
 internal class PlayerInputHandler
 {
     private readonly PlayerIndex[] _allPlayers;
 
+    private PlayerInputCollection _oldPlayerInputs;
+
     // Мапы, использующиеся в процессе игры.
     private readonly Dictionary<int, PlayerIndex> _gamePadIndexesAssignedToPlayers = new();
-    private Dictionary<PlayerIndex, Dictionary<Buttons, PlayerInputs>> _gamePadBindings = new();
-    private Dictionary<Keys, (PlayerIndex PlayerIndex, PlayerInputs Inputs)> _keyboardBindings = new();
+    private Dictionary<PlayerIndex, Dictionary<Buttons, PlayerInputCommands>> _gamePadBindings = new();
+    private Dictionary<Keys, (PlayerIndex PlayerIndex, PlayerInputCommands Inputs)> _keyboardBindings = new();
 
     // Мапы, использующиеся для хранения настроек.
     private Dictionary<PlayerIndex, KeyboardControlsSettings> _keyboardControlsByPlayer;
@@ -25,6 +26,8 @@ internal class PlayerInputHandler
     public PlayerInputHandler(PlayerIndex[] allPlayers)
     {
         _allPlayers = allPlayers;
+
+        _oldPlayerInputs = new PlayerInputCollection(_allPlayers);
     }
 
     internal ICollection<int> GetActiveGamePadIndexes() => _gamePadIndexesAssignedToPlayers.Keys;
@@ -33,13 +36,13 @@ internal class PlayerInputHandler
     {
         var playersInputs = new PlayerInputCollection();
         foreach (var playerIndex in _allPlayers)
-            playersInputs[playerIndex] = PlayerInputs.None;
+            playersInputs[playerIndex] = new PlayerInput();
 
         // Нажатые клавиши можем получить целиком и обработать их.
         foreach (var key in keyboardState.GetPressedKeys())
         {
             if (_keyboardBindings.TryGetValue(key, out var binding))
-                playersInputs[binding.PlayerIndex] |= binding.Inputs;
+                playersInputs[binding.PlayerIndex].Active |= binding.Inputs;
         }
 
         // С геймпадами придется наоборот - перебирать все забинженные клавиши.
@@ -50,7 +53,7 @@ internal class PlayerInputHandler
             foreach (var (button, input) in bindings)
             {
                 if (gamePadState.IsButtonDown(button))
-                    playersInputs[playerIndex] |= input;
+                    playersInputs[playerIndex].Active |= input;
             }
 
             // TODO: Сделать выбор только одной команды по дельте - какая больше, туда и едем, чтобы было более плавное переключение.
@@ -58,23 +61,32 @@ internal class PlayerInputHandler
             switch (gamePadState.ThumbSticks.Left.X)
             {
                 case < 0:
-                    playersInputs[playerIndex] |= PlayerInputs.Left;
+                    playersInputs[playerIndex].Active |= PlayerInputCommands.Left;
                     break;
                 case > 0:
-                    playersInputs[playerIndex] |= PlayerInputs.Right;
+                    playersInputs[playerIndex].Active |= PlayerInputCommands.Right;
                     break;
             }
 
             switch (gamePadState.ThumbSticks.Left.Y)
             {
                 case < 0:
-                    playersInputs[playerIndex] |= PlayerInputs.Down;
+                    playersInputs[playerIndex].Active |= PlayerInputCommands.Down;
                     break;
                 case > 0:
-                    playersInputs[playerIndex] |= PlayerInputs.Up;
+                    playersInputs[playerIndex].Active |= PlayerInputCommands.Up;
                     break;
             }
         }
+
+        // На основе предыдущих и текущих нажатий определяем, какие кнопки были нажаты только что.
+        foreach (var (playerIndex, playerInput) in playersInputs)
+        {
+            var oldPlayerInput = _oldPlayerInputs[playerIndex];
+            playerInput.Pressed = playerInput.Active & ~oldPlayerInput.Active;
+        }
+
+        _oldPlayerInputs = playersInputs;
 
         return playersInputs;
     }
@@ -134,10 +146,10 @@ internal class PlayerInputHandler
         _gamePadBindings = _gamePadIndexesAssignedToPlayers.ToDictionary(x => x.Value, _ => InputDefaults.GetDefaultGamepadBindings());
     }
 
-    private static Dictionary<Keys, (PlayerIndex PlayerIndex, PlayerInputs Inputs)> ConvertBindingsToKeysMap(
+    private static Dictionary<Keys, (PlayerIndex PlayerIndex, PlayerInputCommands Inputs)> ConvertBindingsToKeysMap(
         Dictionary<PlayerIndex, KeyboardControlsSettings> keyboardControlsByPlayer)
     {
-        var bindings = new Dictionary<Keys, (PlayerIndex PlayerIndex, PlayerInputs Inputs)>();
+        var bindings = new Dictionary<Keys, (PlayerIndex PlayerIndex, PlayerInputCommands Inputs)>();
         // Конвертируем настройки в мапу по клавишам.
         bindings.Clear();
         foreach (var (playerIndex, controls) in keyboardControlsByPlayer)

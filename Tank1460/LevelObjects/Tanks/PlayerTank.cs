@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 using System.Collections.Generic;
 using Tank1460.Audio;
-using Tank1460.PlayerInput;
+using Tank1460.Input;
 
 namespace Tank1460.LevelObjects.Tanks;
 
@@ -24,7 +24,7 @@ public class PlayerTank : Tank
         { PlayerIndex.Two, TankColor.Green }
     };
 
-    private PlayerInputs _inputs;
+    private PlayerInput _playerInput;
 
     protected override int[] SpawnAnimationTimesInFrames() => new[] { 2, 3, 3, 4, 2, 3, 4, 3, 2, 4, 3, 3, 1 };
 
@@ -64,11 +64,11 @@ public class PlayerTank : Tank
         SetType(TankType.Type3);
     }
 
-    public void HandleInput(PlayerInputs inputs)
+    public void HandleInput(PlayerInput playerInput)
     {
-        _inputs = inputs;
+        _playerInput = playerInput;
 
-        if (_inputs.HasFlag(PlayerInputs.Start))
+        if (_playerInput.Pressed.HasFlag(PlayerInputCommands.Start))
         {
             // TODO: level handle player pressed start
         }
@@ -105,19 +105,19 @@ public class PlayerTank : Tank
     {
         var order = TankOrder.None;
 
-        if (_inputs.HasFlag(PlayerInputs.Left))
+        if (_playerInput.Active.HasFlag(PlayerInputCommands.Left))
             order |= TankOrder.MoveLeft;
 
-        if (_inputs.HasFlag(PlayerInputs.Right))
+        if (_playerInput.Active.HasFlag(PlayerInputCommands.Right))
             order |= TankOrder.MoveRight;
 
-        if (_inputs.HasFlag(PlayerInputs.Up))
+        if (_playerInput.Active.HasFlag(PlayerInputCommands.Up))
             order |= TankOrder.MoveUp;
 
-        if (_inputs.HasFlag(PlayerInputs.Down))
+        if (_playerInput.Active.HasFlag(PlayerInputCommands.Down))
             order |= TankOrder.MoveDown;
 
-        if (_inputs.HasFlag(PlayerInputs.Shoot))
+        if (_playerInput.Active.HasFlag(PlayerInputCommands.Shoot))
             order |= TankOrder.Shoot;
 
         return order;

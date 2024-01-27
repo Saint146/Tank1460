@@ -544,6 +544,30 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Hud/Font.png
 
+#begin Sprites/Hud/Pattern1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Hud/Pattern1.png
+
+#begin Sprites/Hud/Pattern2.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Hud/Pattern2.png
+
 #begin Sprites/Hud/Player.png
 /importer:TextureImporter
 /processor:TextureProcessor

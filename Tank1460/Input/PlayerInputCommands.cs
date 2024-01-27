@@ -1,9 +1,9 @@
 ﻿using System;
 
-namespace Tank1460.PlayerInput;
+namespace Tank1460.Input;
 
 [Flags]
-public enum PlayerInputs
+public enum PlayerInputCommands
 {
     None = 0,
     Up = 1 << 0,
