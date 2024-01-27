@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.Xna.Framework.Graphics;
 using Tank1460.Extensions;
 using Tank1460.LevelObjects;
 using Tank1460.LevelObjects.Tiles;
@@ -103,8 +104,6 @@ internal class ArmoredFalconEffect : LevelEffect
 
     public override void Update(GameTime gameTime)
     {
-        base.Update(gameTime);
-
         _time += gameTime.ElapsedGameTime.TotalSeconds;
         if (_time <= _currentEffectTime) return;
 
@@ -129,5 +128,9 @@ internal class ArmoredFalconEffect : LevelEffect
             ArmorFalcons();
         else
             RestoreFalconsSurroundings();
+    }
+
+    public override void Draw(SpriteBatch spriteBatch, Vector2 position)
+    {
     }
 }

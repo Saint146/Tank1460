@@ -8,6 +8,9 @@ namespace Tank1460;
 public class PlayerSpawner
 {
     public PlayerIndex PlayerIndex { get; }
+
+    public PlayerTank Tank { get; private set; }
+
     private readonly Level _level;
     private readonly int _x;
     private readonly int _y;
@@ -17,7 +20,7 @@ public class PlayerSpawner
     private bool _spawnIsDue;
 
     public int LivesRemaining { get; private set; } = 3;
-    private PlayerTank _playerTank;
+
     private bool _enabled = true;
 
     public PlayerSpawner(Level level, int x, int y, PlayerIndex playerIndex)
@@ -42,14 +45,17 @@ public class PlayerSpawner
 
     public void HandleTankDestroyed(PlayerTank playerTank)
     {
-        if (_playerTank != playerTank)
+        if (Tank != playerTank)
         {
             Debug.Fail($"Player spawner {PlayerIndex} cannot handle a death of player tank with a different number {playerTank.PlayerIndex}");
             return;
         }
 
-        _playerTank = null;
+        Tank = null;
+
         LivesRemaining--;
+        if (LivesRemaining == 0)
+            _level.HandlePlayerLostAllLives(PlayerIndex);
 
         StartSpawnTimer();
     }
@@ -65,12 +71,20 @@ public class PlayerSpawner
         LivesRemaining++;
     }
 
+    public bool CanDonateLife() => LivesRemaining > 1;
+
+    public void DonateLife(PlayerSpawner receiverSpawner)
+    {
+        LivesRemaining--;
+        receiverSpawner.LivesRemaining++;
+    }
+
     public void Update(GameTime gameTime)
     {
         if (!_enabled)
             return;
 
-        if (_playerTank is not null)
+        if (Tank is not null)
             return;
 
         if (!_spawnIsDue)
@@ -88,12 +102,11 @@ public class PlayerSpawner
 
     private void SpawnPlayer()
     {
-        if (_playerTank is not null)
+        if (Tank is not null)
             return;
 
         var bounds = Level.GetTileBounds(_x, _y);
-        _playerTank = new PlayerTank(_level, PlayerIndex);
-        _playerTank.Spawn(new Point(bounds.Left, bounds.Top));
-        _level.AddPlayer(_playerTank);
+        Tank = new PlayerTank(_level, PlayerIndex);
+        Tank.Spawn(new Point(bounds.Left, bounds.Top));
     }
 }

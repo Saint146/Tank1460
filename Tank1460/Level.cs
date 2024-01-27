@@ -47,7 +47,9 @@ public class Level : IDisposable
 
     public bool IsLoaded => State != LevelState.Loading;
 
-    public IReadOnlyList<PlayerTank> PlayerTanks => _playerTanks;
+    public PlayerTank GetPlayerTank(PlayerIndex playerIndex) => PlayerSpawners[playerIndex]?.Tank;
+
+    public IEnumerable<PlayerTank> GetAllPlayerTanks() => PlayersInGame.Select(GetPlayerTank).Where(tank => tank is not null);
 
     public List<Falcon> Falcons { get; } = new();
 
@@ -61,14 +63,11 @@ public class Level : IDisposable
     //private Texture2D[] layers;
     private List<LevelObject>[,] _tileObjectMap;
 
-    // TODO: возможно, одженерить.
-    private readonly List<LevelEffect> _levelEffects = new();
+    private readonly LevelEffects _levelEffects = new();
 
     // В оригинале именно так: зависит лишь от режима,
     // а не от того, жив ли второй игрок. Даже если уровень стартует, когда один уже без жизней, всё равно будет шесть.
     private int MaxAliveBots() => (PlayersInGame.Length + 1) * 2;
-
-    private readonly List<PlayerTank> _playerTanks = new();
 
     private Dictionary<PlayerIndex, PlayerSpawner> PlayerSpawners { get; } = new();
     private const int MaxPlayerCount = 2;
@@ -80,6 +79,9 @@ public class Level : IDisposable
 #endif
 
     private LevelState _state = LevelState.Loading;
+    private double _delayTime;
+    private double _delayEffectTime;
+
     internal LevelState State
     {
         get => _state;
@@ -116,15 +118,13 @@ public class Level : IDisposable
 
     public void AddExplosion(Explosion explosion) => _explosions.Add(explosion);
 
-    public void AddPlayer(PlayerTank playerTank) => _playerTanks.Add(playerTank);
-
     public PlayerTank GetTargetPlayerForBot(int botIndex)
     {
-        return _playerTanks.Count switch
+        return PlayersInGame.Length switch
         {
             0 => null,
-            1 => botIndex % 2 == 0 ? null : _playerTanks[0],
-            _ => _playerTanks[botIndex % _playerTanks.Count]
+            1 => botIndex % 2 == 0 ? null : GetPlayerTank(PlayersInGame[0]),
+            _ => GetPlayerTank(PlayersInGame[botIndex % PlayersInGame.Length])
         };
     }
 
@@ -142,43 +142,78 @@ public class Level : IDisposable
 
     public void HandleInput(PlayerInputCollection playersInputs)
     {
-        // TODO: Вообще говоря, не всегда правда.
-        if (State is not LevelState.Running and not LevelState.Paused)
-            return;
-
-        foreach (var playerTank in _playerTanks)
-            playerTank.HandleInput(playersInputs[playerTank.PlayerIndex]);
-
-        if (KeyboardEx.HasBeenPressed(Keys.Space) || KeyboardEx.HasBeenPressed(Keys.X))
+        switch (State)
         {
-            State = State == LevelState.Running ? LevelState.Paused : LevelState.Running;
+            case LevelState.Loading:
+            case LevelState.Intro:
+            case LevelState.LostDelay:
+            case LevelState.WinScoreScreen:
+            case LevelState.LostScoreScreen:
+            case LevelState.GameOverScreen:
+            case LevelState.Win:
+            case LevelState.Lost:
+                playersInputs.ClearInputs();
+                break;
+
+            case LevelState.Running:
+            case LevelState.Paused:
+            case LevelState.WinDelay:
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        foreach (var playerIndex in PlayersInGame)
+        {
+            var tank = GetPlayerTank(playerIndex);
+            if (tank is null)
+            {
+                if (PlayerLivesRemaining(playerIndex) == 0)
+                {
+                    // Обрабатываем нажатия клавиш игрока без жизней.
+                    if(playersInputs[playerIndex].Pressed.HasFlag(PlayerInputCommands.Shoot))
+                        TryReceiveDonatedLife(playerIndex);
+                }
+            }
+            else
+            {
+                var playerInput = playersInputs[playerIndex];
+
+                if (playerInput.Pressed.HasFlag(PlayerInputCommands.Start))
+                    State = State == LevelState.Running ? LevelState.Paused : LevelState.Running;
+                tank.HandleInput(playerInput);
+            }
         }
 
 #if DEBUG
         if (KeyboardEx.HasBeenPressed(Keys.F10))
         {
             _cheatGodMode = !_cheatGodMode;
-            _playerTanks.ForEach(tank => tank.GodMode = _cheatGodMode);
+            GetAllPlayerTanks().ForEach(tank => tank.GodMode = _cheatGodMode);
         }
 
         if (KeyboardEx.HasBeenPressed(Keys.PageUp))
-            _playerTanks.ForEach(tank => tank.UpgradeUp());
+            GetAllPlayerTanks().ForEach(tank => tank.UpgradeUp());
 
         if (KeyboardEx.HasBeenPressed(Keys.PageDown))
-            _playerTanks.ForEach(tank => tank.UpgradeDown());
+            GetAllPlayerTanks().ForEach(tank => tank.UpgradeDown());
 
         if (KeyboardEx.HasBeenPressed(Keys.Enter))
-            _playerTanks.ForEach(tank => tank.Explode(tank));
+            GetAllPlayerTanks().ForEach(tank => tank.Explode(tank));
 #endif
     }
 
     public void Update(GameTime gameTime)
     {
-        if (State is not LevelState.Loading and not LevelState.Intro and not LevelState.Paused)
+        var proceedWithUpdate = ProcessState(gameTime);
+
+        if (proceedWithUpdate)
         {
-            _playerTanks.FindAll(p => p.ToRemove).ForEach(HandlePlayerTankDestroyed);
-            foreach (var player in _playerTanks)
-                player.Update(gameTime);
+            var playerTanks = GetAllPlayerTanks().ToList();
+            playerTanks.FindAll(p => p.ToRemove).ForEach(HandlePlayerTankDestroyed);
+            foreach (var playerTank in playerTanks)
+                playerTank.Update(gameTime);
 
             foreach (var falcon in Falcons)
                 falcon.Update(gameTime);
@@ -202,8 +237,7 @@ public class Level : IDisposable
 
             BonusManager.Update(gameTime);
 
-            _levelEffects.RemoveAll(effect => effect.ToRemove);
-            _levelEffects.ForEach(effect => effect.Update(gameTime));
+            _levelEffects.Update(gameTime);
         }
 
         SoundPlayer.Perform(gameTime);
@@ -218,7 +252,7 @@ public class Level : IDisposable
     public void HandleFalconDestroyed(Falcon falcon)
     {
         if (!Falcons.Any(f => f.IsAlive))
-            AllFalconsDestroyed();
+            StartGameOverSequence();
     }
 
     public void Dispose()
@@ -238,8 +272,8 @@ public class Level : IDisposable
         foreach (var tile in _tiles.Where(tile => tile.TileView == TileView.Default))
             tile.Draw(gameTime, spriteBatch);
 
-        foreach (var player in PlayerTanks)
-            player.Draw(gameTime, spriteBatch);
+        foreach (var playerTank in GetAllPlayerTanks())
+            playerTank.Draw(gameTime, spriteBatch);
 
         foreach (var falcon in Falcons)
             falcon.Draw(gameTime, spriteBatch);
@@ -256,6 +290,7 @@ public class Level : IDisposable
             tile.Draw(gameTime, spriteBatch);
 
         BonusManager.Draw(gameTime, spriteBatch);
+        _levelEffects.Draw(spriteBatch, Bounds.Location.ToVector2());
     }
 
     public static Rectangle GetTileBounds(int tileX, int tileY)
@@ -273,6 +308,9 @@ public class Level : IDisposable
 
     public void HandleAllBotsDestroyed()
     {
+        State = LevelState.WinDelay;
+        _delayTime = 0.0;
+        _delayEffectTime = 300 * Tank1460Game.OneFrameSpan;
     }
 
     public void Start()
@@ -328,12 +366,14 @@ public class Level : IDisposable
         GetTile(x, y)?.Remove();
     }
 
-    internal void AddExclusiveEffect(LevelEffect levelEffect)
+    internal void ArmorFalcons(double effectTime)
     {
-        _levelEffects.Where(e => e.GetType().IsInstanceOfType(levelEffect))
-                     .ForEach(e => e.Remove());
+        _levelEffects.AddExclusive(new ArmoredFalconEffect(this, effectTime));
+    }
 
-        _levelEffects.Add(levelEffect);
+    internal void LeaveFalconsUnprotected()
+    {
+        _levelEffects.AddExclusive(new UnprotectedFalconEffect(this));
     }
 
     internal void RemoveAllEffects<T>() where T : LevelEffect
@@ -345,7 +385,55 @@ public class Level : IDisposable
     {
         PlayerRewarded?.Invoke(this, (playerIndex, points));
     }
-    
+
+    internal void HandlePlayerLostAllLives(PlayerIndex playerIndex)
+    {
+        if (PlayersInGame.All(player => PlayerLivesRemaining(player) == 0))
+            StartGameOverSequence();
+    }
+
+    private bool ProcessState(GameTime gameTime)
+    {
+        switch (State)
+        {
+            case LevelState.Loading:
+            case LevelState.Intro:
+            case LevelState.Paused:
+            case LevelState.Lost:
+            case LevelState.Win:
+                return false;
+
+            case LevelState.Running:
+                return true;
+
+            case LevelState.WinDelay:
+                _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
+                if (_delayTime <= _delayEffectTime)
+                    return true;
+
+                State = LevelState.Win;
+                LevelComplete?.Invoke(this);
+
+                return true;
+
+            case LevelState.LostDelay:
+                _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
+                if (_delayTime <= _delayEffectTime)
+                    return true;
+
+                State = LevelState.Lost;
+                GameOver?.Invoke(this);
+
+                return true;
+
+            case LevelState.WinScoreScreen:
+            case LevelState.LostScoreScreen:
+            case LevelState.GameOverScreen:
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
     private void LoadTiles(TileType[,] tileTypes)
     {
         var width = tileTypes.GetLength(0);
@@ -380,9 +468,7 @@ public class Level : IDisposable
 
     private void HandlePlayerTankDestroyed(PlayerTank playerTank)
     {
-        _playerTanks.Remove(playerTank);
         var playerSpawner = PlayerSpawners[playerTank.PlayerIndex];
-
         if (playerSpawner is null)
         {
             Debug.Fail($"Cannot find player spawner for player {playerTank.PlayerIndex}.");
@@ -390,6 +476,14 @@ public class Level : IDisposable
         }
 
         playerSpawner.HandleTankDestroyed(playerTank);
+    }
+
+    private void TryReceiveDonatedLife(PlayerIndex playerIndex)
+    {
+        if (!PlayerSpawners.Values.TryGetFirst(out var spawnerDonator, spawner => spawner.CanDonateLife()))
+            return;
+
+        spawnerDonator.DonateLife(PlayerSpawners[playerIndex]);
     }
 
     private Tile LoadTile(TileType tileType, int x, int y)
@@ -441,10 +535,13 @@ public class Level : IDisposable
         return null;
     }
 
-    private void AllFalconsDestroyed()
+    private void StartGameOverSequence()
     {
+        State = LevelState.LostDelay;
+        _delayTime = 0.0;
+        _delayEffectTime = 288 * Tank1460Game.OneFrameSpan;
     }
-    
+
     private Tile CreateFalcon(int x, int y)
     {
         var falcon = new Falcon(this);
@@ -476,5 +573,6 @@ public class Level : IDisposable
     public delegate void LevelEvent<T>(Level level, T args);
 
     public event LevelEvent GameOver;
+    public event LevelEvent LevelComplete;
     public event LevelEvent<(PlayerIndex PlayerIndex, int PointsReward)> PlayerRewarded;
 }

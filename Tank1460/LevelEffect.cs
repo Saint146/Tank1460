@@ -1,10 +1,11 @@
-﻿using Tank1460.LevelObjects;
+﻿namespace Tank1460;
 
-namespace Tank1460;
-
-internal abstract class LevelEffect : UpdateableObject
+public abstract class LevelEffect : Effect
 {
-    protected LevelEffect(Level level) : base(level)
+    protected Level Level;
+
+    protected LevelEffect(Level level) : base()
     {
+        Level = level;
     }
 }

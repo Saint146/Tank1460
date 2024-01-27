@@ -51,16 +51,16 @@ public class Falcon : LevelObject
             case FalconState.Exploding when _explosion.ToRemove:
                 _explosion = null;
                 SetState(FalconState.Destroyed);
-                Level.HandleFalconDestroyed(this);
                 break;
         }
     }
 
     public void Explode()
     {
-        SetState(FalconState.Destroyed);
+        SetState(FalconState.Exploding);
         _explosion = new BigExplosion(Level);
         _explosion.SpawnViaCenterPosition(BoundingRectangle.Center);
+        Level.HandleFalconDestroyed(this);
 
         Level.SoundPlayer.Play(Sound.ExplosionBig);
         Level.SoundPlayer.Play(Sound.Fail);

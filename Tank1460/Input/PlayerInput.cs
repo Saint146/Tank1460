@@ -2,12 +2,6 @@
 
 public class PlayerInput
 {
-    public PlayerInput()
-    {
-        Active = PlayerInputCommands.None;
-        Pressed = PlayerInputCommands.None;
-    }
-
     /// <summary>
     /// Команды, активные в текущий момент.
     /// </summary>
@@ -17,4 +11,15 @@ public class PlayerInput
     /// Команды, которые только что нажали.
     /// </summary>
     public PlayerInputCommands Pressed { get; set; }
+
+    public PlayerInput()
+    {
+        Clear();
+    }
+
+    public void Clear()
+    {
+        Active = PlayerInputCommands.None;
+        Pressed = PlayerInputCommands.None;
+    }
 }

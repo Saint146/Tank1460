@@ -162,7 +162,7 @@ public class Tank1460Game : Game
         if (_isCustomCursorVisible)
             _cursor.Update(gameTime, _mouseState, _scale);
 
-        ProcessGameState(gameTime);
+        ProcessState(gameTime);
 
         _menu?.HandleInput(inputs);
         _menu?.Update(gameTime);
@@ -226,7 +226,7 @@ public class Tank1460Game : Game
         base.UnloadContent();
     }
 
-    private void ProcessGameState(GameTime gameTime)
+    private void ProcessState(GameTime gameTime)
     {
         switch (State)
         {
@@ -236,6 +236,7 @@ public class Tank1460Game : Game
 
             case GameState.Ready:
                 State = GameState.InMenu;
+                UnloadLevel();
                 LoadMenu();
                 break;
 
@@ -382,6 +383,7 @@ public class Tank1460Game : Game
             return;
 
         _level.PlayerRewarded -= Level_PlayerRewarded;
+        _level.LevelComplete -= Level_LevelComplete;
         _level.GameOver -= Level_GameOver;
 
         _level.Dispose();
@@ -399,6 +401,7 @@ public class Tank1460Game : Game
         _level = new Level(Services, levelStructure, levelNumber, PlayersInGame);
 
         _level.PlayerRewarded += Level_PlayerRewarded;
+        _level.LevelComplete += Level_LevelComplete;
         _level.GameOver += Level_GameOver;
 
         _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
@@ -413,8 +416,17 @@ public class Tank1460Game : Game
         Debug.WriteLine($"Level {levelNumber} loaded.");
     }
 
+    private void Level_LevelComplete(Level level)
+    {
+        LevelNumber++;
+
+        _curtainTime = 0.0;
+        State = GameState.CurtainClosing;
+    }
+
     private void Level_GameOver(Level level)
     {
+        State = GameState.Ready;
         ResetPlayersPoints();
     }
 

@@ -1,22 +1,5 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
+﻿namespace Tank1460;
 
-namespace Tank1460;
-
-public abstract class TankEffect
+public abstract class TankEffect : Effect
 {
-    protected TankEffect()
-    {
-    }
-
-    public bool ToRemove { get; private set; } = false;
-
-    public void Remove()
-    {
-        ToRemove = true;
-    }
-
-    public abstract void Update(GameTime gameTime);
-
-    public abstract void Draw(SpriteBatch spriteBatch, Vector2 position);
 }

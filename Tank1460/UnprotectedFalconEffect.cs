@@ -1,4 +1,6 @@
 ﻿using System.Linq;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Tank1460.Extensions;
 using Tank1460.LevelObjects;
 
@@ -27,5 +29,13 @@ internal class UnprotectedFalconEffect : LevelEffect
                     tile.Remove();
             }
         }
+    }
+
+    public override void Update(GameTime gameTime)
+    {
+    }
+
+    public override void Draw(SpriteBatch spriteBatch, Vector2 position)
+    {
     }
 }

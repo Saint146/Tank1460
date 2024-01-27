@@ -14,4 +14,9 @@ public class PlayerInputCollection : Dictionary<PlayerIndex, PlayerInput>
     {
         playerIndices.ForEach(playerIndex => this[playerIndex] = new PlayerInput());
     }
+
+    public void ClearInputs()
+    {
+        Values.ForEach(input => input.Clear());
+    }
 }

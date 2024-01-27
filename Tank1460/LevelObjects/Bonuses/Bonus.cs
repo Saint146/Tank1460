@@ -67,7 +67,7 @@ public class Bonus : LevelObject
 
             case BonusType.Shovel:
                 Level.RemoveAllEffects<UnprotectedFalconEffect>();
-                Level.AddExclusiveEffect(new ArmoredFalconEffect(Level, ShovelTimeInFrames * Tank1460Game.OneFrameSpan));
+                Level.ArmorFalcons(ShovelTimeInFrames * Tank1460Game.OneFrameSpan);
                 break;
 
             case BonusType.Clock:
@@ -108,7 +108,7 @@ public class Bonus : LevelObject
                 break;
             case BonusType.Grenade:
                 // Передаём null, чтобы не давать очков игроку за уничтожение (логика оригинала).
-                Level.PlayerTanks.ForEach(playerTank => playerTank.Explode(null));
+                Level.GetAllPlayerTanks().ForEach(playerTank => playerTank.Explode(null));
                 break;
 
             case BonusType.Pistol:
@@ -125,11 +125,11 @@ public class Bonus : LevelObject
 
             case BonusType.Shovel:
                 Level.RemoveAllEffects<ArmoredFalconEffect>();
-                Level.AddExclusiveEffect(new UnprotectedFalconEffect(Level));
+                Level.LeaveFalconsUnprotected();
                 break;
 
             case BonusType.Clock:
-                Level.PlayerTanks.ForEach(playerTank => playerTank.AddTimedImmobility());
+                Level.GetAllPlayerTanks().ForEach(playerTank => playerTank.AddTimedImmobility());
                 break;
 
             default:
