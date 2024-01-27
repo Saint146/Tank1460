@@ -16,4 +16,9 @@ public static class IntExtensions
     {
         return (int)Math.Floor((double)coordY / Tile.DefaultHeight);
     }
+
+    public static int CeilingByBase(this int number, int baseNumber)
+    {
+        return (int)Math.Ceiling(number / (double)baseNumber) * baseNumber;
+    }
 }

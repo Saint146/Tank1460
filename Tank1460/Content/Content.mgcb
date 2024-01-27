@@ -82,6 +82,12 @@
 /processorParam:Quality=Best
 /build:Sounds/8bit/ExplosionSmall/4.ogg
 
+#begin Sounds/8bit/Fail/1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/8bit/Fail/1.ogg
+
 #begin Sounds/8bit/GameOver/1.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor

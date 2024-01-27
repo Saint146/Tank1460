@@ -13,6 +13,7 @@ using Tank1460.LevelObjects.Bonuses;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
+using static Tank1460.Level;
 
 namespace Tank1460;
 
@@ -217,7 +218,7 @@ public class Level : IDisposable
     public void HandleFalconDestroyed(Falcon falcon)
     {
         if (!Falcons.Any(f => f.IsAlive))
-            GameOver();
+            GameOver?.Invoke(this);
     }
 
     public void Dispose()
@@ -294,13 +295,17 @@ public class Level : IDisposable
         if (DetectOutOfBoundsCollisionSimple(levelObject.TileRectangle))
             return new LevelObject[] { null };
 
+        // Ограничиваем список всех объектов на уровне теми, что находятся в тех же тайлах.
         var closeObjects = new HashSet<LevelObject>();
         levelObject.TileRectangle.EnumerateArray(_tileObjectMap, closeObjects.UnionWith);
 
+        // Выкидываем из него лишнее - сам объект и то, что было указано как лишнее.
         closeObjects.Remove(levelObject);
         if (excludedObjects is not null)
             closeObjects.RemoveWhere(excludedObjects.Contains);
 
+        // Вот здесь уже настоящая проверка коллизий.
+        // TODO: Использовать более простой метод, ведь нам тут не надо считать глубину.
         closeObjects.RemoveWhere(closeObject =>
             levelObject.BoundingRectangle.GetIntersectionDepth(closeObject.BoundingRectangle) == Vector2.Zero);
 
@@ -334,6 +339,11 @@ public class Level : IDisposable
     internal void RemoveAllEffects<T>() where T : LevelEffect
     {
         _levelEffects.RemoveAll(e => e is T);
+    }
+
+    internal void RewardPlayerWithPoints(PlayerIndex playerIndex, int points)
+    {
+        PlayerRewarded?.Invoke(this, (playerIndex, points));
     }
     
     private void LoadTiles(TileType[,] tileTypes)
@@ -458,8 +468,9 @@ public class Level : IDisposable
         return false;
     }
 
-    private void GameOver()
-    {
+    public delegate void LevelEvent(Level level);
+    public delegate void LevelEvent<T>(Level level, T args);
 
-    }
+    public event LevelEvent GameOver;
+    public event LevelEvent<(PlayerIndex PlayerIndex, int PointsReward)> PlayerRewarded;
 }

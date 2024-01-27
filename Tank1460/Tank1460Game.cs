@@ -91,6 +91,8 @@ public class Tank1460Game : Game
     private KeyboardState _keyboardState;
     private Dictionary<int, GamePadState> _gamePadStates;
 
+    private Dictionary<PlayerIndex, int> _playersPoints;
+
     private readonly PlayerIndex[] _allPlayers = { PlayerIndex.One, PlayerIndex.Two };
 
     public Tank1460Game()
@@ -104,6 +106,8 @@ public class Tank1460Game : Game
         _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
 
         _playerInputHandler = new PlayerInputHandler(_allPlayers);
+
+        ResetPlayersPoints();
 
 #pragma warning disable CS0162
         if (Fps != 60)
@@ -199,7 +203,7 @@ public class Tank1460Game : Game
 
     protected override void UnloadContent()
     {
-        _level?.Dispose();
+        UnloadLevel();
         base.UnloadContent();
     }
 
@@ -245,6 +249,11 @@ public class Tank1460Game : Game
             GameState.CurtainOpening => _curtainPosition - 1,
             _ => throw new ArgumentOutOfRangeException()
         };
+    }
+
+    private void ResetPlayersPoints()
+    {
+        _playersPoints = _allPlayers.ToDictionary(playerIndex => playerIndex, _ => 0);
     }
 
     private PlayerInputCollection HandleInput()
@@ -316,12 +325,26 @@ public class Tank1460Game : Game
         return inputs;
     }
 
+    private void UnloadLevel()
+    {
+        if (_level is null)
+            return;
+
+        _level.PlayerRewarded -= Level_PlayerRewarded;
+        _level.GameOver -= Level_GameOver;
+
+        _level.Dispose();
+    }
+
     private void LoadLevel(int levelNumber)
     {
-        _level?.Dispose();
+        UnloadLevel();
 
         var levelStructure = new LevelStructure($"Content/Levels/{levelNumber}.lvl");
         _level = new Level(Services, levelStructure, levelNumber, _allPlayers);
+
+        _level.PlayerRewarded += Level_PlayerRewarded;
+        _level.GameOver += Level_GameOver;
 
         // TODO: Вынести в сеттер State
         State = GameState.CurtainOpening;
@@ -330,6 +353,26 @@ public class Tank1460Game : Game
         _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
         _graphics.ApplyChanges();
         ScalePresentationArea();
+    }
+
+    private void Level_GameOver(Level level)
+    {
+        ResetPlayersPoints();
+    }
+
+    private void Level_PlayerRewarded(Level level, (PlayerIndex PlayerIndex, int PointsReward) args)
+    {
+        // TODO: Проверить логику оригинала.
+        const int pointsForOneUp = 20000;
+
+        var nearestOneUpPoints = (_playersPoints[args.PlayerIndex] + 1).CeilingByBase(pointsForOneUp);
+        var newPoints = _playersPoints[args.PlayerIndex] += args.PointsReward;
+
+        while (nearestOneUpPoints <= newPoints)
+        {
+            level.GetPlayerSpawner(args.PlayerIndex).AddOneUp();
+            nearestOneUpPoints = (nearestOneUpPoints + 1).CeilingByBase(pointsForOneUp);
+        }
     }
 
     private void DrawCurtain(SpriteBatch spriteBatch)

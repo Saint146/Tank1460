@@ -63,6 +63,7 @@ public class Falcon : LevelObject
         _explosion.SpawnViaCenterPosition(BoundingRectangle.Center);
 
         Level.SoundPlayer.Play(Sound.ExplosionBig);
+        Level.SoundPlayer.Play(Sound.Fail);
     }
 
     public void HandleShot(Shell shell)

@@ -50,12 +50,24 @@ public abstract class Tank : MoveableLevelObject
     private IReadOnlyDictionary<ObjectDirection, IAnimation> _animations;
     private IAnimation _spawnAnimation;
     private Explosion _explosion;
-    private double _lastFireTime;
+    private double _timeTillReload;
     private readonly List<Shell> _shells = new();
     private readonly TankEffects _activeEffects = new();
     private int _maxShells;
     private ShellProperties _shellProperties;
     private ShellSpeed _shellSpeed;
+
+    private readonly Dictionary<TankType, int> _pointsRewardsByType = new()
+    {
+        { TankType.Type0, 500 },
+        { TankType.Type1, 500 },
+        { TankType.Type2, 500 },
+        { TankType.Type3, 500 },
+        { TankType.Type4, 100 },
+        { TankType.Type5, 200 },
+        { TankType.Type6, 300 },
+        { TankType.Type7, 400 }
+    };
 
     protected Tank(Level level, TankType type, TankColor color, int bonusCount) : base(level, 0.75f)
     {
@@ -90,6 +102,10 @@ public abstract class Tank : MoveableLevelObject
             case TankState.Exploding when _explosion.ToRemove:
                 _explosion = null;
                 State = TankState.Destroyed;
+
+                _activeEffects.EffectAdded -= ActiveEffects_EffectAdded;
+                _activeEffects.EffectRemoved -= ActiveEffects_EffectRemoved; 
+
                 Remove();
                 break;
 
@@ -266,11 +282,16 @@ public abstract class Tank : MoveableLevelObject
         if (State != TankState.Normal)
             return;
 
+        var isBotTank = this is BotTank;
+
+        if (isBotTank && destroyedBy is PlayerTank playerTank)
+            Level.RewardPlayerWithPoints(playerTank.PlayerIndex, GetPointsReward());
+
         State = TankState.Exploding;
         _explosion = new BigExplosion(Level);
         _explosion.SpawnViaCenterPosition(BoundingRectangle.Center);
 
-        Level.SoundPlayer.Play(this is PlayerTank ? Sound.ExplosionBig : Sound.ExplosionSmall);
+        Level.SoundPlayer.Play(isBotTank ? Sound.ExplosionSmall : Sound.ExplosionBig);
     }
 
     protected bool IsTankCenteredOnTile() => Position.X % Tile.DefaultWidth == 0 && Position.Y % Tile.DefaultHeight == 0;
@@ -357,7 +378,7 @@ public abstract class Tank : MoveableLevelObject
         if (_shells.Count >= _maxShells)
             return;
 
-        if (gameTime.TotalGameTime.TotalSeconds < _lastFireTime + FireDelay)
+        if (gameTime.TotalGameTime.TotalSeconds < _timeTillReload)
             return;
 
         Shoot(gameTime);
@@ -365,7 +386,7 @@ public abstract class Tank : MoveableLevelObject
 
     private void Shoot(GameTime gameTime)
     {
-        _lastFireTime = gameTime.TotalGameTime.TotalSeconds;
+        _timeTillReload = gameTime.TotalGameTime.TotalSeconds + FireDelay;
         var shell = new Shell(Level, Direction, _shellSpeed, this, _shellProperties);
         shell.SpawnViaCenterPosition(BoundingRectangle.GetEdgeCenter(Direction));
         _shells.Add(shell);
@@ -379,7 +400,9 @@ public abstract class Tank : MoveableLevelObject
         if (!IsTankCenteredOnTile())
             IsFrontTileBlocked = false;
         else
-            IsFrontTileBlocked = TileRectangle.NearestTiles(Direction).GetAllPoints().Any(point => !Level.CanTankPassThroughTile(this, point));
+            IsFrontTileBlocked = TileRectangle.NearestTiles(Direction)
+                                              .GetAllPoints()
+                                              .Any(point => !Level.CanTankPassThroughTile(this, point));
     }
 
     private void MoveTo(ObjectDirection newDirection)
@@ -395,6 +418,7 @@ public abstract class Tank : MoveableLevelObject
             MovingDirection = null;
         }
     }
+    private int GetPointsReward() => _pointsRewardsByType[Type];
 
     private void ActiveEffects_EffectAdded(TankEffect effect)
     {

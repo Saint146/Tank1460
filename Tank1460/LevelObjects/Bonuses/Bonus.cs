@@ -18,6 +18,8 @@ public class Bonus : LevelObject
     private const int ShovelTimeInFrames = 1280;
     private const int ClockOnBotsTimeInFrames = 640;
 
+    private const int PointsRewardForBonus = 500;
+
     public Bonus(Level level, BonusType type) : base(level)
     {
         Type = type;
@@ -35,6 +37,7 @@ public class Bonus : LevelObject
     private void ApplyEffectOnPlayer(PlayerTank playerTank)
     {
         Level.SoundPlayer.Play(Sound.BonusPickup);
+        Level.RewardPlayerWithPoints(playerTank.PlayerIndex, PointsRewardForBonus);
 
         switch (Type)
         {
@@ -104,7 +107,8 @@ public class Bonus : LevelObject
                 }
                 break;
             case BonusType.Grenade:
-                Level.PlayerTanks.ForEach(playerTank => playerTank.Explode(botTank));
+                // Передаём null, чтобы не давать очков игроку за уничтожение (логика оригинала).
+                Level.PlayerTanks.ForEach(playerTank => playerTank.Explode(null));
                 break;
 
             case BonusType.Pistol:

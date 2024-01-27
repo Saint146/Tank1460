@@ -218,6 +218,7 @@ public class BotManager
     {
         _botTanks.Remove(botTank);
         _botsAlive--;
+
         if (_botsAlive <= 0 && SpawnsRemaining <= 0)
             _level.HandleAllBotsDestroyed();
     }

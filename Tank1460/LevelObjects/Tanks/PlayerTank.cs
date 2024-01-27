@@ -74,6 +74,11 @@ public class PlayerTank : Tank
         }
     }
 
+    public void AddPointsReward(int points)
+    {
+
+    }
+
     protected override void OnSpawn()
     {
         base.OnSpawn();

@@ -6,6 +6,7 @@ internal enum Sound
     BonusSpawn,
     ExplosionBig,
     ExplosionSmall,
+    Fail,
     GameOver,
     HitDestroy,
     HitDull,
