@@ -99,6 +99,8 @@ public class Tank1460Game : Game
     private Dictionary<int, GamePadState> _gamePadStates;
 
     private Dictionary<PlayerIndex, int> _playersPoints;
+    private Point _windowPosition;
+    private Point _windowSize;
 
     private PlayerIndex[] AllPlayers { get; } = { PlayerIndex.One, PlayerIndex.Two };
 
@@ -114,7 +116,6 @@ public class Tank1460Game : Game
         IsFixedTimeStep = true;
 
         _graphics = new GraphicsDeviceManager(this);
-        _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
 
         _playerInputHandler = new PlayerInputHandler(AllPlayers);
 
@@ -144,8 +145,6 @@ public class Tank1460Game : Game
 
         _levelHud = new LevelHud(Content);
         _cursor = new Cursor(Content);
-
-        ScalePresentationArea();
 
         State = GameState.Ready;
     }
@@ -291,16 +290,10 @@ public class Tank1460Game : Game
 
         var inputs = _playerInputHandler.HandleInput(_keyboardState, _gamePadStates);
 
-        if (_keyboardState.IsKeyDown(Keys.Escape))
-            Exit();
-
-        if (_keyboardState.IsKeyDown(Keys.LeftAlt) || _keyboardState.IsKeyDown(Keys.RightAlt))
+        if (KeyboardEx.HasBeenPressed(Keys.F11))
         {
-            if (KeyboardEx.HasBeenPressed(Keys.Enter))
-            {
-                _graphics.IsFullScreen = !_graphics.IsFullScreen;
-                _graphics.ApplyChanges();
-            }
+            _graphics.IsFullScreen = !_graphics.IsFullScreen;
+            _graphics.ApplyChanges();
         }
 
 #if DEBUG
@@ -404,8 +397,6 @@ public class Tank1460Game : Game
         _level.LevelComplete += Level_LevelComplete;
         _level.GameOver += Level_GameOver;
 
-        _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale));
-        _graphics.ApplyChanges();
         ScalePresentationArea();
 
         // TODO: Вынести в сеттер State
@@ -470,34 +461,37 @@ public class Tank1460Game : Game
         // Кастомный курсор.
         CustomCursorEnabled = settings?.Controls?.CustomCursor ?? true;
 
+        // Масштабирование.
         _isScalingPixelPerfect = settings?.Graphics?.PixelPerfectScaling ?? true;
 
-        var position = settings?.Screen?.Position;
-        var size = settings?.Screen?.Size;
-        var isMaximized = settings?.Screen?.IsMaximized;
-
         // Позиция окна.
+        var position = settings?.Screen?.Position;
         if (position.HasValue)
             Window.Position = position.Value.ToPoint();
+        _windowPosition = Window.Position;
 
         // Размер окна.
-        if (size.HasValue)
-            _graphics.ChangeSize(BaseScreenSize.Multiply(DefaultScale), size.Value.ToPoint());
-
-        // Развернутое окно.
-        if (isMaximized is true)
-            Window.Maximize();
-
-        _graphics.HardwareModeSwitch = false;
+        var size = settings?.Screen?.Size ?? ScreenPoint.FromPoint(BaseScreenSize.Multiply(DefaultScale));
+        _graphics.PreferredBackBufferWidth = size.X;
+        _graphics.PreferredBackBufferHeight = size.Y;
+        _windowSize = size.ToPoint();
 
         // Режим экрана.
+        _graphics.HardwareModeSwitch = false;
         _graphics.IsFullScreen = settings?.Screen?.Mode switch
         {
+            ScreenMode.Window => false,
             ScreenMode.Borderless => true,
-            _ => false
+            _ => true
         };
 
         _graphics.ApplyChanges();
+
+        // Развернутое окно.
+        var isMaximized = settings?.Screen?.IsMaximized;
+        if (isMaximized is true)
+            Window.Maximize();
+
         ScalePresentationArea();
     }
 
@@ -517,8 +511,8 @@ public class Tank1460Game : Game
             Screen = new ScreenSettings
             {
                 Mode = _graphics.IsFullScreen ? ScreenMode.Borderless : ScreenMode.Window,
-                Position = ScreenPoint.FromPoint(Window.Position),
-                Size = ScreenPoint.FromPoint(Window.ClientBounds.Size),
+                Position = ScreenPoint.FromPoint(_windowPosition),
+                Size = ScreenPoint.FromPoint(_windowSize),
                 IsMaximized = Window.IsMaximized()
             }
         };
@@ -528,11 +522,18 @@ public class Tank1460Game : Game
 
     private void ScalePresentationArea()
     {
+        // Запоминаем положение и размер окна, только если находимся в окне.
+        if (!_graphics.IsFullScreen && !Window.IsMaximized())
+        {
+            _windowPosition = Window.Position;
+            _windowSize = Window.ClientBounds.Size;
+        }
+
         _backbufferWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
         _backbufferHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
 
-        var horScaling = _backbufferWidth / BaseScreenSize.X;
-        var verScaling = _backbufferHeight / BaseScreenSize.Y;
+        var horScaling = (float)_backbufferWidth / BaseScreenSize.X;
+        var verScaling = (float)_backbufferHeight / BaseScreenSize.Y;
         _scale = MathHelper.Min(horScaling, verScaling);
         if (_isScalingPixelPerfect)
             _scale = (int)_scale;
@@ -540,7 +541,12 @@ public class Tank1460Game : Game
         var scaleTransformation = Matrix.CreateScale(screenScalingFactor);
 
         var xShift = (horScaling - _scale) * BaseScreenSize.X / 2;
-        var yShift = (verScaling - _scale) * BaseScreenSize.Y / 2;
+        var yShift =(verScaling - _scale) * BaseScreenSize.Y / 2;
+        if (_isScalingPixelPerfect)
+        {
+            xShift = MathF.Round(xShift);
+            yShift = MathF.Round(yShift);
+        }
         var shiftTransformation = Matrix.CreateTranslation(xShift, yShift, 0);
 
         _globalTransformation = _levelTransformation * scaleTransformation * shiftTransformation;
