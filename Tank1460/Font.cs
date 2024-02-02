@@ -27,15 +27,18 @@ public class Font
         InitTexturePositions();
     }
 
-    public void Draw(string text, SpriteBatch spriteBatch, Vector2 startingPosition)
+    public void Draw(string text, SpriteBatch spriteBatch, Point startingPosition)
     {
-        var position = startingPosition;
+        var position = startingPosition.ToVector2();
         foreach(var c in text)
         {
             spriteBatch.Draw(_texture, position, _charTexturePositions[c], Color.White);
             position.X += CharWidth;
         }
     }
+
+    public Rectangle GetTextRectangle(string text, Point startingPosition) =>
+        new(startingPosition.X, startingPosition.Y, CharWidth * text.Length, CharHeight);
 
     private void InitTexturePositions()
     {

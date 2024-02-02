@@ -159,11 +159,11 @@ public class Tank1460Game : Game
         var inputs = HandleInput();
 
         if (_isCustomCursorVisible)
-            _cursor.Update(gameTime, _mouseState, _scale);
+            _cursor.Update(gameTime, _mouseState);
 
         ProcessStatus(gameTime);
 
-        _menu?.HandleInput(inputs);
+        _menu?.HandleInput(inputs, _mouseState);
         _menu?.Update(gameTime);
 
         _level?.HandleInput(inputs);
@@ -182,7 +182,8 @@ public class Tank1460Game : Game
         {
             _level.Draw(gameTime, _spriteBatch);
 
-            var hudPosition = /*PreLevelIndent +*/new Point(GetLevelBounds().Width + PostLevelIndent.X - 1, 0); // ну вот так в оригинале, на один пиксель сдвинуто левее сетки
+            var hudPosition = /*PreLevelIndent +*/
+                new Point(GetLevelBounds().Width + PostLevelIndent.X - 1, 0); // ну вот так в оригинале, на один пиксель сдвинуто левее сетки
             _levelHud.Draw(_level, _spriteBatch, hudPosition);
         }
 
@@ -190,14 +191,11 @@ public class Tank1460Game : Game
 
         DrawCurtain(_spriteBatch);
 
+        if (_isCustomCursorVisible)
+            _cursor.Draw(gameTime, _spriteBatch);
+
         _spriteBatch.End();
 
-        if (_isCustomCursorVisible)
-        {
-            _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp);
-            _cursor.Draw(gameTime, _spriteBatch);
-            _spriteBatch.End();
-        }
 
         base.Draw(gameTime);
     }
@@ -286,11 +284,21 @@ public class Tank1460Game : Game
     {
         _keyboardState = KeyboardEx.GetState();
         _mouseState = Mouse.GetState();
+
+        // Курсор не обновляет свое состояние, если он отключен или вне экрана.
+        if (_customCursorEnabled) 
+            _isCustomCursorVisible = _mouseState.X >= 0 && _mouseState.Y >= 0 && _mouseState.X < _backbufferWidth && _mouseState.Y < _backbufferHeight;
+        else
+            _isCustomCursorVisible = false;
+
+        // Сразу после этого пересчитываем координаты мыши в игровые.
+        _mouseState = _mouseState.CopyWithPosition(_mouseState.Position.ApplyReversedTransformation(_globalTransformation));
+
         _gamePadStates = _playerInputHandler.GetActiveGamePadIndices().ToDictionary(index => index, GamePad.GetState);
 
         var inputs = _playerInputHandler.HandleInput(_keyboardState, _gamePadStates);
 
-        if (KeyboardEx.HasBeenPressed(Keys.F11))
+        if (KeyboardEx.HasBeenPressed(Keys.F11) || (KeyboardEx.IsPressed(Keys.LeftAlt) || KeyboardEx.IsPressed(Keys.RightAlt)) && KeyboardEx.HasBeenPressed(Keys.Enter))
         {
             _graphics.IsFullScreen = !_graphics.IsFullScreen;
             _graphics.ApplyChanges();
@@ -335,12 +343,6 @@ public class Tank1460Game : Game
             explosion.Spawn(Level.GetTileBounds(x, y).Location);
         }
 #endif
-
-        if (_customCursorEnabled)
-            // Курсор не обновляет свое состояние, если он отключен или вне экрана.
-            _isCustomCursorVisible = _mouseState.X >= 0 && _mouseState.Y >= 0 && _mouseState.X < _backbufferWidth && _mouseState.Y < _backbufferHeight;
-        else
-            _isCustomCursorVisible = false;
 
         return inputs;
     }

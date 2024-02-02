@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Tank1460.Extensions;
 using Tank1460.LevelObjects.Tiles;
 
 namespace Tank1460;
@@ -42,7 +43,7 @@ public class LevelHud
 
     public void Draw(Level level, SpriteBatch spriteBatch, Point location)
     {
-        var currentLocation = location.ToVector2();
+        var currentLocation = location;
 
         DrawBotSpawnsRemaining(spriteBatch, currentLocation, Math.Min(level.BotSpawnsRemaining, 20));
 
@@ -56,7 +57,7 @@ public class LevelHud
         DrawLevelIndex(spriteBatch, currentLocation, level.LevelNumber);
     }
 
-    private void DrawBotSpawnsRemaining(SpriteBatch spriteBatch, Vector2 location, int count)
+    private void DrawBotSpawnsRemaining(SpriteBatch spriteBatch, Point location, int count)
     {
         if (count > 20)
             count = 20;
@@ -74,7 +75,7 @@ public class LevelHud
             spriteBatch.Draw(_bot, currentLocation, Color.White);
     }
 
-    private void DrawPlayerLives(SpriteBatch spriteBatch, Vector2 location, char playerName, int lives)
+    private void DrawPlayerLives(SpriteBatch spriteBatch, Point location, char playerName, int lives)
     {
         if (--lives < 0)
             lives = 0;
@@ -85,7 +86,7 @@ public class LevelHud
         _font.Draw($"{lives}", spriteBatch, location with { X = location.X + Tile.DefaultWidth, Y = location.Y + Tile.DefaultHeight });
     }
 
-    private void DrawLevelIndex(SpriteBatch spriteBatch, Vector2 location, int levelIndex)
+    private void DrawLevelIndex(SpriteBatch spriteBatch, Point location, int levelIndex)
     {
         spriteBatch.Draw(_levelFlag, location with { X = location.X - 1 }, Color.White);
         _font.Draw($"{levelIndex,2}", spriteBatch, location with { Y = location.Y + 2 * Tile.DefaultWidth });

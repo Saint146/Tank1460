@@ -196,8 +196,16 @@ public class BotManager
         }
         else
         {
-            hp = Rng.Next(1, 5);
-            bonusCount = Rng.OneIn(3) ? Rng.Next(1, hp + 1) : 0;
+            hp = Rng.Next(1, 4);
+            if (Rng.OneIn(3))
+            {
+                bonusCount = Rng.Next(1, 4);
+                hp += bonusCount - 1;
+            }
+            else
+            {
+                bonusCount = 0;
+            }
         }
 
         var bot = new BotTank(_level, type, hp, bonusCount, SpawnsRemaining, _periodIndex);

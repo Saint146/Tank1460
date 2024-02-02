@@ -7,6 +7,9 @@ namespace Tank1460.Extensions;
 
 public static class SpriteBatchExtensions
 {
+    public static void Draw(this SpriteBatch spriteBatch, Texture2D texture, Point position, Color color) =>
+        spriteBatch.Draw(texture, position.ToVector2(), color);
+
     /// <summary>
     /// Нарисовать столько меток, сколько передано.
     /// </summary>

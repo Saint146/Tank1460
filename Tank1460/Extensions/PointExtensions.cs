@@ -37,4 +37,16 @@ public static class PointExtensions
     }
 
     public static Point Multiply(this Point point, int multiplier) => new(point.X * multiplier, point.Y * multiplier);
+
+    /// <summary>
+    /// Применить обратную трансформацию к точке.
+    /// </summary>
+    /// <remarks>
+    /// Вероятно, отвалится, если в матрице будет поворот, например. Но для текущих задач работает.
+    /// </remarks>
+    public static Point ApplyReversedTransformation(this Point point, Matrix transformation) =>
+        new(
+            x: (int)((point.X - transformation.Translation.X) * 2 / (transformation.Right.X - transformation.Left.X)),
+            y: (int)((point.Y - transformation.Translation.Y) * 2 / (transformation.Up.Y - transformation.Down.Y))
+        );
 }
