@@ -16,7 +16,7 @@ internal class PlayerInputHandler
     private PlayerInputCollection _oldPlayerInputs;
 
     // Мапы, использующиеся в процессе игры.
-    private readonly Dictionary<int, PlayerIndex> _gamePadIndexesAssignedToPlayers = new();
+    private readonly Dictionary<int, PlayerIndex> _gamePadIndicesAssignedToPlayers = new();
     private Dictionary<PlayerIndex, Dictionary<Buttons, PlayerInputCommands>> _gamePadBindings = new();
     private Dictionary<Keys, (PlayerIndex PlayerIndex, PlayerInputCommands Inputs)> _keyboardBindings = new();
 
@@ -30,7 +30,7 @@ internal class PlayerInputHandler
         _oldPlayerInputs = new PlayerInputCollection(_allPlayers);
     }
 
-    internal ICollection<int> GetActiveGamePadIndexes() => _gamePadIndexesAssignedToPlayers.Keys;
+    internal ICollection<int> GetActiveGamePadIndices() => _gamePadIndicesAssignedToPlayers.Keys;
 
     public PlayerInputCollection HandleInput(KeyboardState keyboardState, Dictionary<int, GamePadState> gamePadStates)
     {
@@ -48,7 +48,7 @@ internal class PlayerInputHandler
         // С геймпадами придется наоборот - перебирать все забинженные клавиши.
         foreach (var (gamePadIndex, gamePadState) in gamePadStates)
         {
-            var playerIndex = _gamePadIndexesAssignedToPlayers[gamePadIndex];
+            var playerIndex = _gamePadIndicesAssignedToPlayers[gamePadIndex];
             var bindings = _gamePadBindings[playerIndex];
             foreach (var (button, input) in bindings)
             {
@@ -110,7 +110,7 @@ internal class PlayerInputHandler
         _keyboardBindings = ConvertBindingsToKeysMap(_keyboardControlsByPlayer);
 
         // Теперь к геймпадам.
-        _gamePadIndexesAssignedToPlayers.Clear();
+        _gamePadIndicesAssignedToPlayers.Clear();
         var allConnectedGamepads = GamePadExtensions.GetAllConnectedGamepads()
                                                     .ToDictionary(x => x.Value.Identifier, x => x.Key);
 
@@ -125,25 +125,25 @@ internal class PlayerInputHandler
                 if (!allConnectedGamepads.TryGetValue(gamepadId, out var gamepadIndex)) continue;
 
                 // TODO: Хранить полную инфу по геймпадам в течение всей игры, чтобы записать весь список геймпадов каждого игрока при выходе.
-                _gamePadIndexesAssignedToPlayers[gamepadIndex] = controls.PlayerIndex;
+                _gamePadIndicesAssignedToPlayers[gamepadIndex] = controls.PlayerIndex;
                 Debug.WriteLine($"Assigned gamepad #{gamepadIndex} to player #{controls.PlayerIndex}");
                 break;
             }
         }
 
         // Приписываем игрокам, оставшимся без геймпадов, те, что могли остаться.
-        foreach (var playerIndex in _allPlayers.Where(player => !_gamePadIndexesAssignedToPlayers.ContainsValue(player)))
+        foreach (var playerIndex in _allPlayers.Where(player => !_gamePadIndicesAssignedToPlayers.ContainsValue(player)))
         {
             if (!allConnectedGamepads.Values
-                                     .TryGetFirst(out var firstFreeGamepadIndex, gamePadIndex => !_gamePadIndexesAssignedToPlayers.ContainsKey(gamePadIndex)))
+                                     .TryGetFirst(out var firstFreeGamepadIndex, gamePadIndex => !_gamePadIndicesAssignedToPlayers.ContainsKey(gamePadIndex)))
                 continue;
 
-            _gamePadIndexesAssignedToPlayers[firstFreeGamepadIndex] = playerIndex;
+            _gamePadIndicesAssignedToPlayers[firstFreeGamepadIndex] = playerIndex;
             Debug.WriteLine($"Auto-assigned gamepad #{firstFreeGamepadIndex} to player #{playerIndex}");
         }
 
         // TODO: Бинды геймпадов пока всегда дефолтные и не хранятся в настройках.
-        _gamePadBindings = _gamePadIndexesAssignedToPlayers.ToDictionary(x => x.Value, _ => InputDefaults.GetDefaultGamepadBindings());
+        _gamePadBindings = _gamePadIndicesAssignedToPlayers.ToDictionary(x => x.Value, _ => InputDefaults.GetDefaultGamepadBindings());
     }
 
     private static Dictionary<Keys, (PlayerIndex PlayerIndex, PlayerInputCommands Inputs)> ConvertBindingsToKeysMap(

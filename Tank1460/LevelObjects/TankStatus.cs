@@ -1,6 +1,6 @@
 ﻿namespace Tank1460.LevelObjects;
 
-public enum TankState
+public enum TankStatus
 {
     Unknown,
     Normal,

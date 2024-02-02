@@ -13,7 +13,7 @@ namespace Tank1460.LevelObjects.Tanks;
 
 public abstract class Tank : MoveableLevelObject
 {
-    public TankState State { get; private set; }
+    public TankStatus Status { get; private set; }
 
     /// <summary>
     /// Запрет на движение.
@@ -26,13 +26,13 @@ public abstract class Tank : MoveableLevelObject
     public bool IsPacifist { get; set; }
 
     public override CollisionType CollisionType =>
-        State == TankState.Normal ? CollisionType.ShootableAndImpassable : CollisionType.None;
+        Status == TankStatus.Normal ? CollisionType.ShootableAndImpassable : CollisionType.None;
 
     public bool HasShip { get; private set; }
 
     public int BonusCount { get; private set; }
 
-    protected TankType Type { get; private set; }
+    public TankType Type { get; private set; }
 
     protected TankColor Color { get; private set; }
 
@@ -71,7 +71,7 @@ public abstract class Tank : MoveableLevelObject
 
     protected Tank(Level level, TankType type, TankColor color, int bonusCount) : base(level, 0.75f)
     {
-        State = TankState.Spawning;
+        Status = TankStatus.Spawning;
         BonusCount = bonusCount;
         SetTypeAndColor(type, color);
         _activeEffects.EffectAdded += ActiveEffects_EffectAdded;
@@ -84,13 +84,13 @@ public abstract class Tank : MoveableLevelObject
 
     public sealed override void Update(GameTime gameTime)
     {
-        Debug.Assert(State != TankState.Unknown);
-        switch (State)
+        Debug.Assert(Status != TankStatus.Unknown);
+        switch (Status)
         {
-            case TankState.Spawning:
+            case TankStatus.Spawning:
                 if (Sprite.HasAnimationEnded)
                 {
-                    State = TankState.Normal;
+                    Status = TankStatus.Normal;
                     TurnTo(Direction);
                     OnSpawn();
                 }
@@ -99,9 +99,9 @@ public abstract class Tank : MoveableLevelObject
 
                 break;
 
-            case TankState.Exploding when _explosion.ToRemove:
+            case TankStatus.Exploding when _explosion.ToRemove:
                 _explosion = null;
-                State = TankState.Destroyed;
+                Status = TankStatus.Destroyed;
 
                 _activeEffects.EffectAdded -= ActiveEffects_EffectAdded;
                 _activeEffects.EffectRemoved -= ActiveEffects_EffectRemoved; 
@@ -109,7 +109,7 @@ public abstract class Tank : MoveableLevelObject
                 Remove();
                 break;
 
-            case TankState.Normal:
+            case TankStatus.Normal:
                 Sprite.ProcessAnimation(gameTime);
 
                 CalcIsFrontTileBlocked();
@@ -163,7 +163,7 @@ public abstract class Tank : MoveableLevelObject
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        if (State != TankState.Normal && State != TankState.Spawning)
+        if (Status != TankStatus.Normal && Status != TankStatus.Spawning)
             return;
 
         base.Draw(gameTime, spriteBatch);
@@ -175,7 +175,7 @@ public abstract class Tank : MoveableLevelObject
         if (IsInvulnerable())
             return;
 
-        if (State != TankState.Normal)
+        if (Status != TankStatus.Normal)
             return;
 
         if (BonusCount > 0)
@@ -279,7 +279,7 @@ public abstract class Tank : MoveableLevelObject
 
     public void Explode(Tank destroyedBy)
     {
-        if (State != TankState.Normal)
+        if (Status != TankStatus.Normal)
             return;
 
         var isBotTank = this is BotTank;
@@ -287,7 +287,7 @@ public abstract class Tank : MoveableLevelObject
         if (isBotTank && destroyedBy is PlayerTank playerTank)
             Level.RewardPlayerWithPoints(playerTank.PlayerIndex, GetPointsReward());
 
-        State = TankState.Exploding;
+        Status = TankStatus.Exploding;
         _explosion = new BigExplosion(Level);
         _explosion.SpawnViaCenterPosition(BoundingRectangle.Center);
 
@@ -407,7 +407,7 @@ public abstract class Tank : MoveableLevelObject
 
     private void MoveTo(ObjectDirection newDirection)
     {
-        Debug.Assert(State == TankState.Normal);
+        Debug.Assert(Status == TankStatus.Normal);
 
         // Сразу после поворота танк ещё не движется.
         if (newDirection == Direction)

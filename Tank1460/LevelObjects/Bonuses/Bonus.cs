@@ -149,7 +149,7 @@ public class Bonus : LevelObject
     {
         // TODO: Тут надо всё оптимизировать, хотя бы сделать отдельный метод, учитывающий только танки.
         var allTankCollisions = Level.GetAllCollisionsSimple(this)
-            .Where(levelObject => levelObject is Tank { State: TankState.Normal })
+            .Where(levelObject => levelObject is Tank { Status: TankStatus.Normal })
             .ToArray();
 
         if (allTankCollisions.Length == 0)

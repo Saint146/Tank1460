@@ -10,7 +10,7 @@ namespace Tank1460.LevelObjects;
 
 public class Shell : MoveableLevelObject
 {
-    public ShellState State = ShellState.Normal;
+    public ShellStatus Status = ShellStatus.Normal;
 
     private IAnimation _animation;
     public readonly Tank ShotBy;
@@ -28,7 +28,7 @@ public class Shell : MoveableLevelObject
         Properties = properties;
     }
 
-    public override CollisionType CollisionType => State == ShellState.Normal ? CollisionType.Shootable : CollisionType.None;
+    public override CollisionType CollisionType => Status == ShellStatus.Normal ? CollisionType.Shootable : CollisionType.None;
 
     protected override IAnimation GetDefaultAnimation() => _animation;
 
@@ -42,7 +42,7 @@ public class Shell : MoveableLevelObject
         if (ToRemove)
             return;
 
-        if (State != ShellState.Normal)
+        if (Status != ShellStatus.Normal)
             return;
 
         base.Draw(gameTime, spriteBatch);
@@ -53,16 +53,16 @@ public class Shell : MoveableLevelObject
         if (ToRemove)
             return;
 
-        switch (State)
+        switch (Status)
         {
-            case ShellState.Normal:
+            case ShellStatus.Normal:
                 // Пуля всегда летит вперёд.
                 MovingDirection = Direction;
                 break;
 
-            case ShellState.Exploding when _explosion.ToRemove:
+            case ShellStatus.Exploding when _explosion.ToRemove:
                 _explosion = null;
-                State = ShellState.Destroyed;
+                Status = ShellStatus.Destroyed;
                 Remove();
                 break;
         }
@@ -70,7 +70,7 @@ public class Shell : MoveableLevelObject
         base.Update(gameTime);
     }
 
-    protected override bool CanMove() => State == ShellState.Normal && !ToRemove;
+    protected override bool CanMove() => Status == ShellStatus.Normal && !ToRemove;
 
     protected override void HandleMove()
     {
@@ -80,7 +80,7 @@ public class Shell : MoveableLevelObject
 
     private void HandleCollisions()
     {
-        if (State != ShellState.Normal)
+        if (Status != ShellStatus.Normal)
             return;
 
         // Имитация оригинала: пропускаем каждый второй кадр
@@ -165,10 +165,10 @@ public class Shell : MoveableLevelObject
 
     private void Explode()
     {
-        if (State != ShellState.Normal)
+        if (Status != ShellStatus.Normal)
             return;
 
-        State = ShellState.Exploding;
+        Status = ShellStatus.Exploding;
         _explosion = new CommonExplosion(Level);
         _explosion.SpawnViaCenterPosition(BoundingRectangle.Center);
     }

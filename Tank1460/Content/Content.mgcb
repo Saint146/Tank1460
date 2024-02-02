@@ -28,6 +28,114 @@
 #begin Levels/9.lvl
 /copy:Levels/9.lvl
 
+#begin Levels/Hack/1.lvl
+/copy:Levels/Hack/1.lvl
+
+#begin Levels/Hack/10.lvl
+/copy:Levels/Hack/10.lvl
+
+#begin Levels/Hack/11.lvl
+/copy:Levels/Hack/11.lvl
+
+#begin Levels/Hack/12.lvl
+/copy:Levels/Hack/12.lvl
+
+#begin Levels/Hack/13.lvl
+/copy:Levels/Hack/13.lvl
+
+#begin Levels/Hack/14.lvl
+/copy:Levels/Hack/14.lvl
+
+#begin Levels/Hack/15.lvl
+/copy:Levels/Hack/15.lvl
+
+#begin Levels/Hack/16.lvl
+/copy:Levels/Hack/16.lvl
+
+#begin Levels/Hack/17.lvl
+/copy:Levels/Hack/17.lvl
+
+#begin Levels/Hack/18.lvl
+/copy:Levels/Hack/18.lvl
+
+#begin Levels/Hack/19.lvl
+/copy:Levels/Hack/19.lvl
+
+#begin Levels/Hack/2.lvl
+/copy:Levels/Hack/2.lvl
+
+#begin Levels/Hack/20.lvl
+/copy:Levels/Hack/20.lvl
+
+#begin Levels/Hack/21.lvl
+/copy:Levels/Hack/21.lvl
+
+#begin Levels/Hack/22.lvl
+/copy:Levels/Hack/22.lvl
+
+#begin Levels/Hack/23.lvl
+/copy:Levels/Hack/23.lvl
+
+#begin Levels/Hack/24.lvl
+/copy:Levels/Hack/24.lvl
+
+#begin Levels/Hack/25.lvl
+/copy:Levels/Hack/25.lvl
+
+#begin Levels/Hack/26.lvl
+/copy:Levels/Hack/26.lvl
+
+#begin Levels/Hack/27.lvl
+/copy:Levels/Hack/27.lvl
+
+#begin Levels/Hack/28.lvl
+/copy:Levels/Hack/28.lvl
+
+#begin Levels/Hack/29.lvl
+/copy:Levels/Hack/29.lvl
+
+#begin Levels/Hack/3.lvl
+/copy:Levels/Hack/3.lvl
+
+#begin Levels/Hack/30.lvl
+/copy:Levels/Hack/30.lvl
+
+#begin Levels/Hack/31.lvl
+/copy:Levels/Hack/31.lvl
+
+#begin Levels/Hack/32.lvl
+/copy:Levels/Hack/32.lvl
+
+#begin Levels/Hack/33.lvl
+/copy:Levels/Hack/33.lvl
+
+#begin Levels/Hack/34.lvl
+/copy:Levels/Hack/34.lvl
+
+#begin Levels/Hack/35.lvl
+/copy:Levels/Hack/35.lvl
+
+#begin Levels/Hack/36.lvl
+/copy:Levels/Hack/36.lvl
+
+#begin Levels/Hack/4.lvl
+/copy:Levels/Hack/4.lvl
+
+#begin Levels/Hack/5.lvl
+/copy:Levels/Hack/5.lvl
+
+#begin Levels/Hack/6.lvl
+/copy:Levels/Hack/6.lvl
+
+#begin Levels/Hack/7.lvl
+/copy:Levels/Hack/7.lvl
+
+#begin Levels/Hack/8.lvl
+/copy:Levels/Hack/8.lvl
+
+#begin Levels/Hack/9.lvl
+/copy:Levels/Hack/9.lvl
+
 #begin Sounds/8bit/BonusPickup/1.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor

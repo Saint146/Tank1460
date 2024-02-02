@@ -10,6 +10,8 @@ namespace Tank1460.Audio;
 
 internal class SoundPlayer : ISoundPlayer
 {
+    public bool IsMuted { get; private set; } = false;
+
     private readonly Dictionary<Sound, SoundGroup> _sounds = new();
     private readonly Dictionary<SoundChannels, SoundGroup> _toPlay = new();
     private Dictionary<SoundChannels, SoundGroup> _wasPlaying = new();
@@ -24,6 +26,9 @@ internal class SoundPlayer : ISoundPlayer
 
     public void Play(Sound sound)
     {
+        if (IsMuted)
+            return;
+
         var targetSound = _sounds[sound];
         Debug.Assert(!targetSound.IsLooped);
 
@@ -38,6 +43,9 @@ internal class SoundPlayer : ISoundPlayer
 
     public void Loop(Sound sound)
     {
+        if (IsMuted)
+            return;
+
         var targetSound = _sounds[sound];
         Debug.Assert(targetSound.IsLooped);
 
@@ -135,6 +143,16 @@ internal class SoundPlayer : ISoundPlayer
         // TODO: Если один из звуков использовался между Push и Pop, будет косяк.
          foreach (var sound in _wasPlaying.Values.ToHashSet())
             sound.Resume();
+    }
+
+    public void Mute()
+    {
+        IsMuted = true;
+    }
+
+    public void Unmute()
+    {
+        IsMuted = false;
     }
 
     private void LoadContent(ContentManagerEx content)

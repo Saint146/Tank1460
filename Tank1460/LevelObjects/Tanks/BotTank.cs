@@ -27,7 +27,11 @@ public class BotTank : Tank
         { 1, TankColor.Gray },
         { 2, TankColor.Yellow | TankColor.Green },
         { 3, TankColor.Gray | TankColor.Yellow },
-        { 4, TankColor.Gray | TankColor.Green }
+        { 4, TankColor.Gray | TankColor.Green },
+        { 5, TankColor.Gray | TankColor.Green },
+        { 6, TankColor.Gray | TankColor.Green },
+        { 7, TankColor.Gray | TankColor.Green },
+        { 8, TankColor.Gray | TankColor.Green }
     };
 
     public BotTank(Level level, TankType type, int hp, int bonusCount, int index, int periodIndex) : base(level, type, HpToTankColor(hp), bonusCount)
@@ -58,7 +62,7 @@ public class BotTank : Tank
     {
         base.Draw(gameTime, spriteBatch);
 #if DEBUG
-        if (!Tank1460Game.ShowBotsPeriods || State is not TankState.Normal)
+        if (!Tank1460Game.ShowBotsPeriods || Status is not TankStatus.Normal)
             return;
 
         switch (PeriodIndex)
@@ -93,7 +97,7 @@ public class BotTank : Tank
             newOrder = newThoughtDirection.Value.ToTankOrder();
 
         // Стреляй, Глеб Егорыч!
-        if (Rng.Next(32) == 0)
+        if (Rng.Next(16) == 0)
             newOrder |= TankOrder.Shoot;
 
         _botOrder = newOrder;
@@ -116,13 +120,13 @@ public class BotTank : Tank
 
     private static TankColor HpToTankColor(int hp)
     {
-        Debug.Assert(hp is > 0 and <= 4);
+        Debug.Assert(hp is > 0 and <= 8);
         return HpToColorMap[hp];
     }
 
     public void SetHp(int newHp)
     {
-        Debug.Assert(newHp is > 0 and <= 4);
+        Debug.Assert(newHp is > 0 and <= 8);
         Hp = newHp;
 
         SetColor(HpToTankColor(newHp));

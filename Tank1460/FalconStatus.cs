@@ -1,6 +1,6 @@
 ﻿namespace Tank1460;
 
-public enum ShellState
+public enum FalconStatus
 {
     Normal,
     Exploding,

@@ -28,7 +28,7 @@ public class PlayerTank : Tank
 
     protected override int[] SpawnAnimationTimesInFrames() => new[] { 2, 3, 3, 4, 2, 3, 4, 3, 2, 4, 3, 3, 1 };
 
-    public PlayerTank(Level level, PlayerIndex playerIndex) : base(level, TankType.Type0, PlayerNumberToColorMap[playerIndex])
+    public PlayerTank(Level level, PlayerIndex playerIndex, TankType type) : base(level, type, PlayerNumberToColorMap[playerIndex])
     {
         PlayerIndex = playerIndex;
     }

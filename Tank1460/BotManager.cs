@@ -12,6 +12,7 @@ namespace Tank1460;
 public class BotManager
 {
     public int SpawnsRemaining { get; private set; }
+
     public IReadOnlyList<BotTank> BotTanks => _botTanks;
 
     private readonly List<BotTank> _botTanks = new();
@@ -40,6 +41,7 @@ public class BotManager
 #else
     private double _periodLength;
     private double PeriodResetTime = 4320.0 * Tank1460Game.OneFrameSpan;
+    private static readonly int[] ClassicBotBonusNumbers = { 4, 11, 18 };
 
 #endif
 
@@ -52,8 +54,13 @@ public class BotManager
 
         _respawnInterval = (190 - level.LevelNumber * 4 - (level.PlayerCount - 1) * 20) * Tank1460Game.OneFrameSpan;
         _periodLength = _respawnInterval * 8;
+
+        if (!_level.ClassicRules)
+            _respawnInterval = 8 * Tank1460Game.OneFrameSpan;
+
         SpawnIsReady();
     }
+
     public void AddSpawnPoint(int x, int y)
     {
         _points.Add((x, y));
@@ -156,11 +163,11 @@ public class BotManager
 
     private void SetPeriodIndex(int periodIndex)
     {
-        if (_periodIndex != periodIndex)
-        {
-            _periodIndex = periodIndex;
-            _botTanks.ForEach(e => e.PeriodIndex = periodIndex);
-        }
+        if (_periodIndex == periodIndex)
+            return;
+
+        _periodIndex = periodIndex;
+        _botTanks.ForEach(e => e.PeriodIndex = periodIndex);
     }
 
     private void TrySpawnBot()
@@ -174,9 +181,6 @@ public class BotManager
 
         var (x, y) = GetNextSpot();
 
-        //if (_level.CanSpawnEnemyOnTile(x, y))
-        //    return;
-
         var position = Level.GetTileBounds(x, y).Location;
 
         if (_tankTypes?.TryDequeue(out var type) is not true)
@@ -184,13 +188,19 @@ public class BotManager
 
         var botNumber = _totalSpawns - SpawnsRemaining;
 
-        bool hasBonus;
-        if (_level.Structure?.BotBonusNumbers is null)
-            hasBonus = Rng.Next(4) == 0;
+        int hp, bonusCount;
+        if (_level.ClassicRules)
+        {
+            hp = type == TankType.Type7 ? 4 : 1;
+            bonusCount = ClassicBotBonusNumbers.Contains(botNumber) ? 1 : 0;
+        }
         else
-            hasBonus = _level.Structure.BotBonusNumbers.Contains(botNumber);
+        {
+            hp = Rng.Next(1, 5);
+            bonusCount = Rng.OneIn(3) ? Rng.Next(1, hp + 1) : 0;
+        }
 
-        var bot = new BotTank(_level, type, type == TankType.Type7 ? 4 : 1, hasBonus ? 1 : 0, SpawnsRemaining, _periodIndex);
+        var bot = new BotTank(_level, type, hp, bonusCount, SpawnsRemaining, _periodIndex);
         if (_paralyzeIsActive)
             bot.IsImmobile = bot.IsPacifist = true;
 

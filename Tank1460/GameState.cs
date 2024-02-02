@@ -1,11 +1,22 @@
-﻿namespace Tank1460;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Xna.Framework;
 
-internal enum GameState
+namespace Tank1460;
+
+public class GameState
 {
-    Initializing,
-    Ready,
-    InMenu,
-    InLevel,
-    CurtainOpening,
-    CurtainClosing
+    public Dictionary<PlayerIndex, PlayerState> PlayersStates { get; }
+
+    public GameState(IEnumerable<PlayerIndex> playersInGame)
+    {
+        PlayersStates = playersInGame.ToDictionary(playerIndex => playerIndex,
+                                                   _ => new PlayerState
+                                                   {
+                                                       LivesRemaining = 3,
+                                                       TankType = null,
+                                                       Score = 0,
+                                                       TankHasShip = false
+                                                   });
+    }
 }

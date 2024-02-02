@@ -11,6 +11,8 @@ public class PlayerSpawner
 
     public PlayerTank Tank { get; private set; }
 
+    public int LivesRemaining { get; set; } = 3;
+
     private readonly Level _level;
     private readonly int _x;
     private readonly int _y;
@@ -19,9 +21,9 @@ public class PlayerSpawner
     private double _timeToSpawnRemaining;
     private bool _spawnIsDue;
 
-    public int LivesRemaining { get; private set; } = 3;
-
-    private bool _enabled = true;
+    // Задаёт тип для первого респауна на случай перехода между уровнями.
+    private TankType? _nextSpawnType;
+    private bool _nextSpawnHasShip;
 
     public PlayerSpawner(Level level, int x, int y, PlayerIndex playerIndex)
     {
@@ -29,18 +31,8 @@ public class PlayerSpawner
         _level = level;
         _x = x;
         _y = y;
+
         SpawnIsReady();
-    }
-
-    private void StartSpawnTimer()
-    {
-        _timeToSpawnRemaining = RespawnInterval;
-        _spawnIsDue = false;
-    }
-
-    private void SpawnIsReady()
-    {
-        _spawnIsDue = true;
     }
 
     public void HandleTankDestroyed(PlayerTank playerTank)
@@ -60,11 +52,6 @@ public class PlayerSpawner
         StartSpawnTimer();
     }
 
-    public void Disable()
-    {
-        _enabled = false;
-    }
-
     public void AddOneUp()
     {
         _level.SoundPlayer.Play(Sound.OneUp);
@@ -79,11 +66,14 @@ public class PlayerSpawner
         receiverSpawner.LivesRemaining++;
     }
 
+    public void SetNextSpawnSettings(TankType? type, bool hasShip)
+    {
+        _nextSpawnType = type;
+        _nextSpawnHasShip = hasShip;
+    }
+
     public void Update(GameTime gameTime)
     {
-        if (!_enabled)
-            return;
-
         if (Tank is not null)
             return;
 
@@ -100,13 +90,33 @@ public class PlayerSpawner
             SpawnPlayer();
     }
 
+    private void StartSpawnTimer()
+    {
+        _timeToSpawnRemaining = RespawnInterval;
+        _spawnIsDue = false;
+    }
+
+    private void SpawnIsReady()
+    {
+        _spawnIsDue = true;
+    }
+
     private void SpawnPlayer()
     {
         if (Tank is not null)
             return;
 
+        var type = _nextSpawnType ?? (_level.ClassicRules ? TankType.Type0 : TankType.Type1);
+        _nextSpawnType = null;
+
         var bounds = Level.GetTileBounds(_x, _y);
-        Tank = new PlayerTank(_level, PlayerIndex);
+        Tank = new PlayerTank(_level, PlayerIndex, type);
         Tank.Spawn(new Point(bounds.Left, bounds.Top));
+
+        if (!_nextSpawnHasShip)
+            return;
+
+        Tank.AddShip();
+        _nextSpawnHasShip = false;
     }
 }

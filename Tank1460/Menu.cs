@@ -15,7 +15,7 @@ internal class Menu : IDisposable
 
     public int LevelNumber { get; private set; }
 
-    private MenuState State { get; set; }
+    private MenuStatus Status { get; set; }
 
     private ContentManagerEx Content { get; }
 
@@ -28,7 +28,7 @@ internal class Menu : IDisposable
         PlayerCount = defaultPlayerCount;
         LevelNumber = defaultLevelNumber;
 
-        State = MenuState.Running;
+        Status = MenuStatus.Running;
 
         LoadContent();
     }
@@ -41,7 +41,7 @@ internal class Menu : IDisposable
 
     public void HandleInput(PlayerInputCollection playersInputs)
     {
-        if (State is not MenuState.Running)
+        if (Status is not MenuStatus.Running)
             return;
 
         if (playersInputs.Values.Any(inputs => inputs.Pressed.HasFlag(PlayerInputCommands.Down)))
@@ -84,7 +84,7 @@ internal class Menu : IDisposable
 
     private void Exit()
     {
-        State = MenuState.Exited;
+        Status = MenuStatus.Exited;
         MenuExited?.Invoke();
     }
 
@@ -93,7 +93,7 @@ internal class Menu : IDisposable
     public event MenuEvent MenuExited;
 }
 
-internal enum MenuState
+internal enum MenuStatus
 {
     Running,
     Exited

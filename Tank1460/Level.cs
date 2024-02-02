@@ -45,7 +45,7 @@ public class Level : IDisposable
 
     public Rectangle Bounds { get; private set; }
 
-    public bool IsLoaded => State != LevelState.Loading;
+    public bool IsLoaded => Status != LevelStatus.Loading;
 
     public PlayerTank GetPlayerTank(PlayerIndex playerIndex) => PlayerSpawners[playerIndex]?.Tank;
 
@@ -59,6 +59,8 @@ public class Level : IDisposable
 
     internal LevelStructure Structure { get; }
 
+    internal bool ClassicRules => false;
+
     private readonly List<Tile> _tiles = new();
     //private Texture2D[] layers;
     private List<LevelObject>[,] _tileObjectMap;
@@ -70,7 +72,7 @@ public class Level : IDisposable
     private int MaxAliveBots() => (PlayersInGame.Length + 1) * 2;
 
     private Dictionary<PlayerIndex, PlayerSpawner> PlayerSpawners { get; } = new();
-    private const int MaxPlayerCount = 2;
+    private Dictionary<PlayerIndex, int> PlayersScore { get; } = new();
     private readonly List<Explosion> _explosions = new();
     private const int TotalBots = 20;
     private const int MaxBonusesOnScreen = 1;
@@ -78,32 +80,32 @@ public class Level : IDisposable
     private bool _cheatGodMode;
 #endif
 
-    private LevelState _state = LevelState.Loading;
+    private LevelStatus _status = LevelStatus.Loading;
     private double _delayTime;
     private double _delayEffectTime;
 
-    internal LevelState State
+    internal LevelStatus Status
     {
-        get => _state;
+        get => _status;
         private set
         {
-            if (value == LevelState.Paused && _state != LevelState.Paused)
+            if (value == LevelStatus.Paused && _status != LevelStatus.Paused)
             {
                 SoundPlayer.PauseAndPushState();
                 SoundPlayer.Play(Sound.Pause);
             }
-            else if (value != LevelState.Paused && _state == LevelState.Paused)
+            else if (value != LevelStatus.Paused && _status == LevelStatus.Paused)
                 SoundPlayer.ResumeAndPopState();
 
-            _state = value;
+            _status = value;
         }
     }
 
-    public Level(IServiceProvider serviceProvider, LevelStructure levelStructure, int levelNumber, PlayerIndex[] playersInGame)
+    public Level(IServiceProvider serviceProvider, LevelStructure levelStructure, int levelNumber, GameState startingGameState)
     {
         Structure = levelStructure;
         LevelNumber = levelNumber;
-        PlayersInGame = playersInGame;
+        PlayersInGame = startingGameState.PlayersStates.Keys.ToArray();
 
         Content = new ContentManagerEx(serviceProvider, "Content");
 
@@ -112,8 +114,16 @@ public class Level : IDisposable
         BonusManager = new BonusManager(this, MaxBonusesOnScreen);
         LoadTiles(levelStructure.Tiles);
 
+        // Load starting game state.
+        foreach (var (playerIndex, playerState) in startingGameState.PlayersStates)
+        {
+            PlayersScore[playerIndex] = playerState.Score;
+            PlayerSpawners[playerIndex].LivesRemaining = playerState.LivesRemaining;
+            PlayerSpawners[playerIndex].SetNextSpawnSettings(playerState.TankType, playerState.TankHasShip);
+        }
+
         SoundPlayer.Play(Sound.Intro);
-        State = LevelState.Intro;
+        Status = LevelStatus.Intro;
     }
 
     public void AddExplosion(Explosion explosion) => _explosions.Add(explosion);
@@ -142,22 +152,22 @@ public class Level : IDisposable
 
     public void HandleInput(PlayerInputCollection playersInputs)
     {
-        switch (State)
+        switch (Status)
         {
-            case LevelState.Loading:
-            case LevelState.Intro:
-            case LevelState.LostDelay:
-            case LevelState.WinScoreScreen:
-            case LevelState.LostScoreScreen:
-            case LevelState.GameOverScreen:
-            case LevelState.Win:
-            case LevelState.Lost:
+            case LevelStatus.Loading:
+            case LevelStatus.Intro:
+            case LevelStatus.LostDelay:
+            case LevelStatus.WinScoreScreen:
+            case LevelStatus.LostScoreScreen:
+            case LevelStatus.GameOverScreen:
+            case LevelStatus.Win:
+            case LevelStatus.Lost:
                 playersInputs.ClearInputs();
                 break;
 
-            case LevelState.Running:
-            case LevelState.Paused:
-            case LevelState.WinDelay:
+            case LevelStatus.Running:
+            case LevelStatus.Paused:
+            case LevelStatus.WinDelay:
                 break;
 
             default:
@@ -181,7 +191,7 @@ public class Level : IDisposable
                 var playerInput = playersInputs[playerIndex];
 
                 if (playerInput.Pressed.HasFlag(PlayerInputCommands.Start))
-                    State = State == LevelState.Running ? LevelState.Paused : LevelState.Running;
+                    Status = Status == LevelStatus.Running ? LevelStatus.Paused : LevelStatus.Running;
                 tank.HandleInput(playerInput);
             }
         }
@@ -206,7 +216,7 @@ public class Level : IDisposable
 
     public void Update(GameTime gameTime)
     {
-        var proceedWithUpdate = ProcessState(gameTime);
+        var proceedWithUpdate = ProcessStatus(gameTime);
 
         if (proceedWithUpdate)
         {
@@ -308,15 +318,15 @@ public class Level : IDisposable
 
     public void HandleAllBotsDestroyed()
     {
-        State = LevelState.WinDelay;
+        Status = LevelStatus.WinDelay;
         _delayTime = 0.0;
         _delayEffectTime = 300 * Tank1460Game.OneFrameSpan;
     }
 
     public void Start()
     {
-        Debug.Assert(State == LevelState.Intro);
-        State = LevelState.Running;
+        Debug.Assert(Status == LevelStatus.Intro);
+        Status = LevelStatus.Running;
     }
 
     public void HandleObjectRemoved(UpdateableObject o)
@@ -383,7 +393,19 @@ public class Level : IDisposable
 
     internal void RewardPlayerWithPoints(PlayerIndex playerIndex, int points)
     {
-        PlayerRewarded?.Invoke(this, (playerIndex, points));
+        Debug.Assert(points > 0);
+
+        // TODO: Проверить логику оригинала.
+        const int pointsForOneUp = 20000;
+
+        var nearestOneUpPoints = (PlayersScore[playerIndex] + 1).CeilingByBase(pointsForOneUp);
+        var newPoints = PlayersScore[playerIndex] += points;
+
+        while (nearestOneUpPoints <= newPoints)
+        {
+            PlayerSpawners[playerIndex].AddOneUp();
+            nearestOneUpPoints = (nearestOneUpPoints + 1).CeilingByBase(pointsForOneUp);
+        }
     }
 
     internal void HandlePlayerLostAllLives(PlayerIndex playerIndex)
@@ -392,43 +414,60 @@ public class Level : IDisposable
             StartGameOverSequence();
     }
 
-    private bool ProcessState(GameTime gameTime)
+    internal GameState GetGameState()
     {
-        switch (State)
+        var gameState = new GameState(PlayersInGame);
+        foreach (var (playerIndex, state) in gameState.PlayersStates)
         {
-            case LevelState.Loading:
-            case LevelState.Intro:
-            case LevelState.Paused:
-            case LevelState.Lost:
-            case LevelState.Win:
+            var tank = GetPlayerTank(playerIndex);
+
+            state.LivesRemaining = PlayerLivesRemaining(playerIndex);
+            state.Score = PlayersScore[playerIndex];
+            state.TankType = tank?.Type;
+            state.TankHasShip = tank?.HasShip is true;
+        }
+
+        return gameState;
+    }
+
+    private bool ProcessStatus(GameTime gameTime)
+    {
+        switch (Status)
+        {
+            case LevelStatus.Loading:
+            case LevelStatus.Intro:
+            case LevelStatus.Paused:
+            case LevelStatus.Lost:
+            case LevelStatus.Win:
                 return false;
 
-            case LevelState.Running:
+            case LevelStatus.Running:
                 return true;
 
-            case LevelState.WinDelay:
+            case LevelStatus.WinDelay:
                 _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
                 if (_delayTime <= _delayEffectTime)
                     return true;
 
-                State = LevelState.Win;
+                Status = LevelStatus.Win;
                 LevelComplete?.Invoke(this);
 
                 return true;
 
-            case LevelState.LostDelay:
+            case LevelStatus.LostDelay:
                 _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
                 if (_delayTime <= _delayEffectTime)
                     return true;
 
-                State = LevelState.Lost;
+                Status = LevelStatus.Lost;
+                SoundPlayer.Unmute();
                 GameOver?.Invoke(this);
 
                 return true;
 
-            case LevelState.WinScoreScreen:
-            case LevelState.LostScoreScreen:
-            case LevelState.GameOverScreen:
+            case LevelStatus.WinScoreScreen:
+            case LevelStatus.LostScoreScreen:
+            case LevelStatus.GameOverScreen:
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -441,8 +480,8 @@ public class Level : IDisposable
 
         _tileObjectMap = new List<LevelObject>[width, height];
         for (var y = 0; y < height; y++)
-            for (var x = 0; x < width; x++)
-                _tileObjectMap[x, y] = new List<LevelObject>();
+        for (var x = 0; x < width; x++)
+            _tileObjectMap[x, y] = new List<LevelObject>();
 
         for (var y = 0; y < height; y++)
         {
@@ -459,8 +498,10 @@ public class Level : IDisposable
         TileBounds = new Rectangle(0, 0, width, height);
         Bounds = TileBounds.Multiply(new Point(Tile.DefaultWidth, Tile.DefaultHeight));
 
-        if (PlayerSpawners.Count is < 1 or > MaxPlayerCount)
-            throw new NotSupportedException($"A level must have 1 to {MaxPlayerCount} starting point(s).");
+        // TODO: Почему-то срабатывает когда не должно.
+        //var playersWithoutSpawners = PlayersInGame.Where(playerIndex => !PlayerSpawners.ContainsKey(playerIndex)).ToList();
+        //if (PlayerSpawners.Count != 0)
+        //    throw new NotSupportedException($"No player spawner for {string.Join(", ", playersWithoutSpawners)} found in the level.");
 
         if (Falcons.Count == 0)
             throw new NotSupportedException("A level must have at least one falcon.");
@@ -523,21 +564,22 @@ public class Level : IDisposable
 
     private Tile CreatePlayerSpawn(int x, int y, PlayerIndex playerIndex)
     {
+        if (!PlayersInGame.Contains(playerIndex))
+            return null;
+
         if (PlayerSpawners.ContainsKey(playerIndex))
             throw new NotSupportedException($"A level may only have one player {playerIndex} spawn.");
 
         var playerSpawner = new PlayerSpawner(this, x, y, playerIndex);
         PlayerSpawners.Add(playerIndex, playerSpawner);
 
-        if (!PlayersInGame.Contains(playerIndex))
-            playerSpawner.Disable();
-
         return null;
     }
 
     private void StartGameOverSequence()
     {
-        State = LevelState.LostDelay;
+        Status = LevelStatus.LostDelay;
+        SoundPlayer.Mute();
         _delayTime = 0.0;
         _delayEffectTime = 288 * Tank1460Game.OneFrameSpan;
     }
@@ -570,9 +612,8 @@ public class Level : IDisposable
     }
 
     public delegate void LevelEvent(Level level);
-    public delegate void LevelEvent<T>(Level level, T args);
+    public delegate void LevelEvent<in T>(Level level, T args);
 
     public event LevelEvent GameOver;
     public event LevelEvent LevelComplete;
-    public event LevelEvent<(PlayerIndex PlayerIndex, int PointsReward)> PlayerRewarded;
 }

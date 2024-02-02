@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<level>
+  <tiles>R.........QQR.XX..XXXX..R.
+..........QQ..XX..XXXX....
+//.XXXXX//XX..XX..........
+//.XXXXX//XX..XX..........
+//XXXXXX//XXXXXXXXXX######
+//XXXXXX//XXXXXXXXXX######
+//XXXXXX////XXQQXX##QQ####
+//XXXXXX////XXQQXX##QQ####
+//~~..XXXX//QQXXXX##QQ~~XX
+//~~..XXXX//QQXXXX##QQ~~XX
+//~~XXXXQQ////XX..####XXXX
+//~~....QQ////XX..####XXXX
+//~~XXXX..QQ##########////
+//~~XXXX..QQ##########////
+//....QQ....##~~~~~~##////
+//....QQ....##~~~~~~##////
+QQ//..########QQ######XX//
+QQ//..########QQ######XX//
+////QQ########........XXXX
+////QQ########........XXXX
+//XX####....XX..QQXXXXXX..
+//XX####....XX....XXXXXX..
+//XX####....XX....XXXXXX..
+//XX####...XXXX...XXXXXX..
+//XX####1..XsXX.2.........
+//XX####...XXXX...........
+</tiles>
+</level>

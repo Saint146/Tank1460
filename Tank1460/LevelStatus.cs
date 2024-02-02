@@ -1,6 +1,6 @@
 ﻿namespace Tank1460;
 
-internal enum LevelState
+internal enum LevelStatus
 {
     Loading,
     Intro,

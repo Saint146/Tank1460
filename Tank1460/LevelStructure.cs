@@ -12,8 +12,6 @@ public class LevelStructure
 
     public IReadOnlyList<(TankType, int)> BotTypes { get; }
 
-    public IReadOnlyList<int> BotBonusNumbers { get; }
-
     public LevelStructure(string levelPath)
     {
         using var fileStream = TitleContainer.OpenStream(levelPath);
@@ -24,7 +22,6 @@ public class LevelStructure
         var tilesAsString = levelElement.Element("tiles")?.Value ?? throw new Exception("Cannot find element 'level/tiles'.");
         Tiles = DeserializeTiles(tilesAsString);
         BotTypes = DeserializeBotTypes(levelElement.Element("botTypes")?.Value);
-        BotBonusNumbers = DeserializeBotBonusNumbers(levelElement.Element("botBonusNumbers")?.Value);
     }
 
     private static TileType[,] DeserializeTiles(string tilesAsString)
@@ -78,27 +75,6 @@ public class LevelStructure
                 throw new Exception($"Invalid format for bot type entry '{botTypeString}'. It should look like '3*15'.");
 
             result.Add(((TankType)botType, botCount));
-        }
-
-        return result;
-    }
-
-    private static IReadOnlyList<int> DeserializeBotBonusNumbers(string botBonusNumbersAsString)
-    {
-        if (botBonusNumbersAsString is null)
-            return null;
-
-        var split = botBonusNumbersAsString.Split(',', StringSplitOptions.TrimEntries);
-        if (split.Length == 0)
-            return null;
-
-        var result = new List<int>();
-        foreach (var botNumberString in split)
-        {
-            if (!int.TryParse(botNumberString, out var botNumber))
-                throw new Exception($"Cannot parse bot number '{botNumberString}'. It should be an integer.");
-
-            result.Add(botNumber);
         }
 
         return result;

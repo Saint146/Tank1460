@@ -30,7 +30,7 @@ public class Tank1460Game : Game
     public static bool ShowBotsPeriods = true;
 #endif
 
-    internal GameState State { get; private set; }
+    internal GameStatus Status { get; private set; }
 
     private Rectangle GetLevelBounds() =>
         _level?.Bounds ?? new Rectangle(0, 0, 26 * Tile.DefaultWidth, 26 * Tile.DefaultHeight);
@@ -53,7 +53,7 @@ public class Tank1460Game : Game
 
     private static Color LevelBackColor { get; } = new(0x7f, 0x7f, 0x7f);
 
-    private static Color CurtainColor { get; }= LevelBackColor;
+    private static Color CurtainColor { get; } = LevelBackColor;
 
     private static Color GameBackColor { get; } = Color.Black;
 
@@ -91,14 +91,14 @@ public class Tank1460Game : Game
     private const int ClosedCurtainPosition = 30;
     private int _curtainPosition = OpenedCurtainPosition;
     private double _curtainTime;
-    private const double _curtainTickTime = OneFrameSpan;
+    private const double CurtainTickTime = OneFrameSpan;
 
     private readonly PlayerInputHandler _playerInputHandler;
     private MouseState _mouseState;
     private KeyboardState _keyboardState;
     private Dictionary<int, GamePadState> _gamePadStates;
 
-    private Dictionary<PlayerIndex, int> _playersPoints;
+    private GameState _gameState;
     private Point _windowPosition;
     private Point _windowSize;
 
@@ -119,9 +119,9 @@ public class Tank1460Game : Game
 
         _playerInputHandler = new PlayerInputHandler(AllPlayers);
 
-        ResetPlayersPoints();
+        ResetPlayersStates();
 
-        State = GameState.Initializing;
+        Status = GameStatus.Initializing;
 
 #pragma warning disable CS0162
         if (Fps != 60)
@@ -146,7 +146,7 @@ public class Tank1460Game : Game
         _levelHud = new LevelHud(Content);
         _cursor = new Cursor(Content);
 
-        State = GameState.Ready;
+        Status = GameStatus.Ready;
     }
 
     protected override void Update(GameTime gameTime)
@@ -161,7 +161,7 @@ public class Tank1460Game : Game
         if (_isCustomCursorVisible)
             _cursor.Update(gameTime, _mouseState, _scale);
 
-        ProcessState(gameTime);
+        ProcessStatus(gameTime);
 
         _menu?.HandleInput(inputs);
         _menu?.Update(gameTime);
@@ -225,34 +225,34 @@ public class Tank1460Game : Game
         base.UnloadContent();
     }
 
-    private void ProcessState(GameTime gameTime)
+    private void ProcessStatus(GameTime gameTime)
     {
-        switch (State)
+        switch (Status)
         {
-            case GameState.Initializing:
+            case GameStatus.Initializing:
                 // Ждём загрузки. По идее, всё однопоточно, конечно, но LoadContent вызывается базовым классом, и мы не знаем, когда это произойдет.
                 break;
 
-            case GameState.Ready:
-                State = GameState.InMenu;
+            case GameStatus.Ready:
+                Status = GameStatus.InMenu;
                 UnloadLevel();
                 LoadMenu();
                 break;
 
-            case GameState.InMenu:
-            case GameState.InLevel:
+            case GameStatus.InMenu:
+            case GameStatus.InLevel:
                 break;
 
-            case GameState.CurtainOpening:
+            case GameStatus.CurtainOpening:
                 ProcessCurtain(gameTime, -1);
                 if (_curtainPosition >= OpenedCurtainPosition)
                     break;
 
-                State = GameState.InLevel;
+                Status = GameStatus.InLevel;
                 _level.Start();
                 break;
 
-            case GameState.CurtainClosing:
+            case GameStatus.CurtainClosing:
                 ProcessCurtain(gameTime, 1);
                 if (_curtainPosition <= ClosedCurtainPosition)
                     break;
@@ -262,7 +262,7 @@ public class Tank1460Game : Game
                 break;
 
             default:
-                throw new ArgumentOutOfRangeException(nameof(State));
+                throw new ArgumentOutOfRangeException(nameof(Status));
         }
     }
 
@@ -270,23 +270,23 @@ public class Tank1460Game : Game
     {
         _curtainTime += gameTime.ElapsedGameTime.TotalSeconds;
 
-        while (_curtainTime > _curtainTickTime)
+        while (_curtainTime > CurtainTickTime)
         {
             _curtainTime -= _curtainTime;
             _curtainPosition += step;
         }
     }
 
-    private void ResetPlayersPoints()
+    private void ResetPlayersStates()
     {
-        _playersPoints = PlayersInGame.ToDictionary(playerIndex => playerIndex, _ => 0);
+        _gameState = new GameState(PlayersInGame);
     }
 
     private PlayerInputCollection HandleInput()
     {
         _keyboardState = KeyboardEx.GetState();
         _mouseState = Mouse.GetState();
-        _gamePadStates = _playerInputHandler.GetActiveGamePadIndexes().ToDictionary(index => index, GamePad.GetState);
+        _gamePadStates = _playerInputHandler.GetActiveGamePadIndices().ToDictionary(index => index, GamePad.GetState);
 
         var inputs = _playerInputHandler.HandleInput(_keyboardState, _gamePadStates);
 
@@ -365,9 +365,10 @@ public class Tank1460Game : Game
     {
         LevelNumber = _menu.LevelNumber;
         PlayersInGame = AllPlayers.Take(_menu.PlayerCount).ToArray();
+        ResetPlayersStates();
 
         _curtainTime = 0.0;
-        State = GameState.CurtainClosing;
+        Status = GameStatus.CurtainClosing;
     }
 
     private void UnloadLevel()
@@ -375,7 +376,6 @@ public class Tank1460Game : Game
         if (_level is null)
             return;
 
-        _level.PlayerRewarded -= Level_PlayerRewarded;
         _level.LevelComplete -= Level_LevelComplete;
         _level.GameOver -= Level_GameOver;
 
@@ -390,17 +390,16 @@ public class Tank1460Game : Game
         UnloadLevel();
 
         LevelNumber = levelNumber;
-        var levelStructure = new LevelStructure($"Content/Levels/{levelNumber}.lvl");
-        _level = new Level(Services, levelStructure, levelNumber, PlayersInGame);
+        var levelStructure = new LevelStructure($"Content/Levels/Hack/{levelNumber}.lvl");
+        _level = new Level(Services, levelStructure, levelNumber, _gameState);
 
-        _level.PlayerRewarded += Level_PlayerRewarded;
         _level.LevelComplete += Level_LevelComplete;
         _level.GameOver += Level_GameOver;
 
         ScalePresentationArea();
 
-        // TODO: Вынести в сеттер State
-        State = GameState.CurtainOpening;
+        // TODO: Вынести в сеттер Status
+        Status = GameStatus.CurtainOpening;
         _curtainPosition = ClosedCurtainPosition;
         _curtainTime = 0.0;
 
@@ -409,36 +408,23 @@ public class Tank1460Game : Game
 
     private void Level_LevelComplete(Level level)
     {
+        _gameState = level.GetGameState();
+
         LevelNumber++;
 
         _curtainTime = 0.0;
-        State = GameState.CurtainClosing;
+        Status = GameStatus.CurtainClosing;
     }
 
     private void Level_GameOver(Level level)
     {
-        State = GameState.Ready;
-        ResetPlayersPoints();
-    }
-
-    private void Level_PlayerRewarded(Level level, (PlayerIndex PlayerIndex, int PointsReward) args)
-    {
-        // TODO: Проверить логику оригинала.
-        const int pointsForOneUp = 20000;
-
-        var nearestOneUpPoints = (_playersPoints[args.PlayerIndex] + 1).CeilingByBase(pointsForOneUp);
-        var newPoints = _playersPoints[args.PlayerIndex] += args.PointsReward;
-
-        while (nearestOneUpPoints <= newPoints)
-        {
-            level.GetPlayerSpawner(args.PlayerIndex).AddOneUp();
-            nearestOneUpPoints = (nearestOneUpPoints + 1).CeilingByBase(pointsForOneUp);
-        }
+        Status = GameStatus.Ready;
+        ResetPlayersStates();
     }
 
     private void DrawCurtain(SpriteBatch spriteBatch)
     {
-        if (State != GameState.CurtainOpening && State != GameState.CurtainClosing)
+        if (Status != GameStatus.CurtainOpening && Status != GameStatus.CurtainClosing)
             return;
 
         var screenHeight = BaseScreenSize.Y;
@@ -541,7 +527,7 @@ public class Tank1460Game : Game
         var scaleTransformation = Matrix.CreateScale(screenScalingFactor);
 
         var xShift = (horScaling - _scale) * BaseScreenSize.X / 2;
-        var yShift =(verScaling - _scale) * BaseScreenSize.Y / 2;
+        var yShift = (verScaling - _scale) * BaseScreenSize.Y / 2;
         if (_isScalingPixelPerfect)
         {
             xShift = MathF.Round(xShift);
