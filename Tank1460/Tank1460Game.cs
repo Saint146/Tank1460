@@ -88,6 +88,7 @@ public class Tank1460Game : Game
     private Matrix _menuTransformation;
     private float _scale = 1.0f;
     private const int DefaultScale = 3;
+    internal const bool ClassicRules = false;
 
     private int _backbufferWidth, _backbufferHeight;
     private bool _isCustomCursorVisible;
@@ -105,7 +106,7 @@ public class Tank1460Game : Game
 
     private PlayerIndex[] PlayersInGame { get; set; } = { PlayerIndex.One };
 
-    private string LevelFolder { get; set; } = "Modern";
+    private string LevelFolder { get; set; } = ClassicRules ? "Classic" : "Modern";
 
     private int LevelNumber { get; set; } = 1;
 

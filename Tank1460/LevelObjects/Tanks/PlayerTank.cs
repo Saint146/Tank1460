@@ -92,7 +92,7 @@ public class PlayerTank : Tank
         if (GodMode) return;
 #endif
 
-        if (Type == TankType.Type3)
+        if (Type == TankType.Type3 && !Level.ClassicRules)
         {
             Level.SoundPlayer.Play(Sound.HitHurt);
             SetType(TankType.Type2);

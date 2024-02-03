@@ -61,7 +61,7 @@ public class Level : IDisposable
 
     internal LevelStructure Structure { get; }
 
-    internal bool ClassicRules => false;
+    internal bool ClassicRules => Tank1460Game.ClassicRules;
 
     private LevelStatus Status { get; set; }
 

@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Tank1460.Audio;
 using Tank1460.Common;
 
@@ -20,6 +21,8 @@ public class BonusManager
         _level = level;
         _maxBonusesOnScreen = maxBonusesOnScreen;
         _allowedTypes = Enum.GetValues<BonusType>();
+        if (level.ClassicRules)
+            _allowedTypes = _allowedTypes.Where(bonus => bonus != BonusType.Ship).ToArray();
     }
 
     public Bonus Spawn(BonusType type, int x, int y)
