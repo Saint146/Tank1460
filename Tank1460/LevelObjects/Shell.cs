@@ -1,7 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Tank1460.Audio;
-using Tank1460.Extensions;
+using Tank1460.Common.Extensions;
+using Tank1460.Common.Level.Object;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;

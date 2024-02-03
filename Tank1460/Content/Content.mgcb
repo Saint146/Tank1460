@@ -10,131 +10,389 @@
 
 #-------------------------------- References --------------------------------#
 
+/reference:..\..\Tank1460.LvlContentPipelineExtension\bin\Debug\net6.0\Tank1460.LvlContentPipelineExtension.dll
 
 #---------------------------------- Content ---------------------------------#
 
-#begin Levels/0.lvl
-/copy:Levels/0.lvl
+#begin Levels/Classic/1.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/1.lvl
 
-#begin Levels/1.lvl
-/copy:Levels/1.lvl
+#begin Levels/Classic/10.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/10.lvl
 
-#begin Levels/2.lvl
-/copy:Levels/2.lvl
+#begin Levels/Classic/11.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/11.lvl
 
-#begin Levels/3.lvl
-/copy:Levels/3.lvl
+#begin Levels/Classic/12.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/12.lvl
 
-#begin Levels/9.lvl
-/copy:Levels/9.lvl
+#begin Levels/Classic/13.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/13.lvl
 
-#begin Levels/Hack/1.lvl
-/copy:Levels/Hack/1.lvl
+#begin Levels/Classic/14.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/14.lvl
 
-#begin Levels/Hack/10.lvl
-/copy:Levels/Hack/10.lvl
+#begin Levels/Classic/15.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/15.lvl
 
-#begin Levels/Hack/11.lvl
-/copy:Levels/Hack/11.lvl
+#begin Levels/Classic/16.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/16.lvl
 
-#begin Levels/Hack/12.lvl
-/copy:Levels/Hack/12.lvl
+#begin Levels/Classic/17.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/17.lvl
 
-#begin Levels/Hack/13.lvl
-/copy:Levels/Hack/13.lvl
+#begin Levels/Classic/18.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/18.lvl
 
-#begin Levels/Hack/14.lvl
-/copy:Levels/Hack/14.lvl
+#begin Levels/Classic/19.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/19.lvl
 
-#begin Levels/Hack/15.lvl
-/copy:Levels/Hack/15.lvl
+#begin Levels/Classic/2.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/2.lvl
 
-#begin Levels/Hack/16.lvl
-/copy:Levels/Hack/16.lvl
+#begin Levels/Classic/20.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/20.lvl
 
-#begin Levels/Hack/17.lvl
-/copy:Levels/Hack/17.lvl
+#begin Levels/Classic/21.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/21.lvl
 
-#begin Levels/Hack/18.lvl
-/copy:Levels/Hack/18.lvl
+#begin Levels/Classic/22.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/22.lvl
 
-#begin Levels/Hack/19.lvl
-/copy:Levels/Hack/19.lvl
+#begin Levels/Classic/23.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/23.lvl
 
-#begin Levels/Hack/2.lvl
-/copy:Levels/Hack/2.lvl
+#begin Levels/Classic/24.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/24.lvl
 
-#begin Levels/Hack/20.lvl
-/copy:Levels/Hack/20.lvl
+#begin Levels/Classic/25.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/25.lvl
 
-#begin Levels/Hack/21.lvl
-/copy:Levels/Hack/21.lvl
+#begin Levels/Classic/26.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/26.lvl
 
-#begin Levels/Hack/22.lvl
-/copy:Levels/Hack/22.lvl
+#begin Levels/Classic/27.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/27.lvl
 
-#begin Levels/Hack/23.lvl
-/copy:Levels/Hack/23.lvl
+#begin Levels/Classic/28.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/28.lvl
 
-#begin Levels/Hack/24.lvl
-/copy:Levels/Hack/24.lvl
+#begin Levels/Classic/29.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/29.lvl
 
-#begin Levels/Hack/25.lvl
-/copy:Levels/Hack/25.lvl
+#begin Levels/Classic/3.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/3.lvl
 
-#begin Levels/Hack/26.lvl
-/copy:Levels/Hack/26.lvl
+#begin Levels/Classic/30.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/30.lvl
 
-#begin Levels/Hack/27.lvl
-/copy:Levels/Hack/27.lvl
+#begin Levels/Classic/31.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/31.lvl
 
-#begin Levels/Hack/28.lvl
-/copy:Levels/Hack/28.lvl
+#begin Levels/Classic/32.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/32.lvl
 
-#begin Levels/Hack/29.lvl
-/copy:Levels/Hack/29.lvl
+#begin Levels/Classic/33.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/33.lvl
 
-#begin Levels/Hack/3.lvl
-/copy:Levels/Hack/3.lvl
+#begin Levels/Classic/34.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/34.lvl
 
-#begin Levels/Hack/30.lvl
-/copy:Levels/Hack/30.lvl
+#begin Levels/Classic/35.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/35.lvl
 
-#begin Levels/Hack/31.lvl
-/copy:Levels/Hack/31.lvl
+#begin Levels/Classic/4.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/4.lvl
 
-#begin Levels/Hack/32.lvl
-/copy:Levels/Hack/32.lvl
+#begin Levels/Classic/5.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/5.lvl
 
-#begin Levels/Hack/33.lvl
-/copy:Levels/Hack/33.lvl
+#begin Levels/Classic/6.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/6.lvl
 
-#begin Levels/Hack/34.lvl
-/copy:Levels/Hack/34.lvl
+#begin Levels/Classic/7.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/7.lvl
 
-#begin Levels/Hack/35.lvl
-/copy:Levels/Hack/35.lvl
+#begin Levels/Classic/8.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/8.lvl
 
-#begin Levels/Hack/36.lvl
-/copy:Levels/Hack/36.lvl
+#begin Levels/Classic/9.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Classic/9.lvl
 
-#begin Levels/Hack/4.lvl
-/copy:Levels/Hack/4.lvl
+#begin Levels/Modern/1.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/1.lvl
 
-#begin Levels/Hack/5.lvl
-/copy:Levels/Hack/5.lvl
+#begin Levels/Modern/10.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/10.lvl
 
-#begin Levels/Hack/6.lvl
-/copy:Levels/Hack/6.lvl
+#begin Levels/Modern/11.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/11.lvl
 
-#begin Levels/Hack/7.lvl
-/copy:Levels/Hack/7.lvl
+#begin Levels/Modern/12.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/12.lvl
 
-#begin Levels/Hack/8.lvl
-/copy:Levels/Hack/8.lvl
+#begin Levels/Modern/13.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/13.lvl
 
-#begin Levels/Hack/9.lvl
-/copy:Levels/Hack/9.lvl
+#begin Levels/Modern/14.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/14.lvl
+
+#begin Levels/Modern/15.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/15.lvl
+
+#begin Levels/Modern/16.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/16.lvl
+
+#begin Levels/Modern/17.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/17.lvl
+
+#begin Levels/Modern/18.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/18.lvl
+
+#begin Levels/Modern/19.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/19.lvl
+
+#begin Levels/Modern/2.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/2.lvl
+
+#begin Levels/Modern/20.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/20.lvl
+
+#begin Levels/Modern/21.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/21.lvl
+
+#begin Levels/Modern/22.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/22.lvl
+
+#begin Levels/Modern/23.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/23.lvl
+
+#begin Levels/Modern/24.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/24.lvl
+
+#begin Levels/Modern/25.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/25.lvl
+
+#begin Levels/Modern/26.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/26.lvl
+
+#begin Levels/Modern/27.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/27.lvl
+
+#begin Levels/Modern/28.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/28.lvl
+
+#begin Levels/Modern/29.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/29.lvl
+
+#begin Levels/Modern/3.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/3.lvl
+
+#begin Levels/Modern/30.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/30.lvl
+
+#begin Levels/Modern/31.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/31.lvl
+
+#begin Levels/Modern/32.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/32.lvl
+
+#begin Levels/Modern/33.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/33.lvl
+
+#begin Levels/Modern/34.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/34.lvl
+
+#begin Levels/Modern/35.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/35.lvl
+
+#begin Levels/Modern/36.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/36.lvl
+
+#begin Levels/Modern/4.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/4.lvl
+
+#begin Levels/Modern/5.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/5.lvl
+
+#begin Levels/Modern/6.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/6.lvl
+
+#begin Levels/Modern/7.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/7.lvl
+
+#begin Levels/Modern/8.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/8.lvl
+
+#begin Levels/Modern/9.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Modern/9.lvl
+
+#begin Levels/Test/0.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Test/0.lvl
+
+#begin Levels/Test/1.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Test/1.lvl
+
+#begin Levels/Test/2.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Test/2.lvl
+
+#begin Levels/Test/3.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Test/3.lvl
+
+#begin Levels/Test/9.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Test/9.lvl
 
 #begin Sounds/8bit/BonusPickup/1.ogg
 /importer:OggImporter
@@ -616,6 +874,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Falcon/Normal.png
 
+#begin Sprites/Font/Pixel8.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Font/Pixel8.png
+
 #begin Sprites/Hud/Bot.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -639,18 +909,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/Hud/Flag.png
-
-#begin Sprites/Hud/Font.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/Hud/Font.png
 
 #begin Sprites/Hud/Pattern1.png
 /importer:TextureImporter

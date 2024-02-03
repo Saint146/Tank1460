@@ -1,18 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.Content;
-using Tank1460.Extensions;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using Tank1460.Common.Extensions;
 
 namespace Tank1460;
 
 public class ContentManagerEx : ContentManager
 {
     private readonly Dictionary<string, Texture2D> _dynamicTextures = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Font> _fonts = new(StringComparer.OrdinalIgnoreCase);
+
+    private const char MixSeparator = ',';
+    private const char RecolorSeparator = ':';
 
     public ContentManagerEx(IServiceProvider serviceProvider) : base(serviceProvider)
     {
@@ -25,6 +29,7 @@ public class ContentManagerEx : ContentManager
     public override void Unload()
     {
         _dynamicTextures.Clear();
+        _fonts.Clear();
         base.Unload();
     }
 
@@ -65,7 +70,7 @@ public class ContentManagerEx : ContentManager
             return texture;
 
         texture = Load<Texture2D>(textureName);
-        var recolorMixedTexture = LoadAndMixTextures(recolorTexture1Name, recolorTexture2Name);
+        var recolorMixedTexture = MixTextures(recolorTexture1Name, recolorTexture2Name);
 
         var recoloredTexture = texture.RecolorAsCopy(recolorMixedTexture);
         _dynamicTextures[key] = recoloredTexture;
@@ -91,13 +96,13 @@ public class ContentManagerEx : ContentManager
         var recolorTexture1Name = split[0];
         var recolorTexture2Name = recolorTexture1Name.Remove(recolorTexture1Name.LastIndexOf('/') + 1) + split[1];
 
-        texture = LoadAndMixTextures(recolorTexture1Name, recolorTexture2Name);
+        texture = MixTextures(recolorTexture1Name, recolorTexture2Name);
         _dynamicTextures[key] = texture;
 
         return texture;
     }
 
-    public Texture2D LoadColoredTexture(Color color, int width, int height)
+    public Texture2D CreateColoredTexture(Color color, int width, int height)
     {
         Debug.Assert(width > 0 && height > 0);
 
@@ -110,7 +115,7 @@ public class ContentManagerEx : ContentManager
         return texture;
     }
 
-    public Dictionary<string, T> MassLoadContent<T>(string contentFolder)
+    public Dictionary<string, T> MassLoadContent<T>(string contentFolder, string filePattern = "*.*", bool recurse = false)
     {
         var dir = new DirectoryInfo(Path.Combine(RootDirectory, contentFolder));
         if (!dir.Exists)
@@ -118,23 +123,36 @@ public class ContentManagerEx : ContentManager
 
         var result = new Dictionary<string, T>();
 
-        var files = dir.GetFiles("*.*");
+        var files = dir.GetFiles(filePattern, new EnumerationOptions { RecurseSubdirectories = recurse });
         foreach (var file in files)
         {
-            var key = Path.GetFileNameWithoutExtension(file.Name);
-
-            result[key] = Load<T>(Path.Combine(contentFolder, key));
+            var key = Path.ChangeExtension(Path.GetRelativePath(RootDirectory, file.FullName), null);
+            result[key] = Load<T>(key);
         }
         return result;
     }
 
-    private const char MixSeparator = ',';
-    private const char RecolorSeparator = ':';
+    public Font LoadFont(string fontName, Color? fontColor = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fontName);
+
+        var key = $"{fontName.Replace('\\', '/')}{RecolorSeparator}{fontColor?.PackedValue.ToString() ?? string.Empty}";
+        if (_fonts.TryGetValue(key, out var font))
+            return font;
+
+        var texture = Load<Texture2D>(fontName);
+        if (fontColor.HasValue)
+            texture = texture.RecolorAsCopy(Color.Black, fontColor.Value);
+
+        _fonts[key] = font = new Font(texture);
+
+        return font;
+    }
 
     /// <summary>
     /// Не кэширует.
     /// </summary>
-    private Texture2D LoadAndMixTextures(string texture1Name, string texture2Name)
+    private Texture2D MixTextures(string texture1Name, string texture2Name)
     {
         var texture1 = Load<Texture2D>(texture1Name);
         var texture2 = Load<Texture2D>(texture2Name);

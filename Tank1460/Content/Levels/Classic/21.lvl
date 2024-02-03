@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<level>
+  <tiles>R...........R...........R.
+......XXXXXX....XX........
+....XXXXXXXXXXXXXXXX......
+..XXXXXXXXXXXXXXXXXX......
+..################XXXX....
+..################XXXX....
+####............####XXXX..
+####............####XXXX..
+##..QQ....QQ......######..
+##..QQ....QQ......######..
+##..QQ....QQ......######..
+##..QQ....QQ......######..
+##....##........####XXXXX.
+##....##........####XXXXX.
+##################XXXXXXX.
+##################XXXXXXX.
+XX####XXXX######XXXXXXXX..
+XX####XXXX######XXXXXXXX..
+..XXXXXXXXXXXXXXXXXXXX..QQ
+..XXXXXXXXXXXXXXXXXXXX..QQ
+QQ..XXQQXXXXXXXXXXXXX...QQ
+QQ..XXQQXXXXXXXXXXXXX...QQ
+..QQXXXXQQXXXXXXXXXXQQQQQQ
+..QQXX..QQXXXXXXXXXXQQQQQQ
+........1..Xs.X.2.........
+...........X..X...........
+</tiles>
+</level>

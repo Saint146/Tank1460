@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
@@ -6,10 +7,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Tank1460.Extensions;
+using Tank1460.Common;
+using Tank1460.Common.Extensions;
+using Tank1460.Common.Level;
+using Tank1460.Input;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tiles;
-using Tank1460.Input;
 using Tank1460.SaveLoad;
 using Tank1460.SaveLoad.Settings;
 
@@ -31,6 +34,8 @@ public class Tank1460Game : Game
 #endif
 
     internal GameStatus Status { get; private set; }
+
+    private new ContentManagerEx Content { get; }
 
     private Rectangle GetLevelBounds() =>
         _level?.Bounds ?? new Rectangle(0, 0, 26 * Tile.DefaultWidth, 26 * Tile.DefaultHeight);
@@ -112,7 +117,7 @@ public class Tank1460Game : Game
     {
         Window.Title = "Tank 1460";
         Window.AllowUserResizing = true;
-        Content.RootDirectory = "Content";
+        Content = new ContentManagerEx(Services, "Content");
         IsFixedTimeStep = true;
 
         _graphics = new GraphicsDeviceManager(this);
@@ -124,12 +129,11 @@ public class Tank1460Game : Game
         Status = GameStatus.Initializing;
 
 #pragma warning disable CS0162
-        if (Fps != 60)
-        {
-            _graphics.SynchronizeWithVerticalRetrace = false;
-            //IsFixedTimeStep = false; // Вроде бы и без этого работает
-            TargetElapsedTime = TimeSpan.FromMilliseconds(1000.0 / Fps);
-        }
+        if (Fps == 60) return;
+
+        _graphics.SynchronizeWithVerticalRetrace = false;
+        //IsFixedTimeStep = false; // Вроде бы и без этого работает
+        TargetElapsedTime = TimeSpan.FromMilliseconds(1000.0 / Fps);
 #pragma warning restore CS0162
     }
 
@@ -145,6 +149,8 @@ public class Tank1460Game : Game
 
         _levelHud = new LevelHud(Content);
         _cursor = new Cursor(Content);
+
+        PreloadLevelsContent();
 
         Status = GameStatus.Ready;
     }
@@ -256,12 +262,26 @@ public class Tank1460Game : Game
                     break;
 
                 UnloadMenu();
-                LoadLevel(LevelNumber);
+                LoadLevel("Modern", LevelNumber);
                 break;
 
             default:
                 throw new ArgumentOutOfRangeException(nameof(Status));
         }
+    }
+
+    protected override void EndRun()
+    {
+        Content.Unload();
+        base.EndRun();
+    }
+
+    private void PreloadLevelsContent()
+    {
+        // TODO: Перенести внутрь левела и прочих вложенных объектов (чтобы каждый объект сам говорил, что ему предзагружать).
+        Content.MassLoadContent<Texture2D>("Sprites", "*.*", recurse: true);
+        Content.MassLoadContent<SoundEffect>("Sounds", "*.*", recurse: true);
+        //Content.MassLoadContent<LevelStructure>("Levels", "*.*", recurse: true);
     }
 
     private void ProcessCurtain(GameTime gameTime, int step)
@@ -328,7 +348,7 @@ public class Tank1460Game : Game
 
                 if (KeyboardEx.HasBeenPressed(key))
                 {
-                    LoadLevel(digit);
+                    LoadLevel("Test", digit);
                     break;
                 }
             }
@@ -353,13 +373,12 @@ public class Tank1460Game : Game
             return;
 
         _menu.MenuExited -= Menu_MenuExited;
-        _menu.Dispose();
         _menu = null;
     }
 
     private void LoadMenu()
     {
-        _menu = new Menu(Services, 1, 1);
+        _menu = new Menu(Content, 1, 1);
         _menu.MenuExited += Menu_MenuExited;
     }
 
@@ -385,14 +404,14 @@ public class Tank1460Game : Game
         _level = null;
     }
 
-    private void LoadLevel(int levelNumber)
+    private void LoadLevel(string levelFolder, int levelNumber)
     {
         Debug.WriteLine($"Loading level {levelNumber}...");
 
         UnloadLevel();
 
         LevelNumber = levelNumber;
-        var levelStructure = new LevelStructure($"Content/Levels/Hack/{levelNumber}.lvl");
+        var levelStructure = Content.Load<LevelStructure>($"Levels/{levelFolder}/{levelNumber}");
         _level = new Level(Services, levelStructure, levelNumber, _gameState);
 
         _level.LevelComplete += Level_LevelComplete;

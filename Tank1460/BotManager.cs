@@ -4,6 +4,9 @@ using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Tank1460.Common;
+using Tank1460.Common.Extensions;
+using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Extensions;
 using Tank1460.LevelObjects.Tanks;
 

@@ -7,12 +7,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tank1460", "Tank1460\Tank14
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tank1460.LevelImport", "Tank1460.LevelImport\Tank1460.LevelImport.csproj", "{A4D5BB40-B361-4A15-BD59-FA5BD19F8FDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tank1460.LevelEditor", "Tank1460.LevelEditor\Tank1460.LevelEditor.csproj", "{ED76D9F0-BE3C-4B12-A2D2-80A0D35E3BEF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tank1460.LevelEditor", "Tank1460.LevelEditor\Tank1460.LevelEditor.csproj", "{ED76D9F0-BE3C-4B12-A2D2-80A0D35E3BEF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8AC53737-BC5E-4A82-A9E1-207B9285F6AB}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tank1460.Common", "Tank1460.Common\Tank1460.Common.csproj", "{265065EA-E41A-4E5E-BFEC-2DEE569B181C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tank1460.LvlContentPipelineExtension", "Tank1460.LvlContentPipelineExtension\Tank1460.LvlContentPipelineExtension.csproj", "{15202AAE-EF8B-4BF6-BFB9-B35D0C23F40D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +36,14 @@ Global
 		{ED76D9F0-BE3C-4B12-A2D2-80A0D35E3BEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED76D9F0-BE3C-4B12-A2D2-80A0D35E3BEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED76D9F0-BE3C-4B12-A2D2-80A0D35E3BEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{265065EA-E41A-4E5E-BFEC-2DEE569B181C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{265065EA-E41A-4E5E-BFEC-2DEE569B181C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{265065EA-E41A-4E5E-BFEC-2DEE569B181C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{265065EA-E41A-4E5E-BFEC-2DEE569B181C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15202AAE-EF8B-4BF6-BFB9-B35D0C23F40D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15202AAE-EF8B-4BF6-BFB9-B35D0C23F40D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15202AAE-EF8B-4BF6-BFB9-B35D0C23F40D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15202AAE-EF8B-4BF6-BFB9-B35D0C23F40D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

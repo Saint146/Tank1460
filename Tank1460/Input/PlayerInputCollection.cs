@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using Microsoft.Xna.Framework;
-using Tank1460.Extensions;
+﻿using Microsoft.Xna.Framework;
+using System.Collections.Generic;
+using Tank1460.Common.Extensions;
 
 namespace Tank1460.Input;
 

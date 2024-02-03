@@ -1,24 +1,19 @@
-﻿using System;
-using System.Linq;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Linq;
 using Tank1460.Input;
 using Tank1460.LevelObjects.Tiles;
 
 namespace Tank1460;
 
-internal class Menu : IDisposable
+internal class Menu
 {
-    public Rectangle Bounds { get; private set; }
-
     public int PlayerCount { get; private set; }
 
-    public int LevelNumber { get; private set; }
+    public int LevelNumber { get; }
 
     private MenuStatus Status { get; set; }
-
-    private ContentManagerEx Content { get; }
 
     private Font _font, _shadowFont, _pressedFont;
     private TimedAnimationPlayer _pointerSprite;
@@ -46,21 +41,14 @@ internal class Menu : IDisposable
     private static readonly Point MenuItem1StartingShadowPosition = MenuItem1StartingPosition + new Point(1, 1);
     private static readonly Point MenuItem2StartingShadowPosition = MenuItem2StartingPosition + new Point(1, 1);
 
-    public Menu(IServiceProvider serviceProvider, int defaultPlayerCount, int defaultLevelNumber)
+    public Menu(ContentManagerEx content, int defaultPlayerCount, int defaultLevelNumber)
     {
-        Content = new ContentManagerEx(serviceProvider, "Content");
         PlayerCount = defaultPlayerCount;
         LevelNumber = defaultLevelNumber;
 
         Status = MenuStatus.Running;
 
-        LoadContent();
-    }
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        Content.Unload();
+        LoadContent(content);
     }
 
     public void HandleInput(PlayerInputCollection playersInputs, MouseState mouseState)
@@ -126,13 +114,13 @@ internal class Menu : IDisposable
         _pointerSprite.ProcessAnimation(gameTime);
     }
 
-    private void LoadContent()
+    private void LoadContent(ContentManagerEx content)
     {
-        _font = new Font(Content, Color.White);
-        _shadowFont = new Font(Content, new Color(0xff7f7f7f));
-        _pressedFont = new Font(Content, new Color(0x775000e0));
+        _font = content.LoadFont(@"Sprites/Font/Pixel8", Color.White);
+        _shadowFont = content.LoadFont(@"Sprites/Font/Pixel8", new Color(0xff7f7f7f));
+        _pressedFont = content.LoadFont(@"Sprites/Font/Pixel8", new Color(0x775000e0));
 
-        var pointerTexture = Content.LoadRecoloredTexture(@"Sprites/Tank/Type0/Right", @"Sprites/_R/Tank/Yellow");
+        var pointerTexture = content.LoadRecoloredTexture(@"Sprites/Tank/Type0/Right", @"Sprites/_R/Tank/Yellow");
         var pointerAnimation = new Animation(pointerTexture, 4 * Tank1460Game.OneFrameSpan, true);
         _pointerSprite = new TimedAnimationPlayer();
         _pointerSprite.PlayAnimation(pointerAnimation);

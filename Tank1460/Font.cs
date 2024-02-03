@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Tank1460.Extensions;
+using System.Collections.Generic;
 
 namespace Tank1460;
 
@@ -18,12 +16,9 @@ public class Font
 
     private readonly Dictionary<char, Rectangle> _charTexturePositions = new();
 
-    public Font(ContentManager content, Color? fontColor = null)
+    public Font(Texture2D fontTexture)
     {
-        _texture = content.Load<Texture2D>(@"Sprites/Hud/Font");
-        if (fontColor.HasValue)
-            _texture = _texture.RecolorAsCopy(Color.Black, fontColor.Value);
-
+        _texture = fontTexture;
         InitTexturePositions();
     }
 

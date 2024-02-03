@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Tank1460.Common.Extensions;
 using Tank1460.Extensions;
 using Tank1460.LevelObjects.Tiles;
 
@@ -22,15 +23,15 @@ public class LevelHud
         { PlayerIndex.Two, '║' }
     };
 
-    public LevelHud(ContentManager content)
+    public LevelHud(ContentManagerEx content)
     {
         LoadContent(content);
     }
 
-    private void LoadContent(ContentManager content)
+    private void LoadContent(ContentManagerEx content)
     {
-        _font = new Font(content);
-        _redFont = new Font(content, new Color(0x0027d1));
+        _font = content.LoadFont(@"Sprites/Font/Pixel8");
+        _redFont = content.LoadFont(@"Sprites/Font/Pixel8", new Color(0x0027d1));
         _bot = content.Load<Texture2D>(@"Sprites/Hud/Bot");
         _player = content.Load<Texture2D>(@"Sprites/Hud/Player");
         _levelFlag = content.Load<Texture2D>(@"Sprites/Hud/Flag");

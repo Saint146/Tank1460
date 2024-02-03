@@ -1,4 +1,6 @@
-﻿namespace Tank1460;
+﻿using Tank1460.Common.Level.Object.Tank;
+
+namespace Tank1460;
 
 public class PlayerState
 {

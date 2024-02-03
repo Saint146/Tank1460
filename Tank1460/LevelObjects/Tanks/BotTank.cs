@@ -3,7 +3,12 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Tank1460.Audio;
+using Tank1460.Common;
+using Tank1460.Common.Extensions;
+using Tank1460.Common.Level.Object;
+using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Extensions;
+using ObjectDirectionExtensions = Tank1460.Common.Extensions.ObjectDirectionExtensions;
 
 namespace Tank1460.LevelObjects.Tanks;
 
@@ -71,11 +76,11 @@ public class BotTank : Tank
                 break;
             case 1:
                 var targetPlayer = Level.GetTargetPlayerForBot(_index);
-                spriteBatch.DrawDebugArrow(BoundingRectangle, Microsoft.Xna.Framework.Color.Gold, targetPlayer?.BoundingRectangle.Center);
+                Extensions.SpriteBatchExtensions.DrawDebugArrow(spriteBatch, BoundingRectangle, Microsoft.Xna.Framework.Color.Gold, targetPlayer?.BoundingRectangle.Center);
                 break;
             default:
                 var targetFalcon = Level.GetTargetFalconForBot(_index);
-                spriteBatch.DrawDebugArrow(BoundingRectangle, Microsoft.Xna.Framework.Color.Red, targetFalcon?.BoundingRectangle.Center);
+                Extensions.SpriteBatchExtensions.DrawDebugArrow(spriteBatch, BoundingRectangle, Microsoft.Xna.Framework.Color.Red, targetFalcon?.BoundingRectangle.Center);
                 break;
         }
 #endif

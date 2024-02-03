@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Tank1460.Audio;
+using Tank1460.Common.Level.Object.Tile;
 using Tank1460.LevelObjects.Tanks;
 
 namespace Tank1460.LevelObjects.Tiles;

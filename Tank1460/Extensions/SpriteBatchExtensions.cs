@@ -2,14 +2,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
+using Tank1460.Common.Extensions;
 
 namespace Tank1460.Extensions;
 
-public static class SpriteBatchExtensions
+internal static class SpriteBatchExtensions
 {
-    public static void Draw(this SpriteBatch spriteBatch, Texture2D texture, Point position, Color color) =>
-        spriteBatch.Draw(texture, position.ToVector2(), color);
-
     /// <summary>
     /// Нарисовать столько меток, сколько передано.
     /// </summary>

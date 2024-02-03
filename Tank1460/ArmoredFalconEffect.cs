@@ -1,9 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Microsoft.Xna.Framework.Graphics;
-using Tank1460.Extensions;
+using Tank1460.Common.Extensions;
+using Tank1460.Common.Level.Object.Tile;
 using Tank1460.LevelObjects;
 using Tank1460.LevelObjects.Tiles;
 

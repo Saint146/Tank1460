@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 using System.Collections.Generic;
 using Tank1460.Audio;
+using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Input;
 
 namespace Tank1460.LevelObjects.Tanks;

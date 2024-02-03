@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Tank1460.Audio;
+using Tank1460.Common.Extensions;
+using Tank1460.Common.Level.Object;
+using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Extensions;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tiles;
@@ -251,7 +254,7 @@ public abstract class Tank : MoveableLevelObject
                 break;
 
             case TankFlashingType.Immobile:
-                bonusTexture = content.LoadColoredTexture(Microsoft.Xna.Framework.Color.Transparent,
+                bonusTexture = content.CreateColoredTexture(Microsoft.Xna.Framework.Color.Transparent,
                                                           plainTexture.Bounds.Width,
                                                           plainTexture.Bounds.Height);
                 break;

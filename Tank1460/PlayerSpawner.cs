@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Tank1460.Audio;
+using Tank1460.Common.Level.Object.Tank;
 using Tank1460.LevelObjects.Tanks;
 
 namespace Tank1460;

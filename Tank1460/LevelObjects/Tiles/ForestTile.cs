@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using Tank1460.Common.Level.Object.Tile;
 
 namespace Tank1460.LevelObjects.Tiles;
 
