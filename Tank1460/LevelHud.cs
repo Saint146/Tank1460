@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Collections.Generic;
 using Tank1460.Common.Extensions;
-using Tank1460.Extensions;
 using Tank1460.LevelObjects.Tiles;
 
 namespace Tank1460;
 
 public class LevelHud
 {
-    public static readonly int HudWidth = 3 * Tile.DefaultWidth;
+    public static readonly int HudWidth = 2 * Tile.DefaultWidth;
 
     private Font _font, _redFont;
 

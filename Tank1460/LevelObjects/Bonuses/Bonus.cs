@@ -139,7 +139,6 @@ public class Bonus : LevelObject
 
     public override void Update(GameTime gameTime)
     {
-        base.Update(gameTime);
         Sprite.ProcessAnimation(gameTime);
 
         HandleCollisions();

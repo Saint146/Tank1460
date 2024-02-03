@@ -43,8 +43,6 @@ public abstract class MoveableLevelObject : LevelObject
             TryMove();
         }
 
-        base.Update(gameTime);
-
         // Очищаем движение перед следующим тактом.
         MovingDirection = null;
     }

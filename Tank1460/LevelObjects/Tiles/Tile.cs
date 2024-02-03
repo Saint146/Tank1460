@@ -1,4 +1,5 @@
-﻿using Tank1460.Common.Level.Object.Tile;
+﻿using Microsoft.Xna.Framework;
+using Tank1460.Common.Level.Object.Tile;
 
 namespace Tank1460.LevelObjects.Tiles;
 
@@ -23,7 +24,12 @@ public abstract class Tile : LevelObject
     {
     }
 
-    public virtual TileView TileView => TileView.Default;
+    public override void Update(GameTime gameTime)
+    {
+    }
+
+    public virtual TileLayer TileLayer => TileLayer.Default;
+
     protected override IAnimation GetDefaultAnimation() => _animation;
 
     protected override void LoadContent()

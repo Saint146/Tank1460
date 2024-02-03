@@ -1,6 +1,6 @@
 ﻿namespace Tank1460.LevelObjects;
 
-public enum TileView
+public enum TileLayer
 {
     Default,
     Foreground

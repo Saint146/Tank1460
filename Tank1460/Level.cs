@@ -124,8 +124,10 @@ public class Level : IDisposable
             PlayerSpawners[playerIndex].SetNextSpawnSettings(playerState.TankType, playerState.TankHasShip);
         }
 
-        SoundPlayer.Play(Sound.Intro);
         Status = LevelStatus.Intro;
+#if !DEBUG
+        SoundPlayer.Play(Sound.Intro);
+#endif
     }
 
     public void AddExplosion(Explosion explosion) => _explosions.Add(explosion);
@@ -281,7 +283,7 @@ public class Level : IDisposable
         //    spriteBatch.Draw(layers[i], Vector2.Zero, Color.White);
 
         // TODO: перейти на слои
-        foreach (var tile in _tiles.Where(tile => tile.TileView == TileView.Default))
+        foreach (var tile in _tiles.Where(tile => tile.TileLayer == TileLayer.Default))
             tile.Draw(gameTime, spriteBatch);
 
         foreach (var playerTank in GetAllPlayerTanks())
@@ -298,7 +300,7 @@ public class Level : IDisposable
 
         BotManager.Draw(gameTime, spriteBatch);
 
-        foreach (var tile in _tiles.Where(tile => tile.TileView == TileView.Foreground))
+        foreach (var tile in _tiles.Where(tile => tile.TileLayer == TileLayer.Foreground))
             tile.Draw(gameTime, spriteBatch);
 
         BonusManager.Draw(gameTime, spriteBatch);

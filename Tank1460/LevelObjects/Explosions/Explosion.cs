@@ -23,7 +23,6 @@ public abstract class Explosion : LevelObject
 
     public override void Update(GameTime gameTime)
     {
-        base.Update(gameTime);
         Sprite.ProcessAnimation(gameTime);
 
         if (Sprite.HasAnimationEnded)

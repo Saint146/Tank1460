@@ -13,7 +13,7 @@ public class ForestTile : DestructibleTile
 
     public override CollisionType CollisionType => CollisionType.Shootable;
 
-    public override TileView TileView => TileView.Foreground;
+    public override TileLayer TileLayer => TileLayer.Foreground;
 
     protected override IAnimation GetAnimation() => new Animation(Level.Content.Load<Texture2D>(@"Sprites/Tiles/Forest"), false);
 

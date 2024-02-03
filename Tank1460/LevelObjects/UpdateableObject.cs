@@ -14,9 +14,7 @@ public abstract class UpdateableObject
         ToRemove = false;
     }
 
-    public virtual void Update(GameTime gameTime)
-    {
-    }
+    public abstract void Update(GameTime gameTime);
 
     protected internal void Remove()
     {

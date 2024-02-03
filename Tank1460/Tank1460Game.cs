@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using MonoGame.Extended;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -44,6 +43,9 @@ public class Tank1460Game : Game
     private static Point PostLevelIndent { get; } = new(Tile.DefaultWidth, Tile.DefaultHeight);
     private static Point PostHudIndent { get; } = new(Tile.DefaultWidth, 0);
 
+    private readonly Matrix _levelIndentTransformation = Matrix.CreateTranslation(PreLevelIndent.X, PreLevelIndent.Y, 0);
+    private readonly Matrix _menuIndentTransformation = Matrix.Identity;
+
     private Point BaseScreenSize =>
         // Отступ слева и сверху
         PreLevelIndent +
@@ -58,16 +60,13 @@ public class Tank1460Game : Game
 
     private static Color LevelBackColor { get; } = new(0x7f, 0x7f, 0x7f);
 
-    private static Color CurtainColor { get; } = LevelBackColor;
-
     private static Color GameBackColor { get; } = Color.Black;
 
     private bool _customCursorEnabled;
-
-    internal bool CustomCursorEnabled
+    private bool CustomCursorEnabled
     {
         get => _customCursorEnabled;
-        private set
+        set
         {
             _customCursorEnabled = value;
             IsMouseVisible = !value;
@@ -83,20 +82,15 @@ public class Tank1460Game : Game
     private Menu _menu;
     private LevelHud _levelHud;
     private Cursor _cursor;
+    private Curtain _curtain;
 
-    private readonly Matrix _levelTransformation = Matrix.CreateTranslation(PostLevelIndent.X, PostLevelIndent.Y, 0);
-    private Matrix _globalTransformation;
+    private Matrix _levelTransformation;
+    private Matrix _menuTransformation;
     private float _scale = 1.0f;
     private const int DefaultScale = 3;
 
     private int _backbufferWidth, _backbufferHeight;
     private bool _isCustomCursorVisible;
-
-    private const int OpenedCurtainPosition = 0;
-    private const int ClosedCurtainPosition = 30;
-    private int _curtainPosition = OpenedCurtainPosition;
-    private double _curtainTime;
-    private const double CurtainTickTime = OneFrameSpan;
 
     private readonly PlayerInputHandler _playerInputHandler;
     private MouseState _mouseState;
@@ -111,6 +105,8 @@ public class Tank1460Game : Game
 
     private PlayerIndex[] PlayersInGame { get; set; } = { PlayerIndex.One };
 
+    private string LevelFolder { get; set; } = "Modern";
+
     private int LevelNumber { get; set; } = 1;
 
     public Tank1460Game()
@@ -124,7 +120,7 @@ public class Tank1460Game : Game
 
         _playerInputHandler = new PlayerInputHandler(AllPlayers);
 
-        ResetPlayersStates();
+        ResetGameState();
 
         Status = GameStatus.Initializing;
 
@@ -165,43 +161,62 @@ public class Tank1460Game : Game
         var inputs = HandleInput();
 
         if (_isCustomCursorVisible)
-            _cursor.Update(gameTime, _mouseState);
+            _cursor.Update(gameTime, _mouseState, _scale);
 
-        ProcessStatus(gameTime);
+        ProcessStatus();
 
-        _menu?.HandleInput(inputs, _mouseState);
+        _menu?.HandleInput(inputs, _mouseState.CopyWithPosition(_mouseState.Position.ApplyReversedTransformation(_menuTransformation)));
         _menu?.Update(gameTime);
 
         _level?.HandleInput(inputs);
         _level?.Update(gameTime);
+
+        _curtain?.Update(gameTime);
 
         base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(_level is null ? GameBackColor : LevelBackColor);
-
-        _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _globalTransformation);
+        GraphicsDevice.Clear(_menu is not null || _level is null ? GameBackColor : LevelBackColor);
 
         if (_level is not null)
         {
-            _level.Draw(gameTime, _spriteBatch);
+            _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _levelTransformation);
 
-            var hudPosition = /*PreLevelIndent +*/
-                new Point(GetLevelBounds().Width + PostLevelIndent.X - 1, 0); // ну вот так в оригинале, на один пиксель сдвинуто левее сетки
+            _level.Draw(gameTime, _spriteBatch);
+            var hudPosition = new Point(GetLevelBounds().Width + PostLevelIndent.X - 1, 0); // ну вот так в оригинале, на один пиксель сдвинуто левее сетки
             _levelHud.Draw(_level, _spriteBatch, hudPosition);
+
+            _spriteBatch.End();
         }
 
-        _menu?.Draw(gameTime, _spriteBatch);
+        if (_menu is not null)
+        {
+            _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _menuTransformation);
 
-        DrawCurtain(_spriteBatch);
+            _menu.Draw(gameTime, _spriteBatch);
+
+            _spriteBatch.End();
+        }
+
+        if (_curtain is not null)
+        {
+            _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp);
+
+            _curtain.Draw(_spriteBatch, new Rectangle(0, 0, _backbufferWidth, _backbufferHeight));
+
+            _spriteBatch.End();
+        }
 
         if (_isCustomCursorVisible)
+        {
+            _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp);
+
             _cursor.Draw(gameTime, _spriteBatch);
 
-        _spriteBatch.End();
-
+            _spriteBatch.End();
+        }
 
         base.Draw(gameTime);
     }
@@ -229,7 +244,7 @@ public class Tank1460Game : Game
         base.UnloadContent();
     }
 
-    private void ProcessStatus(GameTime gameTime)
+    private void ProcessStatus()
     {
         switch (Status)
         {
@@ -248,21 +263,21 @@ public class Tank1460Game : Game
                 break;
 
             case GameStatus.CurtainOpening:
-                ProcessCurtain(gameTime, -1);
-                if (_curtainPosition >= OpenedCurtainPosition)
+                if (!_curtain.IsFinished)
                     break;
 
+                _curtain = null;
                 Status = GameStatus.InLevel;
                 _level.Start();
                 break;
 
             case GameStatus.CurtainClosing:
-                ProcessCurtain(gameTime, 1);
-                if (_curtainPosition <= ClosedCurtainPosition)
+                if (!_curtain.IsFinished)
                     break;
 
+                _curtain = null;
                 UnloadMenu();
-                LoadLevel("Modern", LevelNumber);
+                LoadLevel();
                 break;
 
             default:
@@ -284,40 +299,30 @@ public class Tank1460Game : Game
         //Content.MassLoadContent<LevelStructure>("Levels", "*.*", recurse: true);
     }
 
-    private void ProcessCurtain(GameTime gameTime, int step)
-    {
-        _curtainTime += gameTime.ElapsedGameTime.TotalSeconds;
-
-        while (_curtainTime > CurtainTickTime)
-        {
-            _curtainTime -= _curtainTime;
-            _curtainPosition += step;
-        }
-    }
-
-    private void ResetPlayersStates()
+    private void ResetGameState()
     {
         _gameState = new GameState(PlayersInGame);
     }
 
     private PlayerInputCollection HandleInput()
     {
+        // Клавиатура.
         _keyboardState = KeyboardEx.GetState();
-        _mouseState = Mouse.GetState();
 
+        // Мышь.
+        _mouseState = Mouse.GetState();
         // Курсор не обновляет свое состояние, если он отключен или вне экрана.
         if (_customCursorEnabled) 
             _isCustomCursorVisible = _mouseState.X >= 0 && _mouseState.Y >= 0 && _mouseState.X < _backbufferWidth && _mouseState.Y < _backbufferHeight;
         else
             _isCustomCursorVisible = false;
 
-        // Сразу после этого пересчитываем координаты мыши в игровые.
-        _mouseState = _mouseState.CopyWithPosition(_mouseState.Position.ApplyReversedTransformation(_globalTransformation));
-
+        // Геймпады.
         _gamePadStates = _playerInputHandler.GetActiveGamePadIndices().ToDictionary(index => index, GamePad.GetState);
 
         var inputs = _playerInputHandler.HandleInput(_keyboardState, _gamePadStates);
 
+        // Глобальные бинды.
         if (KeyboardEx.HasBeenPressed(Keys.F11) || (KeyboardEx.IsPressed(Keys.LeftAlt) || KeyboardEx.IsPressed(Keys.RightAlt)) && KeyboardEx.HasBeenPressed(Keys.Enter))
         {
             _graphics.IsFullScreen = !_graphics.IsFullScreen;
@@ -345,13 +350,18 @@ public class Tank1460Game : Game
             foreach (var digit in Enumerable.Range(0, 10))
             {
                 var key = Keys.D0 + digit;
+                if (!KeyboardEx.HasBeenPressed(key))
+                    continue;
 
-                if (KeyboardEx.HasBeenPressed(key))
-                {
-                    LoadLevel("Test", digit);
-                    break;
-                }
+                StartLoadingLevelSequence("Test", digit);
+                break;
             }
+
+            if (KeyboardEx.HasBeenPressed(Keys.OemPlus))
+                StartLoadingLevelSequence(levelNumber: LevelNumber + 1);
+
+            if (KeyboardEx.HasBeenPressed(Keys.OemMinus))
+                StartLoadingLevelSequence(levelNumber: LevelNumber + 1);
         }
 
         if (_keyboardState.IsKeyDown(Keys.J))
@@ -386,9 +396,24 @@ public class Tank1460Game : Game
     {
         LevelNumber = _menu.LevelNumber;
         PlayersInGame = AllPlayers.Take(_menu.PlayerCount).ToArray();
-        ResetPlayersStates();
+        ResetGameState();
+        StartLoadingLevelSequence();
+    }
 
-        _curtainTime = 0.0;
+    /// <summary>
+    /// Начать процесс загрузки уровня (закрыть шторку и открыть её уже с уровнем).
+    /// </summary>
+    /// <param name="levelFolder">Папка с уровнями. Если не указать, останется от предыдущего уровня.</param>
+    /// <param name="levelNumber">Номер уровня. Если не указать, останется от предыдущего уровня.</param>
+    private void StartLoadingLevelSequence(string levelFolder = null, int? levelNumber = null)
+    {
+        if (levelFolder is not null)
+            LevelFolder = levelFolder;
+
+        if (levelNumber is not null)
+            LevelNumber = levelNumber.Value;
+
+        _curtain = new Curtain(LevelBackColor, CurtainAction.Close);
         Status = GameStatus.CurtainClosing;
     }
 
@@ -404,15 +429,14 @@ public class Tank1460Game : Game
         _level = null;
     }
 
-    private void LoadLevel(string levelFolder, int levelNumber)
+    private void LoadLevel()
     {
-        Debug.WriteLine($"Loading level {levelNumber}...");
+        Debug.WriteLine($"Loading level {LevelFolder}/{LevelNumber}...");
 
         UnloadLevel();
 
-        LevelNumber = levelNumber;
-        var levelStructure = Content.Load<LevelStructure>($"Levels/{levelFolder}/{levelNumber}");
-        _level = new Level(Services, levelStructure, levelNumber, _gameState);
+        var levelStructure = Content.Load<LevelStructure>($"Levels/{LevelFolder}/{LevelNumber}");
+        _level = new Level(Services, levelStructure, LevelNumber, _gameState);
 
         _level.LevelComplete += Level_LevelComplete;
         _level.GameOver += Level_GameOver;
@@ -421,41 +445,21 @@ public class Tank1460Game : Game
 
         // TODO: Вынести в сеттер Status
         Status = GameStatus.CurtainOpening;
-        _curtainPosition = ClosedCurtainPosition;
-        _curtainTime = 0.0;
+        _curtain = new Curtain(LevelBackColor, CurtainAction.Open);
 
-        Debug.WriteLine($"Level {levelNumber} loaded.");
+        Debug.WriteLine($"Level {LevelFolder}/{LevelNumber} loaded.");
     }
 
     private void Level_LevelComplete(Level level)
     {
         _gameState = level.GetGameState();
-
-        LevelNumber++;
-
-        _curtainTime = 0.0;
-        Status = GameStatus.CurtainClosing;
+        StartLoadingLevelSequence(levelNumber: LevelNumber + 1);
     }
 
     private void Level_GameOver(Level level)
     {
         Status = GameStatus.Ready;
-        ResetPlayersStates();
-    }
-
-    private void DrawCurtain(SpriteBatch spriteBatch)
-    {
-        if (Status != GameStatus.CurtainOpening && Status != GameStatus.CurtainClosing)
-            return;
-
-        var screenHeight = BaseScreenSize.Y;
-
-        var curtainHeight = screenHeight * (_curtainPosition - OpenedCurtainPosition) /
-                            (ClosedCurtainPosition - OpenedCurtainPosition) / 2;
-        var curtainWidth = BaseScreenSize.X;
-
-        spriteBatch.FillRectangle(0, 0, curtainWidth, curtainHeight, CurtainColor);
-        spriteBatch.FillRectangle(0, screenHeight - curtainHeight, curtainWidth, curtainHeight, CurtainColor);
+        ResetGameState();
     }
 
     private void LoadSettings()
@@ -529,7 +533,7 @@ public class Tank1460Game : Game
 
     private void ScalePresentationArea()
     {
-        // Запоминаем положение и размер окна, только если находимся в окне.
+        // Запоминаем положение и размер окна, только если находимся в окне, чтобы потом хранить именно его.
         if (!_graphics.IsFullScreen && !Window.IsMaximized())
         {
             _windowPosition = Window.Position;
@@ -539,14 +543,18 @@ public class Tank1460Game : Game
         _backbufferWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
         _backbufferHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
 
+        // Считаем соотношения реальных размеров окна и виртуального экрана.
         var horScaling = (float)_backbufferWidth / BaseScreenSize.X;
         var verScaling = (float)_backbufferHeight / BaseScreenSize.Y;
+
+        // Берем минимальный из них как масштаб и создаём матрицу для масштабирования.
         _scale = MathHelper.Min(horScaling, verScaling);
         if (_isScalingPixelPerfect)
             _scale = (int)_scale;
         var screenScalingFactor = new Vector3(_scale, _scale, 1);
         var scaleTransformation = Matrix.CreateScale(screenScalingFactor);
 
+        // Подсчитываем сдвиги по координатам и создаём матрицу для сдвига.
         var xShift = (horScaling - _scale) * BaseScreenSize.X / 2;
         var yShift = (verScaling - _scale) * BaseScreenSize.Y / 2;
         if (_isScalingPixelPerfect)
@@ -556,6 +564,11 @@ public class Tank1460Game : Game
         }
         var shiftTransformation = Matrix.CreateTranslation(xShift, yShift, 0);
 
-        _globalTransformation = _levelTransformation * scaleTransformation * shiftTransformation;
+        // Итоговая трансформация.
+        var globalTransformation = scaleTransformation * shiftTransformation;
+
+        // Для разных сущностей рассчитываем от их изначальных сдвигов.
+        _levelTransformation = _levelIndentTransformation * globalTransformation;
+        _menuTransformation = _menuIndentTransformation * globalTransformation;
     }
 }

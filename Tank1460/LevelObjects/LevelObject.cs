@@ -6,7 +6,7 @@ using Tank1460.Extensions;
 
 namespace Tank1460.LevelObjects;
 
-public abstract class LevelObject : UpdateableObject
+public abstract class LevelObject : DrawableObject
 {
     public Point Position
     {
@@ -44,7 +44,7 @@ public abstract class LevelObject : UpdateableObject
     {
     }
 
-    public virtual void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+    public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         Sprite.Draw(spriteBatch, Position.ToVector2());
 

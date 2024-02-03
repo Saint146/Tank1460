@@ -16,7 +16,7 @@ internal class Menu
     private MenuStatus Status { get; set; }
 
     private Font _font, _shadowFont, _pressedFont;
-    private TimedAnimationPlayer _pointerSprite;
+    private TimedAnimationPlayer _menuCursorSprite;
 
     /// <summary>
     /// Пункт меню, на котором левую кнопку мыши последний раз зажали.
@@ -98,10 +98,10 @@ internal class Menu
         font = _lastPressedMenuItemIndex == itemIndex && _hoveringMenuItemIndex == itemIndex ? _pressedFont : _font;
         font.Draw(MenuItem2PlayersText, spriteBatch, MenuItem2StartingPosition);
 
-        var pointerX = MenuItemsX - Tile.DefaultWidth - _pointerSprite.VisibleRect.Width;
-        var pointerY = (PlayerCount == 1 ? MenuItem1Y : MenuItem2Y) - _pointerSprite.VisibleRect.Height / 4.0f;
+        var pointerX = MenuItemsX - Tile.DefaultWidth - _menuCursorSprite.VisibleRect.Width;
+        var pointerY = (PlayerCount == 1 ? MenuItem1Y : MenuItem2Y) - _menuCursorSprite.VisibleRect.Height / 4.0f;
 
-        _pointerSprite.Draw(spriteBatch, new Vector2(pointerX, pointerY));
+        _menuCursorSprite.Draw(spriteBatch, new Vector2(pointerX, pointerY));
     }
 
     public void Update(GameTime gameTime)
@@ -111,7 +111,7 @@ internal class Menu
         _menuItem2Bounds = _font.GetTextRectangle(MenuItem2PlayersText, MenuItem2StartingPosition);
         _menuItem2Bounds.Inflate(4, 4);
 
-        _pointerSprite.ProcessAnimation(gameTime);
+        _menuCursorSprite.ProcessAnimation(gameTime);
     }
 
     private void LoadContent(ContentManagerEx content)
@@ -122,8 +122,8 @@ internal class Menu
 
         var pointerTexture = content.LoadRecoloredTexture(@"Sprites/Tank/Type0/Right", @"Sprites/_R/Tank/Yellow");
         var pointerAnimation = new Animation(pointerTexture, 4 * Tank1460Game.OneFrameSpan, true);
-        _pointerSprite = new TimedAnimationPlayer();
-        _pointerSprite.PlayAnimation(pointerAnimation);
+        _menuCursorSprite = new TimedAnimationPlayer();
+        _menuCursorSprite.PlayAnimation(pointerAnimation);
     }
 
     private void HandleClick(int menuItemIndex)
@@ -152,10 +152,10 @@ internal class Menu
     public delegate void MenuEvent();
 
     public event MenuEvent MenuExited;
-}
 
-internal enum MenuStatus
-{
-    Running,
-    Exited
+    private enum MenuStatus
+    {
+        Running,
+        Exited
+    }
 }

@@ -13,6 +13,7 @@ internal class Cursor
 
     protected readonly TimedAnimationPlayer Sprite = new();
     private IAnimation _animation;
+    private float _scale = 1.0f;
 
     public Cursor(ContentManager content)
     {
@@ -29,14 +30,15 @@ internal class Cursor
         _animation = new ShiftingAnimation(allCursors, double.MaxValue, true, Tank1460Game.OneFrameSpan * 240);
     }
 
-    public void Update(GameTime gameTime, MouseState mouseState)
+    public void Update(GameTime gameTime, MouseState mouseState, float scale)
     {
         _animation.Process(gameTime);
         Position = mouseState.Position;
+        _scale = scale;
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        Sprite.Draw(spriteBatch, Position.ToVector2());
+        Sprite.Draw(spriteBatch, Position.ToVector2(), _scale);
     }
 }

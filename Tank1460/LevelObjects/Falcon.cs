@@ -44,8 +44,6 @@ public class Falcon : LevelObject
 
     public override void Update(GameTime gameTime)
     {
-        base.Update(gameTime);
-
         switch (Status)
         {
             case FalconStatus.Exploding when _explosion.ToRemove:
