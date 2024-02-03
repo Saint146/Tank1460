@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Tank1460;
 
+// TODO: Слишком много общего с потомками, хочется вынести в базовый класс.
 public class Animation : IAnimation
 {
     public int FrameWidth { get; }
@@ -46,9 +47,9 @@ public class Animation : IAnimation
 
     public Animation(Texture2D texture, double frameTime, bool isLooping)
         : this(texture,
-            // Assume square frames.
-            Enumerable.Repeat(frameTime, texture.Width / texture.Height).ToArray(),
-            isLooping)
+               // Assume square frames.
+               Enumerable.Repeat(frameTime, texture.Width / texture.Height).ToArray(),
+               isLooping)
     {
     }
 

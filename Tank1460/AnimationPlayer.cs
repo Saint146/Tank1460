@@ -59,6 +59,11 @@ public class AnimationPlayer
         Animation.Reset();
     }
 
+    public void Draw(SpriteBatch spriteBatch, Point position, float scale = 1.0f)
+    {
+        Draw(spriteBatch, position.ToVector2(), scale);
+    }
+
     public void Draw(SpriteBatch spriteBatch, Vector2 position, float scale = 1.0f)
     {
         if (Animation == null)

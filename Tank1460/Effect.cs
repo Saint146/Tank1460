@@ -13,5 +13,4 @@ public abstract class Effect
     }
 
     public abstract void Update(GameTime gameTime);
-    public abstract void Draw(SpriteBatch spriteBatch, Vector2 position);
 }

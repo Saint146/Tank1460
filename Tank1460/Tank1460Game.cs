@@ -345,6 +345,11 @@ public class Tank1460Game : Game
             ScalePresentationArea();
         }
 
+        if (KeyboardEx.HasBeenPressed(Keys.Delete))
+        {
+            _level?.GetAllPlayerTanks().EmptyIfNull().ForEach(tank => tank.Explode(null));
+        }
+
         if (_keyboardState.IsKeyDown(Keys.LeftShift))
         {
             foreach (var digit in Enumerable.Range(0, 10))
@@ -364,7 +369,7 @@ public class Tank1460Game : Game
                 StartLoadingLevelSequence(levelNumber: LevelNumber + 1);
         }
 
-        if (_keyboardState.IsKeyDown(Keys.J))
+        if (_keyboardState.IsKeyDown(Keys.J) && _level is not null)
         {
             var x = Rng.Next(_level.TileBounds.Left, _level.TileBounds.Right);
             var y = Rng.Next(_level.TileBounds.Top, _level.TileBounds.Bottom);

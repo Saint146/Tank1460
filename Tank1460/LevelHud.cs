@@ -11,7 +11,7 @@ public class LevelHud
 {
     public static readonly int HudWidth = 2 * Tile.DefaultWidth;
 
-    private Font _font, _redFont;
+    private Font _font;
 
     private Texture2D _bot, _player, _levelFlag;
 
@@ -29,7 +29,6 @@ public class LevelHud
     private void LoadContent(ContentManagerEx content)
     {
         _font = content.LoadFont(@"Sprites/Font/Pixel8");
-        _redFont = content.LoadFont(@"Sprites/Font/Pixel8", new Color(0x0027d1));
         _bot = content.Load<Texture2D>(@"Sprites/Hud/Bot");
         _player = content.Load<Texture2D>(@"Sprites/Hud/Player");
         _levelFlag = content.Load<Texture2D>(@"Sprites/Hud/Flag");

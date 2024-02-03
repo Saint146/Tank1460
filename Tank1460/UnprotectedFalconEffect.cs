@@ -35,7 +35,7 @@ internal class UnprotectedFalconEffect : LevelEffect
     {
     }
 
-    public override void Draw(SpriteBatch spriteBatch, Vector2 position)
+    public override void Draw(SpriteBatch spriteBatch, Rectangle levelBounds)
     {
     }
 }

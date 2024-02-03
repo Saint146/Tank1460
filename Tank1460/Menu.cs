@@ -99,7 +99,7 @@ internal class Menu
         font.Draw(MenuItem2PlayersText, spriteBatch, MenuItem2StartingPosition);
 
         var pointerX = MenuItemsX - Tile.DefaultWidth - _menuCursorSprite.VisibleRect.Width;
-        var pointerY = (PlayerCount == 1 ? MenuItem1Y : MenuItem2Y) - _menuCursorSprite.VisibleRect.Height / 4.0f;
+        var pointerY = (PlayerCount == 1 ? MenuItem1Y : MenuItem2Y) - _menuCursorSprite.VisibleRect.Height / 3.5f;
 
         _menuCursorSprite.Draw(spriteBatch, new Vector2(pointerX, pointerY));
     }

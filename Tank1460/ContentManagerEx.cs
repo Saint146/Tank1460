@@ -102,7 +102,7 @@ public class ContentManagerEx : ContentManager
         return texture;
     }
 
-    public Texture2D CreateColoredTexture(Color color, int width, int height)
+    public Texture2D LoadNewSolidColoredTexture(Color color, int width, int height)
     {
         Debug.Assert(width > 0 && height > 0);
 

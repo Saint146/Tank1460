@@ -4,11 +4,14 @@ namespace Tank1460.Audio;
 
 internal interface ISoundPlayer
 {
-    bool IsMuted { get; }
+    int MinSoundPriority
+    { get; set; }
 
     void Play(Sound sound);
 
     void Loop(Sound sound);
+
+    void StopAll();
 
     void Perform(GameTime gameTime);
 
@@ -19,4 +22,6 @@ internal interface ISoundPlayer
     void Mute();
 
     void Unmute();
+
+    void MuteAllWithLessPriorityThan(Sound sound);
 }

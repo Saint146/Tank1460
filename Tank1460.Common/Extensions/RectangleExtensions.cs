@@ -90,6 +90,9 @@ public static class RectangleExtensions
             case ObjectDirection.Up:
                 height -= cropValue;
                 break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(direction), direction, null);
         }
 
         if (width <= 0 || height <= 0)

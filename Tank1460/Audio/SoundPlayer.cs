@@ -11,7 +11,7 @@ namespace Tank1460.Audio;
 
 internal class SoundPlayer : ISoundPlayer
 {
-    public bool IsMuted { get; private set; } = false;
+    public int MinSoundPriority { get; set; } = int.MinValue;
 
     private readonly Dictionary<Sound, SoundGroup> _sounds = new();
     private readonly Dictionary<SoundChannels, SoundGroup> _toPlay = new();
@@ -27,11 +27,11 @@ internal class SoundPlayer : ISoundPlayer
 
     public void Play(Sound sound)
     {
-        if (IsMuted)
-            return;
-
         var targetSound = _sounds[sound];
         Debug.Assert(!targetSound.IsLooped);
+
+        if (targetSound.Priority < MinSoundPriority)
+            return;
 
         // Если хотя бы на одном канале пересекаемся со звуком такого или выше приоритета (но не таким же), ничего не делаем.
         var playingOnTheSameChannels = targetSound.Channels.Select(channel => _toPlay.GetValueOrDefault(channel));
@@ -44,11 +44,11 @@ internal class SoundPlayer : ISoundPlayer
 
     public void Loop(Sound sound)
     {
-        if (IsMuted)
-            return;
-
         var targetSound = _sounds[sound];
         Debug.Assert(targetSound.IsLooped);
+
+        if (targetSound.Priority < MinSoundPriority)
+            return;
 
         // Если хотя бы на одном канале пересекаемся со звуком такого или выше приоритета или этим же, ничего не делаем.
         var playingOnTheSameChannels = targetSound.Channels.Select(channel => _toPlay.GetValueOrDefault(channel));
@@ -57,6 +57,14 @@ internal class SoundPlayer : ISoundPlayer
 
         // Записываем луп в заявку на этот такт.
         targetSound.Channels.ForEach(channel => _toPlay[channel] = targetSound);
+    }
+
+    public void StopAll()
+    {
+        foreach (var sound in _wasPlaying.Values.Where(sound => sound.IsPlaying).ToHashSet())
+            sound.Stop();
+
+        _wasPlaying.Clear();
     }
 
     // Каждый такт сначала получаем от всех команды по звукам (Play/Loop/Stop), сортируем по каналам и приоритетам,
@@ -148,12 +156,17 @@ internal class SoundPlayer : ISoundPlayer
 
     public void Mute()
     {
-        IsMuted = true;
+        MinSoundPriority = int.MaxValue;
     }
 
     public void Unmute()
     {
-        IsMuted = false;
+        MinSoundPriority = int.MinValue;
+    }
+
+    public void MuteAllWithLessPriorityThan(Sound sound)
+    {
+        MinSoundPriority = _sounds[sound].Priority;
     }
 
     private void LoadContent(ContentManagerEx content)

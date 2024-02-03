@@ -63,6 +63,8 @@ public class Level : IDisposable
 
     internal bool ClassicRules => false;
 
+    private LevelStatus Status { get; set; }
+
     private readonly List<Tile> _tiles = new();
     //private Texture2D[] layers;
     private List<LevelObject>[,] _tileObjectMap;
@@ -82,26 +84,9 @@ public class Level : IDisposable
     private bool _cheatGodMode;
 #endif
 
-    private LevelStatus _status = LevelStatus.Loading;
     private double _delayTime;
     private double _delayEffectTime;
-
-    internal LevelStatus Status
-    {
-        get => _status;
-        private set
-        {
-            if (value == LevelStatus.Paused && _status != LevelStatus.Paused)
-            {
-                SoundPlayer.PauseAndPushState();
-                SoundPlayer.Play(Sound.Pause);
-            }
-            else if (value != LevelStatus.Paused && _status == LevelStatus.Paused)
-                SoundPlayer.ResumeAndPopState();
-
-            _status = value;
-        }
-    }
+    private LevelStatus _statusBeforePause;
 
     public Level(IServiceProvider serviceProvider, LevelStructure levelStructure, int levelNumber, GameState startingGameState)
     {
@@ -165,13 +150,14 @@ public class Level : IDisposable
             case LevelStatus.LostScoreScreen:
             case LevelStatus.GameOverScreen:
             case LevelStatus.Win:
-            case LevelStatus.Lost:
+            case LevelStatus.GameOver:
                 playersInputs.ClearInputs();
                 break;
 
             case LevelStatus.Running:
             case LevelStatus.Paused:
             case LevelStatus.WinDelay:
+            case LevelStatus.LostPreDelay:
                 break;
 
             default:
@@ -195,7 +181,8 @@ public class Level : IDisposable
                 var playerInput = playersInputs[playerIndex];
 
                 if (playerInput.Pressed.HasFlag(PlayerInputCommands.Start))
-                    Status = Status == LevelStatus.Running ? LevelStatus.Paused : LevelStatus.Running;
+                    TogglePause();
+
                 tank.HandleInput(playerInput);
             }
         }
@@ -250,9 +237,9 @@ public class Level : IDisposable
                 playerSpawner.Update(gameTime);
 
             BonusManager.Update(gameTime);
-
-            _levelEffects.Update(gameTime);
         }
+
+        _levelEffects.Update(gameTime, Status == LevelStatus.Paused);
 
         SoundPlayer.Perform(gameTime);
     }
@@ -304,7 +291,7 @@ public class Level : IDisposable
             tile.Draw(gameTime, spriteBatch);
 
         BonusManager.Draw(gameTime, spriteBatch);
-        _levelEffects.Draw(spriteBatch, Bounds.Location.ToVector2());
+        _levelEffects.Draw(spriteBatch, Bounds);
     }
 
     public static Rectangle GetTileBounds(int tileX, int tileY)
@@ -324,7 +311,7 @@ public class Level : IDisposable
     {
         Status = LevelStatus.WinDelay;
         _delayTime = 0.0;
-        _delayEffectTime = 300 * Tank1460Game.OneFrameSpan;
+        _delayEffectTime = 144 * Tank1460Game.OneFrameSpan;
     }
 
     public void Start()
@@ -441,7 +428,7 @@ public class Level : IDisposable
             case LevelStatus.Loading:
             case LevelStatus.Intro:
             case LevelStatus.Paused:
-            case LevelStatus.Lost:
+            case LevelStatus.GameOver:
             case LevelStatus.Win:
                 return false;
 
@@ -463,10 +450,22 @@ public class Level : IDisposable
                 if (_delayTime <= _delayEffectTime)
                     return true;
 
-                Status = LevelStatus.Lost;
+                Status = LevelStatus.GameOver;
+                SoundPlayer.StopAll();
                 SoundPlayer.Unmute();
                 GameOver?.Invoke(this);
 
+                return true;
+
+            case LevelStatus.LostPreDelay:
+                _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
+                if (_delayTime <= _delayEffectTime)
+                    return true;
+
+                SoundPlayer.MuteAllWithLessPriorityThan(Sound.ExplosionBig);
+                Status = LevelStatus.LostDelay;
+                _delayTime = 0.0;
+                _delayEffectTime = 252 * Tank1460Game.OneFrameSpan;
                 return true;
 
             case LevelStatus.WinScoreScreen:
@@ -509,6 +508,42 @@ public class Level : IDisposable
 
         if (Falcons.Count == 0)
             throw new NotSupportedException("A level must have at least one falcon.");
+    }
+
+    private void TogglePause()
+    {
+        switch (Status)
+        {
+            case LevelStatus.Loading:
+            case LevelStatus.WinDelay:
+            case LevelStatus.LostDelay:
+                return;
+
+            case LevelStatus.Intro:
+            case LevelStatus.LostPreDelay:
+            case LevelStatus.Running:
+                _statusBeforePause = Status;
+                Status = LevelStatus.Paused;
+                SoundPlayer.PauseAndPushState();
+                SoundPlayer.Play(Sound.Pause);
+                _levelEffects.AddExclusive(new PauseLevelEffect(this));
+                break;
+
+            case LevelStatus.Paused:
+                _levelEffects.RemoveAll<PauseLevelEffect>();
+                Status = _statusBeforePause;
+                SoundPlayer.ResumeAndPopState();
+                break;
+
+            case LevelStatus.WinScoreScreen:
+            case LevelStatus.LostScoreScreen:
+            case LevelStatus.GameOverScreen:
+            case LevelStatus.Win:
+            case LevelStatus.GameOver:
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 
     private void HandlePlayerTankDestroyed(PlayerTank playerTank)
@@ -582,10 +617,8 @@ public class Level : IDisposable
 
     private void StartGameOverSequence()
     {
-        Status = LevelStatus.LostDelay;
-        SoundPlayer.Mute();
-        _delayTime = 0.0;
-        _delayEffectTime = 288 * Tank1460Game.OneFrameSpan;
+        Status = LevelStatus.LostPreDelay;
+        _delayEffectTime = 36 * Tank1460Game.OneFrameSpan;
     }
 
     private Tile CreateFalcon(int x, int y)

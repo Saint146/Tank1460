@@ -254,7 +254,7 @@ public abstract class Tank : MoveableLevelObject
                 break;
 
             case TankFlashingType.Immobile:
-                bonusTexture = content.CreateColoredTexture(Microsoft.Xna.Framework.Color.Transparent,
+                bonusTexture = content.LoadNewSolidColoredTexture(Microsoft.Xna.Framework.Color.Transparent,
                                                           plainTexture.Bounds.Width,
                                                           plainTexture.Bounds.Height);
                 break;

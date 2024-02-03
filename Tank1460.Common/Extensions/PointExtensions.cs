@@ -42,6 +42,8 @@ public static class PointExtensions
 
     public static Point Multiply(this Point point, int multiplier) => new(point.X * multiplier, point.Y * multiplier);
 
+    public static Point Divide(this Point point, int divisor) => new(point.X / divisor, point.Y / divisor);
+
     /// <summary>
     /// Применить обратную трансформацию к точке.
     /// </summary>
