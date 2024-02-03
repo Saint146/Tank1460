@@ -124,7 +124,7 @@ public abstract class Tank : MoveableLevelObject
                 var order = Think(gameTime);
 
                 if (order.HasFlag(TankOrder.Shoot) && !IsPacifist)
-                    TryShoot(gameTime);
+                    Shoot(gameTime);
 
                 if (IsImmobile)
                     break;
@@ -301,17 +301,6 @@ public abstract class Tank : MoveableLevelObject
 
     protected bool IsInvulnerable() => _activeEffects.HasEffect<Invulnerability>();
 
-    protected void TurnTo(ObjectDirection newDirection)
-    {
-        // При повороте танка на 90° округляем его координаты до клетки (механика из оригинальной игры для более удобного прохождения между препятствиями)
-        if (newDirection.Has90DegreesDifference(Direction))
-            Position = new Point((int)Math.Round((double)Position.X / Tile.DefaultWidth) * Tile.DefaultWidth,
-                (int)Math.Round((double)Position.Y / Tile.DefaultHeight) * Tile.DefaultHeight);
-
-        Direction = newDirection;
-        PlayCurrentAnimation();
-    }
-
     protected void SetType(TankType type)
     {
         Type = type;
@@ -353,7 +342,13 @@ public abstract class Tank : MoveableLevelObject
     {
     }
 
-    private void PlayCurrentAnimation() => Sprite.PlayAnimation(_animations[Direction]);
+    private void PlayCurrentAnimation()
+    {
+        if (Status != TankStatus.Normal)
+            return;
+
+        Sprite.PlayAnimation(_animations[Direction]);
+    }
 
     private void ReloadAnimations()
     {
@@ -376,7 +371,18 @@ public abstract class Tank : MoveableLevelObject
         _shellSpeed = properties.ShellSpeed;
     }
 
-    private void TryShoot(GameTime gameTime)
+    private void TurnTo(ObjectDirection newDirection)
+    {
+        // При повороте танка на 90° округляем его координаты до клетки (механика из оригинальной игры для более удобного прохождения между препятствиями)
+        if (newDirection.Has90DegreesDifference(Direction))
+            Position = new Point((int)Math.Round((double)Position.X / Tile.DefaultWidth) * Tile.DefaultWidth,
+                                 (int)Math.Round((double)Position.Y / Tile.DefaultHeight) * Tile.DefaultHeight);
+
+        Direction = newDirection;
+        PlayCurrentAnimation();
+    }
+
+    private void Shoot(GameTime gameTime)
     {
         if (_shells.Count >= _maxShells)
             return;
@@ -384,11 +390,6 @@ public abstract class Tank : MoveableLevelObject
         if (gameTime.TotalGameTime.TotalSeconds < _timeTillReload)
             return;
 
-        Shoot(gameTime);
-    }
-
-    private void Shoot(GameTime gameTime)
-    {
         _timeTillReload = gameTime.TotalGameTime.TotalSeconds + FireDelay;
         var shell = new Shell(Level, Direction, _shellSpeed, this, _shellProperties);
         shell.SpawnViaCenterPosition(BoundingRectangle.GetEdgeCenter(Direction));
