@@ -34,11 +34,6 @@ public class LevelHud
         _levelFlag = content.Load<Texture2D>(@"Sprites/Hud/Flag");
     }
 
-    public void Update(GameTime gameTime)
-    {
-
-    }
-
     public void Draw(Level level, SpriteBatch spriteBatch, Point location)
     {
         var currentLocation = location;

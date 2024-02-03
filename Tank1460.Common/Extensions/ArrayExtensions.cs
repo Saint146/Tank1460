@@ -1,4 +1,6 @@
-﻿namespace Tank1460.Common.Extensions;
+﻿using System.Linq;
+
+namespace Tank1460.Common.Extensions;
 
 public static class ArrayExtensions
 {
@@ -13,4 +15,18 @@ public static class ArrayExtensions
     }
 
     public static T GetRandom<T>(this T[] array) => array[Rng.Next(array.Length)];
+
+    /// <summary>
+    /// Дополнить все строки указанными символами до длины максимальной из них.
+    /// </summary>
+    public static string[] TopAllToMaxLength(this string[] array, char placeholder = ' ')
+    {
+        var maxLength = array.Select(s => s.Length).Max();
+
+        var resultArray = new string[array.Length];
+        for (var i = 0; i < array.Length; i++)
+            resultArray[i] = array[i] + new string(placeholder, maxLength - array[i].Length);
+
+        return resultArray;
+    }
 }

@@ -37,7 +37,7 @@ internal class Cursor
         _scale = scale;
     }
 
-    public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+    public void Draw(SpriteBatch spriteBatch)
     {
         Sprite.Draw(spriteBatch, Position.ToVector2(), _scale);
     }

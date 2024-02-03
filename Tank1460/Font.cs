@@ -1,6 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using System.Diagnostics;
+using Tank1460.Common.Extensions;
 
 namespace Tank1460;
 
@@ -19,6 +22,8 @@ public class Font
 
     public Font(Texture2D fontTexture)
     {
+        ArgumentNullException.ThrowIfNull(fontTexture);
+
         _texture = fontTexture;
         _textureData = new Color[_texture.Width * _texture.Height];
         _texture.GetData(_textureData);
@@ -31,8 +36,10 @@ public class Font
 
     public void Draw(string text, SpriteBatch spriteBatch, Point startingPosition)
     {
+        ArgumentException.ThrowIfNullOrEmpty(text);
+
         var position = startingPosition.ToVector2();
-        foreach(var c in text)
+        foreach (var c in text)
         {
             spriteBatch.Draw(_texture, position, _charTexturePositions[c], Color.White);
             position.X += CharWidth;
@@ -50,15 +57,26 @@ public class Font
         }
     }
 
+    /// <summary>
+    /// Создать текстуру из надписи. Поддерживает многострочные надписи.
+    /// </summary>
     public Texture2D CreateTexture(GraphicsDevice graphics, string text)
     {
-        var t = new Texture2D(graphics, CharWidth * text.Length, CharHeight);
+        ArgumentException.ThrowIfNullOrEmpty(text);
+
+        var lines = text.SplitIntoLines().TopAllToMaxLength();
+        var linesCount = lines.Length;
+        var lineLength = lines[0].Length;
+
+        var linePixelCount = CharWidth * CharHeight * lineLength;
+
+        var t = new Texture2D(graphics, CharWidth * lineLength, CharHeight * linesCount);
         var data = new Color[t.Width * t.Height];
 
         for (var i = 0; i < data.Length; i++)
         {
-            var c = text[i % t.Width / CharWidth];
-            data[i] = _textureData[i % CharWidth + CharWidth * Chars.IndexOf(c) + i / t.Width * _texture.Width];
+            var c = lines[i / linePixelCount][i % linePixelCount % t.Width / CharWidth];
+            data[i] = _textureData[i % linePixelCount % CharWidth + CharWidth * Chars.IndexOf(c) + i % linePixelCount / t.Width * _texture.Width];
         }
 
         t.SetData(data);

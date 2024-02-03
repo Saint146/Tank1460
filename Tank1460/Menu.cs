@@ -81,7 +81,7 @@ internal class Menu
         }
     }
 
-    public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+    public void Draw(SpriteBatch spriteBatch)
     {
         // TODO: Ну давно пора уже окончательно одженерить для N пунктов. Ломает пока)
         var itemIndex = 0;

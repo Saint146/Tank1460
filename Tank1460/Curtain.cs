@@ -11,9 +11,9 @@ internal class Curtain
 
     private readonly Color _color;
 
-    private const double CurtainTickTime = Tank1460Game.OneFrameSpan;
-    private const int OpenedCurtainPosition = 0;
-    private const int ClosedCurtainPosition = 24;
+    private const double TickTime = Tank1460Game.OneFrameSpan;
+    private const int OpenedPosition = 0;
+    private const int ClosedPosition = 24;
 
     private readonly int _targetPosition;
     private readonly int _step;
@@ -26,12 +26,12 @@ internal class Curtain
         switch (action)
         {
             case CurtainAction.Open:
-                _position = ClosedCurtainPosition;
-                _targetPosition = OpenedCurtainPosition;
+                _position = ClosedPosition;
+                _targetPosition = OpenedPosition;
                 break;
             case CurtainAction.Close:
-                _position = OpenedCurtainPosition;
-                _targetPosition = ClosedCurtainPosition;
+                _position = OpenedPosition;
+                _targetPosition = ClosedPosition;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(action), action, null);
@@ -45,9 +45,9 @@ internal class Curtain
     {
         _time += gameTime.ElapsedGameTime.TotalSeconds;
 
-        while (_time > CurtainTickTime)
+        while (_time > TickTime)
         {
-            _time -= _time;
+            _time -= TickTime;
             _position += _step;
 
             if (_step > 0 && _position < _targetPosition || _step < 0 && _position > _targetPosition)
@@ -60,7 +60,7 @@ internal class Curtain
 
     public void Draw(SpriteBatch spriteBatch, Rectangle curtainBounds)
     {
-        var curtainHeight = curtainBounds.Height * (_position - OpenedCurtainPosition) / (ClosedCurtainPosition - OpenedCurtainPosition) / 2;
+        var curtainHeight = curtainBounds.Height * (_position - OpenedPosition) / (ClosedPosition - OpenedPosition) / 2;
         var curtainWidth = curtainBounds.Width;
 
         spriteBatch.FillRectangle(curtainBounds.X, curtainBounds.Y, curtainWidth, curtainHeight, _color);

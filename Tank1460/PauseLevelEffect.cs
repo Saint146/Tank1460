@@ -34,6 +34,5 @@ public class PauseLevelEffect : LevelEffect
         var textTexture = font.CreateTexture(content.GetGraphicsDevice(), "PAUSE");
 
         _animation = new BlinkingAnimation(textTexture, 16 * Tank1460Game.OneFrameSpan);
-        Sprite.PlayAnimation(_animation);
     }
 }

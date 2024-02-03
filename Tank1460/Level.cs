@@ -21,7 +21,7 @@ namespace Tank1460;
 
 public class Level : IDisposable
 {
-    // TODO: Паблик Морозов во все поля
+    // TODO: Паблик Морозов во все поля и попахивает год-обжектом :(
 
     public int PlayerLivesRemaining(PlayerIndex playerIndex) => PlayerSpawners[playerIndex].LivesRemaining;
 
@@ -166,23 +166,23 @@ public class Level : IDisposable
 
         foreach (var playerIndex in PlayersInGame)
         {
+            var playerInput = playersInputs[playerIndex];
+
+            if (playerInput.Pressed.HasFlag(PlayerInputCommands.Start))
+                TogglePause();
+
             var tank = GetPlayerTank(playerIndex);
             if (tank is null)
             {
-                if (PlayerLivesRemaining(playerIndex) == 0)
-                {
-                    // Обрабатываем нажатия клавиш игрока без жизней.
-                    if(playersInputs[playerIndex].Pressed.HasFlag(PlayerInputCommands.Shoot))
-                        TryReceiveDonatedLife(playerIndex);
-                }
+                if (PlayerLivesRemaining(playerIndex) != 0)
+                    continue;
+
+                // Обрабатываем нажатия клавиш игрока без жизней.
+                if(playerInput.Pressed.HasFlag(PlayerInputCommands.Shoot))
+                    TrySnatchLife(playerIndex);
             }
             else
             {
-                var playerInput = playersInputs[playerIndex];
-
-                if (playerInput.Pressed.HasFlag(PlayerInputCommands.Start))
-                    TogglePause();
-
                 tank.HandleInput(playerInput);
             }
         }
@@ -294,11 +294,8 @@ public class Level : IDisposable
         _levelEffects.Draw(spriteBatch, Bounds);
     }
 
-    public static Rectangle GetTileBounds(int tileX, int tileY)
-    {
-        return new Rectangle(tileX * Tile.DefaultWidth, tileY * Tile.DefaultHeight, Tile.DefaultWidth,
-            Tile.DefaultHeight);
-    }
+    public static Rectangle GetTileBounds(int tileX, int tileY) =>
+        new(tileX * Tile.DefaultWidth, tileY * Tile.DefaultHeight, Tile.DefaultWidth, Tile.DefaultHeight);
 
     public void HandleChangeTileBounds(LevelObject levelObject, Rectangle oldTileBounds, Rectangle? newTileBounds)
     {
@@ -402,7 +399,12 @@ public class Level : IDisposable
     internal void HandlePlayerLostAllLives(PlayerIndex playerIndex)
     {
         if (PlayersInGame.All(player => PlayerLivesRemaining(player) == 0))
+        {
             StartGameOverSequence();
+            return;
+        }
+
+        _levelEffects.Add(new GameOverLevelEffect(this, playerIndex));
     }
 
     internal GameState GetGameState()
@@ -445,27 +447,30 @@ public class Level : IDisposable
 
                 return true;
 
+            case LevelStatus.LostPreDelay:
+                _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
+                if (_delayTime <= _delayEffectTime)
+                    return true;
+
+                _levelEffects.AddExclusive(new GameOverLevelEffect(this));
+                SoundPlayer.MuteAllWithLessPriorityThan(Sound.ExplosionBig);
+                Status = LevelStatus.LostDelay;
+
+                _delayTime = 0.0;
+                _delayEffectTime = 252 * Tank1460Game.OneFrameSpan;
+                return true;
+
             case LevelStatus.LostDelay:
                 _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
                 if (_delayTime <= _delayEffectTime)
                     return true;
 
                 Status = LevelStatus.GameOver;
+                _levelEffects.RemoveAll();
                 SoundPlayer.StopAll();
                 SoundPlayer.Unmute();
                 GameOver?.Invoke(this);
 
-                return true;
-
-            case LevelStatus.LostPreDelay:
-                _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
-                if (_delayTime <= _delayEffectTime)
-                    return true;
-
-                SoundPlayer.MuteAllWithLessPriorityThan(Sound.ExplosionBig);
-                Status = LevelStatus.LostDelay;
-                _delayTime = 0.0;
-                _delayEffectTime = 252 * Tank1460Game.OneFrameSpan;
                 return true;
 
             case LevelStatus.WinScoreScreen:
@@ -558,12 +563,13 @@ public class Level : IDisposable
         playerSpawner.HandleTankDestroyed(playerTank);
     }
 
-    private void TryReceiveDonatedLife(PlayerIndex playerIndex)
+    private void TrySnatchLife(PlayerIndex playerIndex)
     {
         if (!PlayerSpawners.Values.TryGetFirst(out var spawnerDonator, spawner => spawner.CanDonateLife()))
             return;
 
         spawnerDonator.DonateLife(PlayerSpawners[playerIndex]);
+        _levelEffects.RemoveAll<GameOverLevelEffect>(effect => effect.PlayerIndex == playerIndex);
     }
 
     private Tile LoadTile(TileType tileType, int x, int y)
@@ -617,6 +623,9 @@ public class Level : IDisposable
 
     private void StartGameOverSequence()
     {
+        if (Status is LevelStatus.LostPreDelay or LevelStatus.LostDelay)
+            return;
+
         Status = LevelStatus.LostPreDelay;
         _delayEffectTime = 36 * Tank1460Game.OneFrameSpan;
     }

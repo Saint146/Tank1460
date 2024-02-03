@@ -1,6 +1,6 @@
-﻿using System.Linq;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Linq;
 using Tank1460.Common.Extensions;
 
 namespace Tank1460;

@@ -25,6 +25,12 @@ public class EffectCollection<T> where T : Effect
         EffectAdded?.Invoke(effect);
     }
 
+    public void AddExclusive(T effect)
+    {
+        RemoveAll(e => e.GetType().IsInstanceOfType(effect));
+        Add(effect);
+    }
+
     public void RemoveAll(Predicate<T> match)
     {
         var effectsToRemove = Effects.Where(effect => match(effect)).ToList();
@@ -35,15 +41,19 @@ public class EffectCollection<T> where T : Effect
         });
     }
 
-    public void AddExclusive(T effect)
+    public void RemoveAll()
     {
-        RemoveAll(e => e.GetType().IsInstanceOfType(effect));
-        Add(effect);
+        RemoveAll(_ => true);
     }
 
     public void RemoveAll<TEffect>() where TEffect : T
     {
         RemoveAll(e => e is TEffect);
+    }
+
+    public void RemoveAll<TEffect>(Func<TEffect, bool> value) where TEffect : T
+    {
+        RemoveAll(e => e is TEffect tEffect && value(tEffect));
     }
 
     public void Update(GameTime gameTime)

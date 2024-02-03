@@ -195,7 +195,7 @@ public class Tank1460Game : Game
         {
             _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _menuTransformation);
 
-            _menu.Draw(gameTime, _spriteBatch);
+            _menu.Draw(_spriteBatch);
 
             _spriteBatch.End();
         }
@@ -213,7 +213,7 @@ public class Tank1460Game : Game
         {
             _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp);
 
-            _cursor.Draw(gameTime, _spriteBatch);
+            _cursor.Draw(_spriteBatch);
 
             _spriteBatch.End();
         }
@@ -393,7 +393,7 @@ public class Tank1460Game : Game
 
     private void LoadMenu()
     {
-        _menu = new Menu(Content, 1, 1);
+        _menu = new Menu(Content, PlayersInGame.Length, LevelNumber);
         _menu.MenuExited += Menu_MenuExited;
     }
 
@@ -432,6 +432,8 @@ public class Tank1460Game : Game
 
         _level.Dispose();
         _level = null;
+
+        ScalePresentationArea();
     }
 
     private void LoadLevel()

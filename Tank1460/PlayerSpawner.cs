@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Tank1460.Audio;
 using Tank1460.Common.Level.Object.Tank;
 using Tank1460.LevelObjects.Tanks;
+using Tank1460.LevelObjects.Tiles;
 
 namespace Tank1460;
 
@@ -14,10 +15,10 @@ public class PlayerSpawner
 
     public int LivesRemaining { get; set; } = 3;
 
+    public Rectangle Bounds { get; }
+
     private readonly Level _level;
-    private readonly int _x;
-    private readonly int _y;
-    private const double RespawnInterval = 64 * Tank1460Game.OneFrameSpan;
+    private const double RespawnInterval = 0 * Tank1460Game.OneFrameSpan;
 
     private double _timeToSpawnRemaining;
     private bool _spawnIsDue;
@@ -30,8 +31,9 @@ public class PlayerSpawner
     {
         PlayerIndex = playerIndex;
         _level = level;
-        _x = x;
-        _y = y;
+
+        // TODO: Ну да, хардкод размера.
+        Bounds = new Rectangle(x * Tile.DefaultWidth, y * Tile.DefaultHeight, 2 * Tile.DefaultWidth, 2 * Tile.DefaultHeight);
 
         SpawnIsReady();
     }
@@ -110,9 +112,8 @@ public class PlayerSpawner
         var type = _nextSpawnType ?? (_level.ClassicRules ? TankType.Type0 : TankType.Type1);
         _nextSpawnType = null;
 
-        var bounds = Level.GetTileBounds(_x, _y);
         Tank = new PlayerTank(_level, PlayerIndex, type);
-        Tank.Spawn(new Point(bounds.Left, bounds.Top));
+        Tank.Spawn(Bounds.Location);
 
         if (!_nextSpawnHasShip)
             return;
