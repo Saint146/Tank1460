@@ -12,6 +12,7 @@ using Tank1460.Common.Level;
 using Tank1460.Input;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tiles;
+using Tank1460.Menu;
 using Tank1460.SaveLoad;
 using Tank1460.SaveLoad.Settings;
 
@@ -79,7 +80,7 @@ public class Tank1460Game : Game
     private SpriteBatch _spriteBatch;
     private readonly SaveLoadManager _saveLoadManager = new();
     private Level _level;
-    private Menu _menu;
+    private MainMenu _mainMenu;
     private LevelHud _levelHud;
     private Cursor _cursor;
     private Curtain _curtain;
@@ -166,8 +167,8 @@ public class Tank1460Game : Game
 
         ProcessStatus();
 
-        _menu?.HandleInput(inputs, _mouseState.CopyWithPosition(_mouseState.Position.ApplyReversedTransformation(_menuTransformation)));
-        _menu?.Update(gameTime);
+        _mainMenu?.HandleInput(inputs, _mouseState.CopyWithPosition(_mouseState.Position.ApplyReversedTransformation(_menuTransformation)));
+        _mainMenu?.Update(gameTime);
 
         _level?.HandleInput(inputs);
         _level?.Update(gameTime);
@@ -179,7 +180,7 @@ public class Tank1460Game : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(_menu is not null || _level is null ? GameBackColor : LevelBackColor);
+        GraphicsDevice.Clear(_mainMenu is not null || _level is null ? GameBackColor : LevelBackColor);
 
         if (_level is not null)
         {
@@ -192,11 +193,11 @@ public class Tank1460Game : Game
             _spriteBatch.End();
         }
 
-        if (_menu is not null)
+        if (_mainMenu is not null)
         {
             _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _menuTransformation);
 
-            _menu.Draw(_spriteBatch);
+            _mainMenu.Draw(_spriteBatch);
 
             _spriteBatch.End();
         }
@@ -385,23 +386,23 @@ public class Tank1460Game : Game
 
     private void UnloadMenu()
     {
-        if (_menu is null)
+        if (_mainMenu is null)
             return;
 
-        _menu.MenuExited -= Menu_MenuExited;
-        _menu = null;
+        _mainMenu.Exited -= MainMenu_Exited;
+        _mainMenu = null;
     }
 
     private void LoadMenu()
     {
-        _menu = new Menu(Content, PlayersInGame.Length, LevelNumber);
-        _menu.MenuExited += Menu_MenuExited;
+        _mainMenu = new MainMenu(Content, PlayersInGame.Length, LevelNumber);
+        _mainMenu.Exited += MainMenu_Exited;
     }
 
-    private void Menu_MenuExited()
+    private void MainMenu_Exited()
     {
-        LevelNumber = _menu.LevelNumber;
-        PlayersInGame = AllPlayers.Take(_menu.PlayerCount).ToArray();
+        LevelNumber = _mainMenu.LevelNumber;
+        PlayersInGame = AllPlayers.Take(_mainMenu.PlayerCount).ToArray();
         ResetGameState();
         StartLoadingLevelSequence();
     }

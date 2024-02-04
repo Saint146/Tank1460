@@ -8,38 +8,38 @@ namespace Tank1460.SaveLoad;
 
 internal class SaveLoadManager
 {
-    readonly string rootSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tank1460");
-    private const string settingsFileName = "settings.json";
+    private readonly string _rootSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tank1460");
+    private const string SettingsFileName = "settings.json";
 
-    private static readonly JsonSerializerOptions defaultOptions = new (){ WriteIndented = true };
+    private static readonly JsonSerializerOptions DefaultOptions = new (){ WriteIndented = true };
 
     public void SaveSettings(UserSettings userSettings)
     {
-        Save(userSettings, settingsFileName);
+        Save(userSettings, SettingsFileName);
     }
 
     public UserSettings LoadSettings()
     {
-        var settings = Load<UserSettings>(settingsFileName);
+        var settings = Load<UserSettings>(SettingsFileName);
         return settings;
     }
 
     protected void Save<T>(T saveData, string fileName)
     {
-        var filePath = Path.Combine(rootSavePath, fileName);
+        var filePath = Path.Combine(_rootSavePath, fileName);
 
         if (File.Exists(filePath))
             File.Move(filePath, filePath + ".bak", true);
 
-        Directory.CreateDirectory(rootSavePath);
+        Directory.CreateDirectory(_rootSavePath);
 
-        var dataSerialized = JsonSerializer.Serialize(saveData, defaultOptions);
+        var dataSerialized = JsonSerializer.Serialize(saveData, DefaultOptions);
         File.WriteAllText(filePath, dataSerialized);
     }
 
     protected T Load<T>(string fileName)
     {
-        var filePath = Path.Combine(rootSavePath, fileName);
+        var filePath = Path.Combine(_rootSavePath, fileName);
 
         if (!File.Exists(filePath))
             return default;

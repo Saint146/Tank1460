@@ -1,10 +1,9 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using MonoGame.Extended.Sprites;
 
 namespace Tank1460;
 
@@ -60,15 +59,24 @@ public class ShiftingAnimation : IAnimation
         FrameHeight = ActiveTexture.Height;
     }
 
-    public ShiftingAnimation(IReadOnlyList<Texture2D> textures, double frameTime, bool isLooping, double shiftTime)
+    public ShiftingAnimation(IReadOnlyList<Texture2D> textures, double[] frameTimes, bool isLooping, double shiftTime = double.MaxValue)
         : this(textures,
-            Enumerable.Repeat(frameTime, textures[0].Width / textures[0].Height).ToArray(),
-            isLooping,
-            Enumerable.Repeat(shiftTime, textures.Count).ToArray())
+               frameTimes,
+               isLooping,
+               Enumerable.Repeat(shiftTime, textures.Count).ToArray())
     {
     }
 
-    public ShiftingAnimation(IReadOnlyList<Texture2D> textures, bool isLooping) : this(textures, double.MaxValue, isLooping, double.MaxValue)
+    public ShiftingAnimation(IReadOnlyList<Texture2D> textures, double frameTime, bool isLooping, double shiftTime = double.MaxValue)
+        : this(textures,
+            Enumerable.Repeat(frameTime, textures[0].Width / textures[0].Height).ToArray(),
+            isLooping,
+            shiftTime)
+    {
+    }
+
+    public ShiftingAnimation(IReadOnlyList<Texture2D> textures, bool isLooping)
+        : this(textures, double.MaxValue, isLooping)
     {
     }
 
