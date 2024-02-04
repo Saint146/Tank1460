@@ -14,8 +14,9 @@ public class ContentManagerEx : ContentManager
 {
     private readonly Dictionary<string, Texture2D> _dynamicTextures = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Font> _fonts = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Texture2D> _customTextures = new();
 
-    private const char MixSeparator = ',';
+    private const char AverageSeparator = ',';
     private const char RecolorSeparator = ':';
 
     public ContentManagerEx(IServiceProvider serviceProvider) : base(serviceProvider)
@@ -30,14 +31,33 @@ public class ContentManagerEx : ContentManager
     {
         _dynamicTextures.Clear();
         _fonts.Clear();
+        _customTextures.Clear();
         base.Unload();
+    }
+
+    /// <summary>
+    /// Подгрузить текстуру из кэша, при необходимости создав её.
+    /// </summary>
+    /// <remarks>
+    /// Имя может содержать любые символы — кастомные текстуры лежат в отдельном кэше, никак не связанном с остальными.
+    /// Имя не подвергается изменениям, кладётся как есть и сравнивается на строгое равенство.
+    /// </remarks>
+    /// <param name="textureName">Имя текстуры.</param>
+    /// <param name="createTextureFunc">Функция для создания текстуры.</param>
+    public Texture2D LoadOrCreateCustomTexture(string textureName, Func<Texture2D> createTextureFunc)
+    {
+        if (_customTextures.TryGetValue(textureName, out var texture))
+            return texture;
+
+        texture = _customTextures[textureName] = createTextureFunc();
+        return texture;
     }
 
     /// <summary>
     /// Загрузить текстуру, перекрасив её с помощью другой текстуры.
     /// </summary>
     /// <remarks>
-    /// Можно смешать цвета, указав в <paramref name="recolorTextureName"/> две текстуры из одной с помощью символа запятой, например ../Green,Gray
+    /// Можно усреднить цвета, указав в <paramref name="recolorTextureName"/> две текстуры из одной с помощью символа запятой, например ../Green,Gray
     /// </remarks>
     public Texture2D LoadRecoloredTexture(string textureName, string recolorTextureName)
     {
@@ -48,40 +68,18 @@ public class ContentManagerEx : ContentManager
         if (_dynamicTextures.TryGetValue(key, out var texture))
             return texture;
 
-        var recolorTexture = !recolorTextureName.Contains(MixSeparator) ? Load<Texture2D>(recolorTextureName) : LoadMixedTexture(recolorTextureName);
+        var recolorTexture = !recolorTextureName.Contains(AverageSeparator) ? Load<Texture2D>(recolorTextureName) : LoadAveragedTexture(recolorTextureName);
 
         texture = Load<Texture2D>(textureName);
-        var recoloredTexture = texture.RecolorAsCopy(recolorTexture);
-        _dynamicTextures[key] = recoloredTexture;
+        var recoloredTexture = _dynamicTextures[key] = texture.RecolorAsCopy(recolorTexture);
         return recoloredTexture;
     }
 
     /// <summary>
-    /// Загрузить текстуру, перекрасив её с помощью двух других текстур, смешанных вместе.
-    /// </summary>
-    public Texture2D LoadRecoloredMixedTexture(string textureName, string recolorTexture1Name, string recolorTexture2Name)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(textureName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(recolorTexture1Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(recolorTexture2Name);
-
-        var key = $"{textureName.Replace('\\', '/')}{RecolorSeparator}{recolorTexture1Name.Replace('\\', '/')}{MixSeparator}{recolorTexture2Name.Replace('\\', '/')}";
-        if (_dynamicTextures.TryGetValue(key, out var texture))
-            return texture;
-
-        texture = Load<Texture2D>(textureName);
-        var recolorMixedTexture = MixTextures(recolorTexture1Name, recolorTexture2Name);
-
-        var recoloredTexture = texture.RecolorAsCopy(recolorMixedTexture);
-        _dynamicTextures[key] = recoloredTexture;
-        return recoloredTexture;
-    }
-
-    /// <summary>
-    /// Загрузить смесь двух текстур из одной папки, разделенные символом запятой.
+    /// Загрузить усредненную текстуру из двух текстур из одной папки, разделенных символом запятой.
     /// Например, textures/one/green,yellow
     /// </summary>
-    public Texture2D LoadMixedTexture(string textureNames)
+    public Texture2D LoadAveragedTexture(string textureNames)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(textureNames);
 
@@ -89,15 +87,14 @@ public class ContentManagerEx : ContentManager
         if (_dynamicTextures.TryGetValue(key, out var texture))
             return texture;
 
-        var split = textureNames.Split(MixSeparator, StringSplitOptions.TrimEntries);
+        var split = textureNames.Split(AverageSeparator, StringSplitOptions.TrimEntries);
         if (split.Length != 2)
-            throw new Exception($"LoadMixedTexture: more than one {MixSeparator} separator is not allowed.");
+            throw new Exception($"LoadAveragedTexture: more than one {AverageSeparator} separator is not allowed.");
 
         var recolorTexture1Name = split[0];
         var recolorTexture2Name = recolorTexture1Name.Remove(recolorTexture1Name.LastIndexOf('/') + 1) + split[1];
 
-        texture = MixTextures(recolorTexture1Name, recolorTexture2Name);
-        _dynamicTextures[key] = texture;
+        texture = _dynamicTextures[key] = AverageTextures(recolorTexture1Name, recolorTexture2Name);
 
         return texture;
     }
@@ -111,7 +108,7 @@ public class ContentManagerEx : ContentManager
         if (_dynamicTextures.TryGetValue(key, out var texture))
             return texture;
 
-        _dynamicTextures[key] = texture = TextureExtensions.CreateColoredTexture(this.GetGraphicsDevice(), color, width, height);
+        texture = _dynamicTextures[key] = Texture2DExtensions.CreateColoredTexture(this.GetGraphicsDevice(), color, width, height);
         return texture;
     }
 
@@ -144,19 +141,18 @@ public class ContentManagerEx : ContentManager
         if (fontColor.HasValue)
             texture = texture.RecolorAsCopy(Color.Black, fontColor.Value);
 
-        _fonts[key] = font = new Font(texture);
-
+        font = _fonts[key] = new Font(texture);
         return font;
     }
 
     /// <summary>
     /// Не кэширует.
     /// </summary>
-    private Texture2D MixTextures(string texture1Name, string texture2Name)
+    private Texture2D AverageTextures(string texture1Name, string texture2Name)
     {
         var texture1 = Load<Texture2D>(texture1Name);
         var texture2 = Load<Texture2D>(texture2Name);
 
-        return texture1.MixAverage(texture2);
+        return texture1.AverageWith(texture2);
     }
 }

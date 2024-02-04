@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended.Sprites;
 
 namespace Tank1460;
 
@@ -14,6 +15,8 @@ namespace Tank1460;
 /// </summary>
 public class ShiftingAnimation : IAnimation
 {
+    public Point FrameSize => new (FrameWidth, FrameHeight);
+
     public int FrameWidth { get; }
 
     public int FrameHeight { get; }
@@ -35,7 +38,6 @@ public class ShiftingAnimation : IAnimation
     private int FrameCount { get; }
 
     private int FrameIndex { get; set; }
-
     private double _frameTime, _shiftTime;
 
     public ShiftingAnimation(IReadOnlyList<Texture2D> textures, double[] frameTimes, bool isLooping, double[] shiftTimes)
@@ -120,6 +122,11 @@ public class ShiftingAnimation : IAnimation
             _shiftTime -= ShiftTimes[TextureIndex];
             Shift();
         }
+    }
+
+    public void Draw(SpriteBatch spriteBatch, Point position)
+    {
+        Draw(spriteBatch, position.ToVector2(), new Rectangle(0, 0, FrameWidth, FrameHeight), 1.0f);
     }
 
     public void Draw(SpriteBatch spriteBatch, Vector2 position, Rectangle visibleRectangle, float scale)

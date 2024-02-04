@@ -1,8 +1,7 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Tank1460.Common.Extensions;
 
 namespace Tank1460;
@@ -46,8 +45,11 @@ public class Font
         }
     }
 
+    public Point GetTextSize(string text) =>
+        new(CharWidth * text.Length, CharHeight);
+
     public Rectangle GetTextRectangle(string text, Point startingPosition) =>
-        new(startingPosition.X, startingPosition.Y, CharWidth * text.Length, CharHeight);
+        new(startingPosition, GetTextSize(text));
 
     private void InitTexturePositions()
     {
