@@ -33,10 +33,10 @@ internal abstract class Form
     /// </summary>
     private FormItem _hoveringItem;
 
-    protected Form(ContentManagerEx content, int defaultPlayerCount, int defaultLevelNumber)
+    protected Form(ContentManagerEx content)
     {
-        Status = FormStatus.Running;
         Content = content;
+        Status = FormStatus.Running;
     }
 
     public void HandleInput(PlayerInputCollection playersInputs, MouseState mouseState)

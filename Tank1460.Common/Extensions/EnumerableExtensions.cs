@@ -36,4 +36,11 @@ public static class EnumerableExtensions
         var lookup = source.ToLookup(element => predicate(element));
         return (lookup[true], lookup[false]);
     }
+
+    public static IEnumerable<IEnumerable<T>> GetCombinations<T>(this IEnumerable<T> source, int length) where T : IComparable
+    {
+        if (length == 1) return source.Select(t => new[] { t });
+        return GetCombinations(source, length - 1).SelectMany(t => source.Where(o => o.CompareTo(t.Last()) > 0),
+                                                        (t1, t2) => t1.Concat(new[] { t2 }));
+    }
 }

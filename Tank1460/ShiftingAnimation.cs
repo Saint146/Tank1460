@@ -22,7 +22,8 @@ public class ShiftingAnimation : IAnimation
 
     public bool HasEnded { get; private set; }
 
-    public IReadOnlyList<Texture2D> Textures { get; }
+    public IReadOnlyList<Texture2D> Textures => _textures;
+    private readonly List<Texture2D> _textures;
 
     public Texture2D ActiveTexture { get; private set; }
 
@@ -39,10 +40,10 @@ public class ShiftingAnimation : IAnimation
     private int FrameIndex { get; set; }
     private double _frameTime, _shiftTime;
 
-    public ShiftingAnimation(IReadOnlyList<Texture2D> textures, double[] frameTimes, bool isLooping, double[] shiftTimes)
+    public ShiftingAnimation(IReadOnlyCollection<Texture2D> textures, double[] frameTimes, bool isLooping, double[] shiftTimes)
     {
-        Textures = textures;
-        if (textures?.Count is null or 0)
+        _textures = textures.ToList();
+        if (textures.Count == 0)
             throw new Exception("There must be at least one texture.");
         ShiftTo(0);
 
@@ -59,7 +60,7 @@ public class ShiftingAnimation : IAnimation
         FrameHeight = ActiveTexture.Height;
     }
 
-    public ShiftingAnimation(IReadOnlyList<Texture2D> textures, double[] frameTimes, bool isLooping, double shiftTime = double.MaxValue)
+    public ShiftingAnimation(IReadOnlyCollection<Texture2D> textures, double[] frameTimes, bool isLooping, double shiftTime = double.MaxValue)
         : this(textures,
                frameTimes,
                isLooping,
@@ -78,6 +79,21 @@ public class ShiftingAnimation : IAnimation
     public ShiftingAnimation(IReadOnlyList<Texture2D> textures, bool isLooping)
         : this(textures, double.MaxValue, isLooping)
     {
+    }
+
+    public void ChangeTexture(int textureIndex, Texture2D newTexture)
+    {
+        if (newTexture.Width != ActiveTexture.Width || newTexture.Height != ActiveTexture.Height)
+            throw new ArgumentException("New texture must be the same size as the existing ones.", nameof(newTexture));
+
+        if (textureIndex < 0 || textureIndex >= Textures.Count)
+            throw new ArgumentOutOfRangeException(nameof(textureIndex));
+
+        _textures[textureIndex] = newTexture;
+
+        // Перезаписать активную текстуру при необходимости.
+        if (textureIndex == TextureIndex)
+            ShiftTo(textureIndex);
     }
 
     public void Reset()

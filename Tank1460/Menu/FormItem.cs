@@ -36,6 +36,16 @@ internal class FormItem
     {
     }
 
+    public FormItem(Texture2D normalTexture, double frameTime)
+        : this(normalTexture, normalTexture, normalTexture, frameTime)
+    {
+    }
+
+    public void ChangeTexture(FormItemVisualStatus status, Texture2D newTexture)
+    {
+        _animation.ChangeTexture((int)status, newTexture);
+    }
+
     internal virtual void Update(GameTime gameTime, FormItemVisualStatus status)
     {
         _animation.Process(gameTime);
