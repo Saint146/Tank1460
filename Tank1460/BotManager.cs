@@ -37,6 +37,7 @@ public class BotManager
     private bool _paralyzeIsActive = false;
     private double _paralyzeTime;
     private double _paralyzeEffectTime;
+    private static readonly int[] ClassicBotBonusNumbers = { 4, 11, 18 };
 
 #if !DEBUG
     private readonly double _periodLength;
@@ -44,7 +45,6 @@ public class BotManager
 #else
     private double _periodLength;
     private double PeriodResetTime = 4320.0 * Tank1460Game.OneFrameSpan;
-    private static readonly int[] ClassicBotBonusNumbers = { 4, 11, 18 };
 
 #endif
 

@@ -178,7 +178,7 @@ public class Level : IDisposable
                     continue;
 
                 // Обрабатываем нажатия клавиш игрока без жизней.
-                if(playerInput.Pressed.HasFlag(PlayerInputCommands.Shoot))
+                if(playerInput.Active.HasFlag(PlayerInputCommands.ShootTurbo) || playerInput.Pressed.HasFlag(PlayerInputCommands.Shoot))
                     TrySnatchLife(playerIndex);
             }
             else

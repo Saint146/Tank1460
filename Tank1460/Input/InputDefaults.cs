@@ -15,7 +15,7 @@ internal static class InputDefaults
         { Buttons.DPadLeft, PlayerInputCommands.Left },
         { Buttons.DPadRight, PlayerInputCommands.Right },
         { Buttons.A, PlayerInputCommands.Shoot },
-        { Buttons.B, PlayerInputCommands.Shoot },
+        { Buttons.B, PlayerInputCommands.ShootTurbo },
         { Buttons.Start, PlayerInputCommands.Start }
     };
 
@@ -35,7 +35,9 @@ internal static class InputDefaults
                     new KeyboardBinding
                         { Command = PlayerInputCommands.Right, Keys = new[] { Keys.D } },
                     new KeyboardBinding
-                        { Command = PlayerInputCommands.Shoot, Keys = new[] { Keys.K } },
+                        { Command = PlayerInputCommands.ShootTurbo, Keys = new[] { Keys.K } },
+                    new KeyboardBinding
+                        { Command = PlayerInputCommands.Shoot, Keys = new[] { Keys.L } },
                     new KeyboardBinding
                         { Command = PlayerInputCommands.Start, Keys = new[] { Keys.X, Keys.Space } }
                 }
@@ -54,7 +56,9 @@ internal static class InputDefaults
                     new KeyboardBinding
                         { Command = PlayerInputCommands.Right, Keys = new[] { Keys.Right } },
                     new KeyboardBinding
-                        { Command = PlayerInputCommands.Shoot, Keys = new[] { Keys.NumPad0 } },
+                        { Command = PlayerInputCommands.ShootTurbo, Keys = new[] { Keys.NumPad0 } },
+                    new KeyboardBinding
+                        { Command = PlayerInputCommands.Shoot, Keys = new[] { Keys.OemComma } },
                     new KeyboardBinding
                         { Command = PlayerInputCommands.Start, Keys = new[] { Keys.Enter } }
                 }

@@ -109,7 +109,12 @@ public class Tank1460Game : Game
 
     private string LevelFolder { get; set; } = ClassicRules ? "Classic" : "Modern";
 
-    private int LevelNumber { get; set; } = 1;
+    private int LevelNumber { get; set; } =
+#if DEBUG
+        Rng.Next(1, 36);
+#else
+    1;
+#endif
 
     public Tank1460Game()
     {
@@ -314,7 +319,7 @@ public class Tank1460Game : Game
         // Мышь.
         _mouseState = Mouse.GetState();
         // Курсор не обновляет свое состояние, если он отключен или вне экрана.
-        if (_customCursorEnabled) 
+        if (_customCursorEnabled)
             _isCustomCursorVisible = _mouseState.X >= 0 && _mouseState.Y >= 0 && _mouseState.X < _backbufferWidth && _mouseState.Y < _backbufferHeight;
         else
             _isCustomCursorVisible = false;

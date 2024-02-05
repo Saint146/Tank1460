@@ -118,7 +118,7 @@ public class PlayerTank : Tank
         if (_playerInput.Active.HasFlag(PlayerInputCommands.Down))
             order |= TankOrder.MoveDown;
 
-        if (_playerInput.Active.HasFlag(PlayerInputCommands.Shoot))
+        if (_playerInput.Active.HasFlag(PlayerInputCommands.ShootTurbo) || _playerInput.Pressed.HasFlag(PlayerInputCommands.Shoot))
             order |= TankOrder.Shoot;
 
         return order;
