@@ -5,6 +5,8 @@ namespace Tank1460;
 
 public interface IAnimation
 {
+    Point FrameSize { get; }
+
     int FrameWidth { get; }
 
     int FrameHeight { get; }
@@ -18,4 +20,6 @@ public interface IAnimation
     void Process(GameTime gameTime);
 
     void Draw(SpriteBatch spriteBatch, Vector2 position, Rectangle visibleRectangle, float scale);
+
+    void Draw(SpriteBatch spriteBatch, Point position);
 }

@@ -75,7 +75,9 @@ internal abstract class Form
         {
             var itemVisualStatus = _lastPressedItem == item && _hoveringItem == item ? FormItemVisualStatus.Pressed :
                 _lastPressedItem == item || _hoveringItem == item && _lastPressedItem is null ? FormItemVisualStatus.Hover : FormItemVisualStatus.Normal;
-            item.Update(gameTime, itemVisualStatus);
+
+            item.SetStatus(itemVisualStatus);
+            item.Update(gameTime);
         }
     }
 
@@ -107,7 +109,22 @@ internal abstract class Form
             item.Position = position.Value;
     }
 
-    protected FormItem CreateTextItem(string text,
+    protected FormLabel CreateTextLabel(string text, Font font = null, Point? margins = null)
+    {
+        font ??= Content.LoadFont(@"Sprites/Font/Pixel8");
+        margins ??= font.GetTextSize(" ");
+        var halfMargins = margins.Value.Divide(2);
+        var itemSize = font.GetTextSize(text) + margins.Value;
+
+        var templateTexture = Content.LoadNewSolidColoredTexture(Color.Transparent, itemSize.X, itemSize.Y);
+        var texture = templateTexture.Copy();
+        texture.Draw(font.CreateTexture(text), halfMargins);
+
+        var animation = new Animation(texture, new[] { double.MaxValue }, false);
+        return new FormLabel(animation);
+    }
+
+    protected FormButton CreateTextButton(string text,
                                           Color? normalColor = null,
                                           Color? shadowColor = null,
                                           Color? pressedColor = null,
@@ -118,14 +135,14 @@ internal abstract class Form
         var pressedFont = Content.LoadFont(@"Sprites/Font/Pixel8", pressedColor ?? DefaultTextPressedColor);
         margins ??= normalFont.GetTextSize(" ");
         var halfMargins = margins.Value.Divide(2);
-
         var itemSize = normalFont.GetTextSize(text) + margins.Value;
+
         var templateTexture = Content.LoadNewSolidColoredTexture(Color.Transparent, itemSize.X, itemSize.Y);
         var normalTexture = Content.LoadOrCreateCustomTexture($"{text}|normal",
                                                               () =>
                                                               {
                                                                   var texture = templateTexture.Copy();
-                                                                  texture.Draw(normalFont.CreateTexture(texture.GraphicsDevice, text), halfMargins);
+                                                                  texture.Draw(normalFont.CreateTexture(text), halfMargins);
                                                                   return texture;
                                                               });
 
@@ -133,9 +150,9 @@ internal abstract class Form
                                                              () =>
                                                              {
                                                                  var texture = templateTexture.Copy();
-                                                                 texture.Draw(shadowFont.CreateTexture(texture.GraphicsDevice, text),
+                                                                 texture.Draw(shadowFont.CreateTexture(text),
                                                                               halfMargins + new Point(1, 1));
-                                                                 texture.Draw(normalFont.CreateTexture(texture.GraphicsDevice, text), halfMargins);
+                                                                 texture.Draw(normalFont.CreateTexture(text), halfMargins);
                                                                  return texture;
                                                              });
 
@@ -143,13 +160,13 @@ internal abstract class Form
                                                                () =>
                                                                {
                                                                    var texture = templateTexture.Copy();
-                                                                   texture.Draw(shadowFont.CreateTexture(texture.GraphicsDevice, text),
+                                                                   texture.Draw(shadowFont.CreateTexture(text),
                                                                                 halfMargins + new Point(1, 1));
-                                                                   texture.Draw(pressedFont.CreateTexture(texture.GraphicsDevice, text), halfMargins);
+                                                                   texture.Draw(pressedFont.CreateTexture(text), halfMargins);
                                                                    return texture;
                                                                });
 
-        return new FormItem(normalTexture, hoverTexture, pressedTexture, new[] { double.MaxValue });
+        return new FormButton(normalTexture, hoverTexture, pressedTexture, new[] { double.MaxValue });
     }
 
     [CanBeNull]

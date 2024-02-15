@@ -12,6 +12,8 @@ namespace Tank1460;
 /// </summary>
 public class BlinkingAnimation : IAnimation
 {
+    public Point FrameSize => new (FrameWidth, FrameHeight);
+
     public int FrameWidth { get; }
 
     public int FrameHeight { get; }
@@ -110,5 +112,10 @@ public class BlinkingAnimation : IAnimation
             return;
 
         spriteBatch.Draw(texture, position + visibleRectangle.Location.ToVector2(), visibleRectangle, Color.White, 0.0f, new Vector2(0,0), scale, SpriteEffects.None, 0.0f);
+    }
+
+    public void Draw(SpriteBatch spriteBatch, Point position)
+    {
+        Draw(spriteBatch, position.ToVector2(), new Rectangle(0, 0, FrameWidth, FrameHeight), 1.0f);
     }
 }

@@ -3,8 +3,12 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Tank1460.Menu;
 
-internal class FormItem
+internal abstract class FormItem
 {
+    protected abstract IAnimation Animation { get; }
+
+    protected FormItemVisualStatus Status { get; private set; }
+
     public Rectangle Bounds { get; private set; }
 
     public Point Position
@@ -13,47 +17,31 @@ internal class FormItem
         set => Bounds = new Rectangle(value, Bounds.Size);
     }
 
-    private readonly ShiftingAnimation _animation;
-
-    private FormItem(ShiftingAnimation animation)
+    protected FormItem(Point initialSize)
     {
-        _animation = animation;
-        Bounds = new Rectangle(Point.Zero, _animation.FrameSize);
+        Bounds = new Rectangle(Point.Zero, initialSize);
     }
 
-    public FormItem(Texture2D normalTexture, Texture2D hoverTexture, Texture2D pressedTexture)
-        : this(new ShiftingAnimation(new[] { normalTexture, hoverTexture, pressedTexture }, false))
+    internal virtual void Update(GameTime gameTime)
     {
+        Animation.Process(gameTime);
     }
 
-    public FormItem(Texture2D normalTexture, Texture2D hoverTexture, Texture2D pressedTexture, double[] frameTimes)
-        : this(new ShiftingAnimation(new[] { normalTexture, hoverTexture, pressedTexture }, frameTimes, true))
+    internal void Draw(SpriteBatch spriteBatch)
     {
+        Animation.Draw(spriteBatch, Bounds.Location);
     }
 
-    public FormItem(Texture2D normalTexture, Texture2D hoverTexture, Texture2D pressedTexture, double frameTime)
-        : this(new ShiftingAnimation(new[] { normalTexture, hoverTexture, pressedTexture }, frameTime, true))
+    internal void SetStatus(FormItemVisualStatus status)
     {
+        if (Status != status)
+        {
+            Status = status;
+            OnChangeStatus();
+        }
     }
 
-    public FormItem(Texture2D normalTexture, double frameTime)
-        : this(normalTexture, normalTexture, normalTexture, frameTime)
+    protected virtual void OnChangeStatus()
     {
-    }
-
-    public void ChangeTexture(FormItemVisualStatus status, Texture2D newTexture)
-    {
-        _animation.ChangeTexture((int)status, newTexture);
-    }
-
-    internal virtual void Update(GameTime gameTime, FormItemVisualStatus status)
-    {
-        _animation.Process(gameTime);
-        _animation.ShiftTo((int)status);
-    }
-
-    internal virtual void Draw(SpriteBatch spriteBatch)
-    {
-        _animation.Draw(spriteBatch, Bounds.Location);
     }
 }

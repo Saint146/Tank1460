@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
+using Microsoft.Xna.Framework.Graphics;
+using Newtonsoft.Json.Serialization;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tank;
 using Tank1460.LevelObjects.Tanks;
@@ -14,17 +16,18 @@ internal class MainMenu : Form
 
     public int LevelNumber { get; private set; }
 
+    private const string TitleText = "TANK\n1460";
     private const string MenuItem1PlayerText = "1 PLAYER";
     private const string MenuItem2PlayersText = "2 PLAYERS";
-    private const int MenuItemsX = 12 * Tile.DefaultWidth;
-    private const int MenuItem1Y = 14 * Tile.DefaultHeight;
-    private const int MenuItem2Y = 16 * Tile.DefaultHeight;
+    private const int MenuItemsX = 11 * Tile.DefaultWidth;
+    private const int MenuItem1Y = 15 * Tile.DefaultHeight;
+    private const int MenuItem2Y = 17 * Tile.DefaultHeight;
     private static readonly Point MenuItem1StartingPosition = new(MenuItemsX, MenuItem1Y);
     private static readonly Point MenuItem2StartingPosition = new(MenuItemsX, MenuItem2Y);
 
-    private FormItem _player1Item;
-    private FormItem _player2Item;
-    private FormItem _cursorItem;
+    private FormButton _player1Button;
+    private FormButton _player2Button;
+    private FormButton _cursor;
 
     private TankType _cursorTankType;
     private TankColor _cursorTankColor;
@@ -34,7 +37,8 @@ internal class MainMenu : Form
         PlayerCount = playerCount;
         LevelNumber = levelNumber;
 
-        CreateItems();
+        CreateMenuItems();
+        CreateTitle();
         CreateCursor();
     }
 
@@ -57,67 +61,82 @@ internal class MainMenu : Form
 
     protected override void HandleClick(FormItem item)
     {
-        if (item == _cursorItem)
+        if (item == _cursor)
         {
             ChangeCursor();
             return;
         }
 
-        PlayerCount = item == _player1Item ? 1 : 2;
-        Exit();
+        if (item == _player1Button || item == _player2Button)
+        {
+            PlayerCount = item == _player1Button ? 1 : 2;
+            Exit();
+            return;
+        }
     }
 
-    private void CreateItems()
+    private void CreateTitle()
     {
-        _player1Item = CreateTextItem(MenuItem1PlayerText);
-        _player2Item = CreateTextItem(MenuItem2PlayersText);
+        var commonFont = Content.LoadFont(@"Sprites/Font/Pixel8", Color.AliceBlue);
+        var titlePatternTexture = Content.Load<Texture2D>(@"Sprites/Hud/Pattern1");
+        var titleFont = commonFont.CreateFontUsingTextureAsPattern(titlePatternTexture);
 
-        AddItem(_player1Item, MenuItem1StartingPosition);
-        AddItem(_player2Item, MenuItem2StartingPosition);
+        var title = CreateTextLabel(TitleText, titleFont, Point.Zero);
+        AddItem(title);
+        title.Position = new Point(x: _player1Button.Position.X + _player1Button.Bounds.Width / 2 - title.Bounds.Width / 2,
+                                   y: _player1Button.Position.Y - Tile.DefaultHeight * 2 - title.Bounds.Height);
+    }
+
+    private void CreateMenuItems()
+    {
+        _player1Button = CreateTextButton(MenuItem1PlayerText);
+        _player2Button = CreateTextButton(MenuItem2PlayersText);
+
+        AddItem(_player1Button, MenuItem1StartingPosition);
+        AddItem(_player2Button, MenuItem2StartingPosition);
     }
 
     private void CreateCursor()
     {
         _cursorTankType = TankType.Type0;
         _cursorTankColor = TankColor.Yellow;
-        _cursorItem = new FormItem(
+        _cursor = new FormButton(
             normalTexture: Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"),
             hoverTexture: Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"),
             pressedTexture: Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", @"Sprites/_R/Tank/Red"),
             frameTime: 4 * Tank1460Game.OneFrameSpan);
 
-        AddItem(_cursorItem);
+        AddItem(_cursor);
         UpdateCursorPosition();
     }
 
     private void UpdateCursorPosition()
     {
-        var x = MenuItemsX - Tile.DefaultWidth - _cursorItem.Bounds.Width;
-        var y = (PlayerCount == 1 ? _player1Item.Bounds : _player2Item.Bounds).Center.Y - _cursorItem.Bounds.Height / 2f - 1;
-        _cursorItem.Position = new(x, (int)y);
+        var x = MenuItemsX - Tile.DefaultWidth - _cursor.Bounds.Width;
+        var y = (PlayerCount == 1 ? _player1Button.Bounds : _player2Button.Bounds).Center.Y - _cursor.Bounds.Height / 2f - 1;
+        _cursor.Position = new(x, (int)y);
     }
 
-    private void ChangeCursor(TankType? newType = null, TankColor? newColor = null)
+    /// <summary>
+    /// Выбрать для курсора новый случайный цвет и тип танка.
+    /// </summary>
+    private void ChangeCursor()
     {
-        if (newType is null)
-        {
-            do
-                newType = Enum.GetValues<TankType>().GetRandom();
-            while (newType == _cursorTankType);
-        }
+        TankType newType;
+        do
+            newType = Enum.GetValues<TankType>().GetRandom();
+        while (newType == _cursorTankType);
 
-        if (newColor is null)
-        {
-            do
-                newColor = Enum.GetValues<TankColor>().Concat(EnumExtensions.GetCombinedFlagValues<TankColor>(2)).ToArray().GetRandom();
-            while (newColor == _cursorTankColor);
-        }
+        TankColor newColor;
+        do
+            newColor = Enum.GetValues<TankColor>().Concat(EnumExtensions.GetCombinedFlagValues<TankColor>(2)).ToArray().GetRandom();
+        while (newColor == _cursorTankColor);
 
-        _cursorTankType = newType.Value;
-        _cursorTankColor = newColor.Value;
+        _cursorTankType = newType;
+        _cursorTankColor = newColor;
 
-        _cursorItem.ChangeTexture(FormItemVisualStatus.Normal, Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{newColor}"));
-        _cursorItem.ChangeTexture(FormItemVisualStatus.Hover, Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{newColor}"));
-        _cursorItem.ChangeTexture(FormItemVisualStatus.Pressed, Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", @"Sprites/_R/Tank/Red"));
+        _cursor.ChangeTexture(FormItemVisualStatus.Normal, Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"));
+        _cursor.ChangeTexture(FormItemVisualStatus.Hover, Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"));
+        _cursor.ChangeTexture(FormItemVisualStatus.Pressed, Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", @"Sprites/_R/Tank/Red"));
     }
 }

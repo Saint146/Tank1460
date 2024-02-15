@@ -45,28 +45,27 @@ public class Font
         }
     }
 
-    public Point GetTextSize(string text) =>
-        new(CharWidth * text.Length, CharHeight);
+    public Point GetTextSize(string text)
+    {
+        if (text?.Length is null or 0)
+            return Point.Zero;
+
+        var lines = SplitIntoLines(text);
+        return new(CharWidth * lines[0].Length, CharHeight * lines.Length);
+    }
 
     public Rectangle GetTextRectangle(string text, Point startingPosition) =>
         new(startingPosition, GetTextSize(text));
 
-    private void InitTexturePositions()
-    {
-        for (var i = 0; i < Chars.Length; i++)
-        {
-            _charTexturePositions.Add(Chars[i], new Rectangle(i * CharWidth, 0, CharWidth, CharHeight));
-        }
-    }
-
     /// <summary>
     /// Создать текстуру из надписи. Поддерживает многострочные надписи.
     /// </summary>
-    public Texture2D CreateTexture(GraphicsDevice graphics, string text)
+    public Texture2D CreateTexture(string text)
     {
         ArgumentException.ThrowIfNullOrEmpty(text);
 
-        var lines = text.SplitIntoLines().TopAllToMaxLength();
+        var graphics = _texture.GraphicsDevice;
+        var lines = SplitIntoLines(text);
         var linesCount = lines.Length;
         var lineLength = lines[0].Length;
 
@@ -84,4 +83,116 @@ public class Font
         t.SetData(data);
         return t;
     }
+
+    /// <summary>
+    /// Создать шрифт, где каждый пиксель оригинального шрифта заменяется на переданную текстуру.
+    /// </summary>
+    public Font CreateFontUsingTextureAsPixel(Texture2D pixelTexture)
+    {
+        ArgumentNullException.ThrowIfNull(pixelTexture);
+
+        var graphics = _texture.GraphicsDevice;
+        var t = new Texture2D(graphics, _charTexturePositions.Count * pixelTexture.Width * _texture.Width, pixelTexture.Height * _texture.Height);
+        var patternData = pixelTexture.ToColorData();
+
+        var data = new Color[t.Width * t.Height];
+
+        for (var y = 0; y < _texture.Height; y++)
+            for (var x = 0; x < _texture.Width; x++)
+            {
+                var originalTextureDataIndex = y * _charTexturePositions.Count + x;
+
+                var fontData = _textureData[originalTextureDataIndex];
+                if (fontData.A == 0)
+                    continue;
+
+                var newTextureDataStartingDataIndex = y * _charTexturePositions.Count * pixelTexture.Height + x * pixelTexture.Width;
+
+                for (var i = 0; i < patternData.Length; i++)
+                    data[newTextureDataStartingDataIndex + i / pixelTexture.Width * t.Width + i % pixelTexture.Width] = patternData[i];
+            }
+
+        t.SetData(data);
+        return new Font(t);
+    }
+
+    /// <summary>
+    /// Создать шрифт, где каждый символ этого шрифта выкладывается переданной текстурой.
+    /// </summary>
+    public Font CreateFontUsingTextureAsPattern(Texture2D patternTexture)
+    {
+        ArgumentNullException.ThrowIfNull(patternTexture);
+
+        // TODO: Написать нормально, крч.
+        //if(patternTexture.Width % _texture.Width != 0 ||
+        //   patternTexture.Height % _texture.Height !=0 ||
+        //   patternTexture.Width / _texture.Width != patternTexture.Height / _texture.Height)
+        //    throw new Exception("Соотношение сторон переданной текстуры должно совпадать с соотношением сторон исходной текстуры шрифта, а сама текстура должна быть ровно в ")
+
+        var scale = patternTexture.Height / _texture.Height;
+
+        var graphics = _texture.GraphicsDevice;
+        var t = new Texture2D(graphics, _charTexturePositions.Count * patternTexture.Width, patternTexture.Height);
+        var patternData = patternTexture.ToColorData();
+
+        var data = new Color[t.Width * t.Height];
+
+        var originalTextureDataIndex = 0;
+        for (var y = 0; y < _texture.Height; y++)
+        {
+            for (var x = 0; x < _texture.Width; x++)
+            {
+                var fontData = _textureData[originalTextureDataIndex];
+                originalTextureDataIndex++;
+                if (fontData.A == 0)
+                    continue;
+
+                var newTextureY = y * scale;
+                var newTextureX = x * scale;
+
+                var newTextureStartingDataIndex = newTextureY * t.Width + newTextureX;
+
+                var patternOffsetX = newTextureX % patternTexture.Width;
+                var patternOffsetY = newTextureY % patternTexture.Height;
+
+                for (var patternY = 0; patternY < scale; patternY++)
+                {
+                    for (var patternX = 0; patternX < scale; patternX++)
+                    {
+                        var patternTextureDataIndex = (patternOffsetY + patternY) * patternTexture.Width + patternOffsetX + patternX;
+                        var newTextureDataIndex = newTextureStartingDataIndex + patternY * t.Width + patternX;
+                        data[newTextureDataIndex] = patternData[patternTextureDataIndex];
+                    }
+                }
+            }
+        }
+
+        t.SetData(data);
+
+        return new Font(t);
+    }
+
+    private void InitTexturePositions()
+    {
+        for (var i = 0; i < Chars.Length; i++)
+        {
+            _charTexturePositions.Add(Chars[i], new Rectangle(i * CharWidth, 0, CharWidth, CharHeight));
+        }
+    }
+    
+    private static string[] SplitIntoLines(string text) =>
+        text.SplitIntoLines().TopAllToMaxLength();
+
+    private static FontTextOptions _defaultOptions = new()
+    {
+        CharSpacing = 0,
+        LineSpacing = 0
+    };
+}
+
+public class FontTextOptions
+{
+    public int CharSpacing { get; set; }
+
+    public int LineSpacing { get; set; }
 }

@@ -14,6 +14,7 @@ internal class Curtain
     private const double TickTime = Tank1460Game.OneFrameSpan;
     private const int OpenedPosition = 0;
     private const int ClosedPosition = 24;
+    private const int ClosedDelay = 5;
 
     private readonly int _targetPosition;
     private readonly int _step;
@@ -31,7 +32,7 @@ internal class Curtain
                 break;
             case CurtainAction.Close:
                 _position = OpenedPosition;
-                _targetPosition = ClosedPosition;
+                _targetPosition = ClosedPosition + ClosedDelay;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(action), action, null);
@@ -50,7 +51,7 @@ internal class Curtain
             _time -= TickTime;
             _position += _step;
 
-            if (_step > 0 && _position < _targetPosition || _step < 0 && _position > _targetPosition)
+            if (_step > 0 && _position <= _targetPosition || _step < 0 && _position >= _targetPosition)
                 continue;
 
             Finish();

@@ -1,7 +1,6 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using MonoGame.Extended.Content;
+using System;
 using Tank1460.Common.Extensions;
 using Tank1460.LevelObjects.Tiles;
 
@@ -33,6 +32,8 @@ public class GameOverLevelEffect : LevelEffect
     private double _moveTime;
     private double _time;
     private bool _isOnTarget;
+
+    private const string Text = "GAME\nOVER";
 
     public override bool CanUpdateWhenGameIsPaused => true;
 
@@ -113,7 +114,7 @@ public class GameOverLevelEffect : LevelEffect
     private void LoadContent(ContentManagerEx content)
     {
         var font = content.LoadFont(@"Sprites/Font/Pixel8", new Color(0xff0027d1));
-        var textTexture = font.CreateTexture(content.GetGraphicsDevice(), "GAME\nOVER");
+        var textTexture = font.CreateTexture(Text);
 
         var animation = new Animation(textTexture, new[] { double.MaxValue }, false);
         Sprite.PlayAnimation(animation);

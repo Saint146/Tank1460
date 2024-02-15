@@ -7,6 +7,8 @@ namespace Tank1460;
 // TODO: Слишком много общего с потомками, хочется вынести в базовый класс.
 public class Animation : IAnimation
 {
+    public Point FrameSize => new (FrameWidth, FrameHeight);
+
     public int FrameWidth { get; }
 
     public int FrameHeight { get; }
@@ -96,5 +98,10 @@ public class Animation : IAnimation
         var source = new Rectangle(visibleRectangle.X + FrameIndex * Texture.Height, visibleRectangle.Y, visibleRectangle.Width, visibleRectangle.Height);
 
         spriteBatch.Draw(Texture, position + visibleRectangle.Location.ToVector2(), source, Color.White, 0.0f, new Vector2(0,0), scale, SpriteEffects.None, 0.0f);
+    }
+
+    public void Draw(SpriteBatch spriteBatch, Point position)
+    {
+        Draw(spriteBatch, position.ToVector2(), new Rectangle(0, 0, FrameWidth, FrameHeight), 1.0f);
     }
 }
