@@ -32,6 +32,7 @@ public class GameOverLevelEffect : LevelEffect
     private double _moveTime;
     private double _time;
     private bool _isOnTarget;
+    private static readonly Color RedColor = new (0xff0027d1);
 
     private const string Text = "GAME\nOVER";
 
@@ -113,7 +114,7 @@ public class GameOverLevelEffect : LevelEffect
 
     private void LoadContent(ContentManagerEx content)
     {
-        var font = content.LoadFont(@"Sprites/Font/Pixel8", new Color(0xff0027d1));
+        var font = content.LoadFont(@"Sprites/Font/Pixel8", RedColor);
         var textTexture = font.CreateTexture(Text);
 
         var animation = new Animation(textTexture, new[] { double.MaxValue }, false);

@@ -9,6 +9,7 @@ using System.Linq;
 using Tank1460.Audio;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
+using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Common.Level.Object.Tile;
 using Tank1460.Input;
 using Tank1460.LevelObjects;
@@ -61,6 +62,8 @@ public class Level : IDisposable
 
     internal LevelStructure Structure { get; }
 
+    internal LevelStats Stats { get; }
+
     internal bool ClassicRules => Tank1460Game.ClassicRules;
 
     private LevelStatus Status { get; set; }
@@ -93,6 +96,7 @@ public class Level : IDisposable
         Structure = levelStructure;
         LevelNumber = levelNumber;
         PlayersInGame = startingGameState.PlayersStates.Keys.ToArray();
+        Stats = new LevelStats(PlayersInGame);
 
         Content = new ContentManagerEx(serviceProvider, "Content");
 
@@ -146,9 +150,6 @@ public class Level : IDisposable
             case LevelStatus.Loading:
             case LevelStatus.Intro:
             case LevelStatus.LostDelay:
-            case LevelStatus.WinScoreScreen:
-            case LevelStatus.LostScoreScreen:
-            case LevelStatus.GameOverScreen:
             case LevelStatus.Win:
             case LevelStatus.GameOver:
                 playersInputs.ClearInputs();
@@ -178,7 +179,7 @@ public class Level : IDisposable
                     continue;
 
                 // Обрабатываем нажатия клавиш игрока без жизней.
-                if(playerInput.Active.HasFlag(PlayerInputCommands.ShootTurbo) || playerInput.Pressed.HasFlag(PlayerInputCommands.Shoot))
+                if (playerInput.Active.HasFlag(PlayerInputCommands.ShootTurbo) || playerInput.Pressed.HasFlag(PlayerInputCommands.Shoot))
                     TrySnatchLife(playerIndex);
             }
             else
@@ -200,8 +201,20 @@ public class Level : IDisposable
         if (KeyboardEx.HasBeenPressed(Keys.PageDown))
             GetAllPlayerTanks().ForEach(tank => tank.UpgradeDown());
 
-        if (KeyboardEx.HasBeenPressed(Keys.Enter))
-            GetAllPlayerTanks().ForEach(tank => tank.Explode(tank));
+        if (KeyboardEx.IsPressed(Keys.LeftAlt))
+        {
+            foreach (var digit in Enumerable.Range(1, 2))
+            {
+                var key = Keys.NumPad0 + digit;
+                if (!KeyboardEx.HasBeenPressed(key))
+                    continue;
+
+                var killerTank = GetPlayerTank((PlayerIndex)(digit - 1));
+                BotManager.ExplodeAll(killerTank);
+
+                break;
+            }
+        }
 #endif
     }
 
@@ -379,6 +392,19 @@ public class Level : IDisposable
         _levelEffects.RemoveAll(e => e is T);
     }
 
+    internal void AddPlayerStatsForDefeatingTank(PlayerIndex playerIndex, Tank tank)
+    {
+        var tankType = tank.Type;
+
+        var playerBotStats = Stats.PlayerStats[playerIndex].BotsDefeated;
+        if (playerBotStats.TryGetValue(tankType, out var value))
+            playerBotStats[tankType] = value + 1;
+        else
+            playerBotStats[tankType] = 1;
+
+        RewardPlayerWithPoints(playerIndex, GameRules.TankScoreByType[tankType]);
+    }
+
     internal void RewardPlayerWithPoints(PlayerIndex playerIndex, int points)
     {
         Debug.Assert(points > 0);
@@ -468,14 +494,11 @@ public class Level : IDisposable
                 Status = LevelStatus.GameOver;
                 _levelEffects.RemoveAll();
                 SoundPlayer.StopAll();
-                SoundPlayer.Unmute();
+                //SoundPlayer.Unmute();
                 GameOver?.Invoke(this);
 
                 return true;
 
-            case LevelStatus.WinScoreScreen:
-            case LevelStatus.LostScoreScreen:
-            case LevelStatus.GameOverScreen:
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -488,8 +511,8 @@ public class Level : IDisposable
 
         _tileObjectMap = new List<LevelObject>[width, height];
         for (var y = 0; y < height; y++)
-        for (var x = 0; x < width; x++)
-            _tileObjectMap[x, y] = new List<LevelObject>();
+            for (var x = 0; x < width; x++)
+                _tileObjectMap[x, y] = new List<LevelObject>();
 
         for (var y = 0; y < height; y++)
         {
@@ -540,12 +563,8 @@ public class Level : IDisposable
                 SoundPlayer.ResumeAndPopState();
                 break;
 
-            case LevelStatus.WinScoreScreen:
-            case LevelStatus.LostScoreScreen:
-            case LevelStatus.GameOverScreen:
             case LevelStatus.Win:
             case LevelStatus.GameOver:
-
             default:
                 throw new ArgumentOutOfRangeException();
         }

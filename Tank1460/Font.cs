@@ -13,7 +13,7 @@ public class Font
     public int CharHeight { get; }
 
     private const string
-        Chars = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,""'?♥#&-:©!│║ "; // Дальше пока не надо.
+        Chars = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,""'?♥#&-_:©!‼│║↑↓→← "; // Дальше пока не надо.
 
     private readonly Texture2D _texture;
     private readonly Color[] _textureData;
@@ -40,6 +40,9 @@ public class Font
         var position = startingPosition.ToVector2();
         foreach (var c in text)
         {
+            if (c == ' ')
+                continue;
+
             spriteBatch.Draw(_texture, position, _charTexturePositions[c], Color.White);
             position.X += CharWidth;
         }

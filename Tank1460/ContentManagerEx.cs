@@ -15,6 +15,7 @@ public class ContentManagerEx : ContentManager
     private readonly Dictionary<string, Texture2D> _dynamicTextures = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Font> _fonts = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Texture2D> _customTextures = new();
+    private readonly Dictionary<string, Font> _customFonts = new();
 
     private const char AverageSeparator = ',';
     private const char RecolorSeparator = ':';
@@ -32,6 +33,7 @@ public class ContentManagerEx : ContentManager
         _dynamicTextures.Clear();
         _fonts.Clear();
         _customTextures.Clear();
+        _customFonts.Clear();
         base.Unload();
     }
 
@@ -142,6 +144,24 @@ public class ContentManagerEx : ContentManager
             texture = texture.RecolorAsCopy(Color.Black, fontColor.Value);
 
         font = _fonts[key] = new Font(texture);
+        return font;
+    }
+
+    /// <summary>
+    /// Подгрузить шрифт из кэша, первый раз создав его.
+    /// </summary>
+    /// <remarks>
+    /// Имя может содержать любые символы — кастомные шрифты лежат в отдельном кэше, никак не связанном с остальными.
+    /// Имя не подвергается изменениям, кладётся как есть и сравнивается на строгое равенство.
+    /// </remarks>
+    /// <param name="fontName">Имя шрифта.</param>
+    /// <param name="createFontFunc">Функция для создания шрифта.</param>
+    public Font LoadOrCreateCustomFont(string fontName, Func<Font> createFontFunc)
+    {
+        if (_customFonts.TryGetValue(fontName, out var font))
+            return font;
+
+        font = _customFonts[fontName] = createFontFunc();
         return font;
     }
 

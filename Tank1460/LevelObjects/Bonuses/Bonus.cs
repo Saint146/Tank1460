@@ -58,7 +58,14 @@ public class Bonus : LevelObject
                 break;
 
             case BonusType.Grenade:
-                Level.BotManager.ExplodeAll(playerTank);
+                // Передаём null, чтобы не давать очков игроку за уничтожение (логика оригинала).
+                Level.BotManager.ExplodeAll(
+#if DEBUG
+                    playerTank
+#else
+                    null
+#endif
+                );
                 break;
 
             case BonusType.Ship:
@@ -107,8 +114,7 @@ public class Bonus : LevelObject
                 }
                 break;
             case BonusType.Grenade:
-                // Передаём null, чтобы не давать очков игроку за уничтожение (логика оригинала).
-                Level.GetAllPlayerTanks().ForEach(playerTank => playerTank.Explode(null));
+                Level.GetAllPlayerTanks().ForEach(playerTank => playerTank.Explode(botTank));
                 break;
 
             case BonusType.Pistol:

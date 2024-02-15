@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Tank1460.Menu;
+namespace Tank1460.Forms;
 
 internal abstract class FormItem
 {

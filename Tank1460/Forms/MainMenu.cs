@@ -1,14 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
-using Microsoft.Xna.Framework.Graphics;
-using Newtonsoft.Json.Serialization;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tank;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
 
-namespace Tank1460.Menu;
+namespace Tank1460.Forms;
 
 internal class MainMenu : Form
 {
@@ -67,19 +66,17 @@ internal class MainMenu : Form
             return;
         }
 
-        if (item == _player1Button || item == _player2Button)
-        {
-            PlayerCount = item == _player1Button ? 1 : 2;
-            Exit();
-            return;
-        }
+        if (item != _player1Button && item != _player2Button) return;
+
+        PlayerCount = item == _player1Button ? 1 : 2;
+        Exit();
     }
 
     private void CreateTitle()
     {
-        var commonFont = Content.LoadFont(@"Sprites/Font/Pixel8", Color.AliceBlue);
+        var commonFont = Content.LoadFont(@"Sprites/Font/Pixel8");
         var titlePatternTexture = Content.Load<Texture2D>(@"Sprites/Hud/Pattern1");
-        var titleFont = commonFont.CreateFontUsingTextureAsPattern(titlePatternTexture);
+        var titleFont = Content.LoadOrCreateCustomFont("TitleFont", () => commonFont.CreateFontUsingTextureAsPattern(titlePatternTexture));
 
         var title = CreateTextLabel(TitleText, titleFont, Point.Zero);
         AddItem(title);

@@ -1,4 +1,4 @@
-﻿namespace Tank1460.Menu;
+﻿namespace Tank1460.Forms;
 
 internal enum FormItemVisualStatus
 {

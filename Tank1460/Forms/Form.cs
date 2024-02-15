@@ -7,11 +7,11 @@ using System.Linq;
 using Tank1460.Common.Extensions;
 using Tank1460.Input;
 
-namespace Tank1460.Menu;
+namespace Tank1460.Forms;
 
 internal abstract class Form
 {
-    protected FormStatus Status { get; private set; }
+    public FormStatus Status { get; private set; }
 
     protected IReadOnlyDictionary<int, FormItem> Items => _items;
 
@@ -22,6 +22,8 @@ internal abstract class Form
     protected static readonly Color DefaultTextPressedColor = new(0x775000e0);
 
     protected ContentManagerEx Content;
+
+    private bool _wasMouseDown;
 
     /// <summary>
     /// Элемент, на котором левую кнопку мыши последний раз зажали.
@@ -54,16 +56,22 @@ internal abstract class Form
         _hoveringItem = HitTest(mouseState.Position);
 
         var isMouseDown = mouseState.LeftButton == ButtonState.Pressed;
-        if (_lastPressedItem is null && isMouseDown)
+        if (!_wasMouseDown && isMouseDown)
         {
             // Клавишу только что нажали.
+            _wasMouseDown = true;
+
             _lastPressedItem = _hoveringItem;
         }
-        else if (_lastPressedItem is not null && !isMouseDown)
+        else if (_wasMouseDown && !isMouseDown)
         {
             // Клавишу только что отпустили.
-            if (_hoveringItem == _lastPressedItem)
+            _wasMouseDown = false;
+
+            if (_lastPressedItem is not null && _lastPressedItem == _hoveringItem)
                 HandleClick(_lastPressedItem);
+            else
+                HandleClick(null);
 
             _lastPressedItem = null;
         }
@@ -93,12 +101,11 @@ internal abstract class Form
 
     protected abstract void Enter();
 
-    protected abstract void HandleClick(FormItem item);
+    protected abstract void HandleClick([CanBeNull] FormItem item);
 
     protected void Exit()
     {
         Status = FormStatus.Exited;
-        Exited?.Invoke();
     }
 
     protected void AddItem(FormItem item, Point? position = null)
@@ -109,7 +116,7 @@ internal abstract class Form
             item.Position = position.Value;
     }
 
-    protected FormLabel CreateTextLabel(string text, Font font = null, Point? margins = null)
+    protected FormImage CreateTextLabel(string text, Font font = null, Point? margins = null)
     {
         font ??= Content.LoadFont(@"Sprites/Font/Pixel8");
         margins ??= font.GetTextSize(" ");
@@ -121,7 +128,7 @@ internal abstract class Form
         texture.Draw(font.CreateTexture(text), halfMargins);
 
         var animation = new Animation(texture, new[] { double.MaxValue }, false);
-        return new FormLabel(animation);
+        return new FormImage(animation);
     }
 
     protected FormButton CreateTextButton(string text,
@@ -173,15 +180,5 @@ internal abstract class Form
     private FormItem HitTest(Point mousePosition)
     {
         return _items.Values.FirstOrDefault(item => item.Bounds.Contains(mousePosition));
-    }
-
-    public delegate void FormEvent();
-
-    public virtual event FormEvent Exited;
-
-    protected enum FormStatus
-    {
-        Running,
-        Exited
     }
 }

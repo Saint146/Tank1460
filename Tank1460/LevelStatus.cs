@@ -37,15 +37,6 @@ internal enum LevelStatus
     /// </summary>
     LostDelay,
 
-    // TODO
-    WinScoreScreen,
-
-    // TODO
-    LostScoreScreen,
-
-    // TODO
-    GameOverScreen,
-
     /// <summary>
     /// Уровень пройден. Игра не идет, но уровень ещё рисуется.
     /// </summary>

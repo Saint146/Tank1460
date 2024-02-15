@@ -60,18 +60,6 @@ public abstract class Tank : MoveableLevelObject
     private ShellProperties _shellProperties;
     private ShellSpeed _shellSpeed;
 
-    private readonly Dictionary<TankType, int> _pointsRewardsByType = new()
-    {
-        { TankType.Type0, 500 },
-        { TankType.Type1, 500 },
-        { TankType.Type2, 500 },
-        { TankType.Type3, 500 },
-        { TankType.Type4, 100 },
-        { TankType.Type5, 200 },
-        { TankType.Type6, 300 },
-        { TankType.Type7, 400 }
-    };
-
     protected Tank(Level level, TankType type, TankColor color, int bonusCount) : base(level, 0.75f)
     {
         Status = TankStatus.Spawning;
@@ -288,7 +276,7 @@ public abstract class Tank : MoveableLevelObject
         var isBotTank = this is BotTank;
 
         if (isBotTank && destroyedBy is PlayerTank playerTank)
-            Level.RewardPlayerWithPoints(playerTank.PlayerIndex, GetPointsReward());
+            Level.AddPlayerStatsForDefeatingTank(playerTank.PlayerIndex, this);
 
         Status = TankStatus.Exploding;
         _explosion = new BigExplosion(Level);
@@ -422,7 +410,6 @@ public abstract class Tank : MoveableLevelObject
             MovingDirection = null;
         }
     }
-    private int GetPointsReward() => _pointsRewardsByType[Type];
 
     private void ActiveEffects_EffectAdded(TankEffect effect)
     {

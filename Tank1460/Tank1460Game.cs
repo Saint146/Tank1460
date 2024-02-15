@@ -12,7 +12,7 @@ using Tank1460.Common.Level;
 using Tank1460.Input;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tiles;
-using Tank1460.Menu;
+using Tank1460.Forms;
 using Tank1460.SaveLoad;
 using Tank1460.SaveLoad.Settings;
 
@@ -45,7 +45,7 @@ public class Tank1460Game : Game
     private static Point PostHudIndent { get; } = new(Tile.DefaultWidth, 0);
 
     private readonly Matrix _levelIndentTransformation = Matrix.CreateTranslation(PreLevelIndent.X, PreLevelIndent.Y, 0);
-    private readonly Matrix _menuIndentTransformation = Matrix.Identity;
+    private readonly Matrix _formIndentTransformation = Matrix.Identity;
 
     private Point BaseScreenSize =>
         // Отступ слева и сверху
@@ -80,13 +80,13 @@ public class Tank1460Game : Game
     private SpriteBatch _spriteBatch;
     private readonly SaveLoadManager _saveLoadManager = new();
     private Level _level;
-    private MainMenu _mainMenu;
+    private Form _form;
     private LevelHud _levelHud;
     private Cursor _cursor;
     private Curtain _curtain;
 
     private Matrix _levelTransformation;
-    private Matrix _menuTransformation;
+    private Matrix _formTransformation;
     private float _scale = 1.0f;
     private const int DefaultScale = 3;
     internal const bool ClassicRules = false;
@@ -118,7 +118,6 @@ public class Tank1460Game : Game
 
     public Tank1460Game()
     {
-        Window.Title = "Tank 1460";
         Window.AllowUserResizing = true;
         Content = new ContentManagerEx(Services, "Content");
         IsFixedTimeStep = true;
@@ -143,6 +142,7 @@ public class Tank1460Game : Game
     protected override void Initialize()
     {
         base.Initialize();
+        Window.Title = "Tank 1460";
         LoadSettings();
     }
 
@@ -172,11 +172,16 @@ public class Tank1460Game : Game
 
         ProcessStatus();
 
-        _mainMenu?.HandleInput(inputs, _mouseState.CopyWithPosition(_mouseState.Position.ApplyReversedTransformation(_menuTransformation)));
-        _mainMenu?.Update(gameTime);
-
-        _level?.HandleInput(inputs);
-        _level?.Update(gameTime);
+        if (_form is not null)
+        {
+            _form.HandleInput(inputs, _mouseState.CopyWithPosition(_mouseState.Position.ApplyReversedTransformation(_formTransformation)));
+            _form.Update(gameTime);
+        }
+        else if (_level is not null)
+        {
+            _level.HandleInput(inputs);
+            _level.Update(gameTime);
+        }
 
         _curtain?.Update(gameTime);
 
@@ -185,24 +190,23 @@ public class Tank1460Game : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(_mainMenu is not null || _level is null ? GameBackColor : LevelBackColor);
+        GraphicsDevice.Clear(_form is not null || _level is null ? GameBackColor : LevelBackColor);
 
-        if (_level is not null)
+        if (_form is not null)
+        {
+            _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _formTransformation);
+
+            _form.Draw(_spriteBatch);
+
+            _spriteBatch.End();
+        }
+        else if (_level is not null)
         {
             _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _levelTransformation);
 
             _level.Draw(gameTime, _spriteBatch);
             var hudPosition = new Point(GetLevelBounds().Width + PostLevelIndent.X - 1, 0); // ну вот так в оригинале, на один пиксель сдвинуто левее сетки
             _levelHud.Draw(_level, _spriteBatch, hudPosition);
-
-            _spriteBatch.End();
-        }
-
-        if (_mainMenu is not null)
-        {
-            _spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, _menuTransformation);
-
-            _mainMenu.Draw(_spriteBatch);
 
             _spriteBatch.End();
         }
@@ -247,7 +251,7 @@ public class Tank1460Game : Game
     protected override void UnloadContent()
     {
         UnloadLevel();
-        UnloadMenu();
+        UnloadForm();
         base.UnloadContent();
     }
 
@@ -260,12 +264,22 @@ public class Tank1460Game : Game
                 break;
 
             case GameStatus.Ready:
-                Status = GameStatus.InMenu;
+                Status = GameStatus.InMainMenu;
                 UnloadLevel();
-                LoadMenu();
+                LoadMainMenu();
                 break;
 
-            case GameStatus.InMenu:
+            case GameStatus.InMainMenu:
+                if (_form.Status != FormStatus.Exited)
+                    break;
+
+                var mainMenu = (MainMenu)_form;
+                LevelNumber = mainMenu.LevelNumber;
+                PlayersInGame = AllPlayers.Take(mainMenu.PlayerCount).ToArray();
+                ResetGameState();
+                StartLoadingLevelSequence();
+                break;
+
             case GameStatus.InLevel:
                 break;
 
@@ -283,10 +297,39 @@ public class Tank1460Game : Game
                     break;
 
                 _curtain = null;
-                UnloadMenu();
+                UnloadLevel();
+                UnloadForm();
                 LoadLevel();
                 break;
 
+            case GameStatus.InWinScoreScreen:
+                if (_form.Status != FormStatus.Exited)
+                    break;
+
+                UnloadForm();
+                StartLoadingLevelSequence(levelNumber: LevelNumber + 1);
+                break;
+
+            case GameStatus.InLostScoreScreen:
+                if (_form.Status != FormStatus.Exited)
+                    break;
+
+                UnloadForm();
+                UnloadLevel();
+                Status = GameStatus.GameOverScreen;
+                LoadGameOverScreen();
+                break;
+
+            case GameStatus.GameOverScreen:
+                if (_form.Status != FormStatus.Exited)
+                    break;
+
+                UnloadForm();
+                Status = GameStatus.Ready;
+                ResetGameState();
+                break;
+
+            case GameStatus.HighscoreScreen:
             default:
                 throw new ArgumentOutOfRangeException(nameof(Status));
         }
@@ -364,7 +407,7 @@ public class Tank1460Game : Game
             _level?.GetAllPlayerTanks().EmptyIfNull().ForEach(tank => tank.Explode(null));
         }
 
-        // Shift+0..Ctrl+9 — загрузить уровень Test/%d
+        // Shift+0..Shift+9 — загрузить уровень Test/%d
         if (_keyboardState.IsKeyDown(Keys.LeftShift))
         {
             foreach (var digit in Enumerable.Range(0, 10))
@@ -394,7 +437,7 @@ public class Tank1460Game : Game
                     continue;
 
                 _graphics.IsFullScreen = false;
-                if(Window.IsMaximized())
+                if (Window.IsMaximized())
                     Window.Restore();
 
                 var size = ScreenPoint.FromPoint(BaseScreenSize.Multiply(digit));
@@ -421,27 +464,36 @@ public class Tank1460Game : Game
         return inputs;
     }
 
-    private void UnloadMenu()
+    private void UnloadForm()
     {
-        if (_mainMenu is null)
+        if (_form is null)
             return;
 
-        _mainMenu.Exited -= MainMenu_Exited;
-        _mainMenu = null;
+        _form = null;
     }
 
-    private void LoadMenu()
+    private void LoadMainMenu()
     {
-        _mainMenu = new MainMenu(Content, PlayersInGame.Length, LevelNumber);
-        _mainMenu.Exited += MainMenu_Exited;
+        Debug.Assert(_level is null);
+        Debug.Assert(_form is null);
+
+        _form = new MainMenu(Content, PlayersInGame.Length, LevelNumber);
     }
 
-    private void MainMenu_Exited()
+    private void LoadScoreScreen(bool showBonus)
     {
-        LevelNumber = _mainMenu.LevelNumber;
-        PlayersInGame = AllPlayers.Take(_mainMenu.PlayerCount).ToArray();
-        ResetGameState();
-        StartLoadingLevelSequence();
+        Debug.Assert(_level is not null);
+        Debug.Assert(_form is null);
+
+        _form = new ScoreScreen(Content, LevelNumber, _gameState, _level.Stats, showBonus);
+    }
+
+    private void LoadGameOverScreen()
+    {
+        Debug.Assert(_level is null);
+        Debug.Assert(_form is null);
+
+        _form = new GameOverScreen(Content);
     }
 
     /// <summary>
@@ -478,8 +530,8 @@ public class Tank1460Game : Game
     private void LoadLevel()
     {
         Debug.WriteLine($"Loading level {LevelFolder}/{LevelNumber}...");
-
-        UnloadLevel();
+        Debug.Assert(_level is null);
+        Debug.Assert(_form is null);
 
         var levelStructure = Content.Load<LevelStructure>($"Levels/{LevelFolder}/{LevelNumber}");
         _level = new Level(Services, levelStructure, LevelNumber, _gameState);
@@ -499,13 +551,15 @@ public class Tank1460Game : Game
     private void Level_LevelComplete(Level level)
     {
         _gameState = level.GetGameState();
-        StartLoadingLevelSequence(levelNumber: LevelNumber + 1);
+
+        Status = GameStatus.InWinScoreScreen;
+        LoadScoreScreen(showBonus: true);
     }
 
     private void Level_GameOver(Level level)
     {
-        Status = GameStatus.Ready;
-        ResetGameState();
+        Status = GameStatus.InLostScoreScreen;
+        LoadScoreScreen(showBonus: false);
     }
 
     private void LoadSettings()
@@ -615,6 +669,6 @@ public class Tank1460Game : Game
 
         // Для разных сущностей рассчитываем от их изначальных сдвигов.
         _levelTransformation = _levelIndentTransformation * globalTransformation;
-        _menuTransformation = _menuIndentTransformation * globalTransformation;
+        _formTransformation = _formIndentTransformation * globalTransformation;
     }
 }
