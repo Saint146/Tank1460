@@ -95,7 +95,8 @@ internal abstract class Form
     public void Draw(SpriteBatch spriteBatch)
     {
         foreach (var (_, item) in _items)
-            item.Draw(spriteBatch);
+            if (item.Visible)
+                item.Draw(spriteBatch);
     }
 
     protected abstract void OnClick([CanBeNull] FormItem item);
@@ -115,16 +116,14 @@ internal abstract class Form
             item.Position = position.Value;
     }
 
-    protected FormImage CreateTextLabel(string text, Font font = null, Point? margins = null)
+    protected FormImage CreateTextImage(string text, Font font = null)
     {
         font ??= Content.LoadFont(@"Sprites/Font/Pixel8");
-        margins ??= font.GetTextSize(" ");
-        var halfMargins = margins.Value.Divide(2);
-        var itemSize = font.GetTextSize(text) + margins.Value;
+        var itemSize = font.GetTextSize(text);
 
         var templateTexture = Content.LoadNewSolidColoredTexture(Color.Transparent, itemSize.X, itemSize.Y);
         var texture = templateTexture.Copy();
-        texture.Draw(font.CreateTexture(text), halfMargins);
+        texture.Draw(font.CreateTexture(text), Point.Zero);
 
         var animation = new Animation(texture, new[] { double.MaxValue }, false);
         return new FormImage(animation);

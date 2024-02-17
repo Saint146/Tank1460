@@ -489,7 +489,7 @@ public class Tank1460Game : Game
         Debug.Assert(_level is not null);
         Debug.Assert(_form is null);
 
-        _form = new ScoreScreen(Content, LevelNumber, _gameState, _level.Stats, showBonus);
+        _form = new ScoreScreen(Content, LevelNumber, 20000, _gameState, _level.Stats, showBonus);
     }
 
     private void LoadGameOverScreen()

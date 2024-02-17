@@ -5,10 +5,6 @@ namespace Tank1460.Forms;
 
 internal abstract class FormItem
 {
-    protected abstract IAnimation Animation { get; }
-
-    protected FormItemVisualStatus Status { get; private set; }
-
     public Rectangle Bounds { get; private set; }
 
     public Point Position
@@ -16,6 +12,12 @@ internal abstract class FormItem
         get => Bounds.Location;
         set => Bounds = new Rectangle(value, Bounds.Size);
     }
+
+    public bool Visible { get; set; } = true;
+
+    protected abstract IAnimation Animation { get; }
+
+    protected FormItemVisualStatus Status { get; private set; }
 
     protected FormItem(Point initialSize)
     {
@@ -34,11 +36,11 @@ internal abstract class FormItem
 
     internal void SetStatus(FormItemVisualStatus status)
     {
-        if (Status != status)
-        {
-            Status = status;
-            OnChangeStatus();
-        }
+        if (Status == status)
+            return;
+
+        Status = status;
+        OnChangeStatus();
     }
 
     protected virtual void OnChangeStatus()

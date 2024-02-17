@@ -78,11 +78,14 @@ internal class MainMenu : Form
 
     private void CreateTitle()
     {
-        var commonFont = Content.LoadFont(@"Sprites/Font/Pixel8");
-        var titlePatternTexture = Content.Load<Texture2D>(@"Sprites/Hud/Pattern1");
-        var titleFont = Content.LoadOrCreateCustomFont("TitleFont", () => commonFont.CreateFontUsingTextureAsPattern(titlePatternTexture));
+        var titleFont = Content.LoadOrCreateCustomFont("TitleFont", () =>
+        {
+            var commonFont = Content.LoadFont(@"Sprites/Font/Pixel8");
+            var titlePatternTexture = Content.Load<Texture2D>(@"Sprites/Hud/Pattern1");
+            return commonFont.CreateFontUsingTextureAsPattern(titlePatternTexture);
+        });
 
-        var title = CreateTextLabel(TitleText, titleFont, Point.Zero);
+        var title = CreateTextImage(TitleText, titleFont);
         AddItem(title);
         title.Position = new Point(x: _player1Button.Position.X + _player1Button.Bounds.Width / 2 - title.Bounds.Width / 2,
                                    y: _player1Button.Position.Y - Tile.DefaultHeight * 2 - title.Bounds.Height);
