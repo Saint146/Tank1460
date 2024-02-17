@@ -9,7 +9,6 @@ using System.Linq;
 using Tank1460.Audio;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
-using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Common.Level.Object.Tile;
 using Tank1460.Input;
 using Tank1460.LevelObjects;
@@ -420,6 +419,11 @@ public class Level : IDisposable
             PlayerSpawners[playerIndex].AddOneUp();
             nearestOneUpPoints = (nearestOneUpPoints + 1).CeilingByBase(pointsForOneUp);
         }
+    }
+
+    internal void CreateFloatingText(Point centerPosition, string text, double effectTime)
+    {
+        _levelEffects.Add(new FloatingText(this, text, centerPosition, effectTime));
     }
 
     internal void HandlePlayerLostAllLives(PlayerIndex playerIndex)

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using JetBrains.Annotations;
 using Tank1460.Audio;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object;
@@ -59,6 +60,7 @@ public abstract class Tank : MoveableLevelObject
     private int _maxShells;
     private ShellProperties _shellProperties;
     private ShellSpeed _shellSpeed;
+    [CanBeNull] private string _afterExplosionText;
 
     protected Tank(Level level, TankType type, TankColor color, int bonusCount) : base(level, 0.75f)
     {
@@ -91,6 +93,9 @@ public abstract class Tank : MoveableLevelObject
                 break;
 
             case TankStatus.Exploding when _explosion.ToRemove:
+                if (!string.IsNullOrEmpty(_afterExplosionText))
+                    Level.CreateFloatingText(BoundingRectangle.Center, _afterExplosionText, 12.0 * Tank1460Game.OneFrameSpan);
+                
                 _explosion = null;
                 Status = TankStatus.Destroyed;
 
@@ -276,7 +281,10 @@ public abstract class Tank : MoveableLevelObject
         var isBotTank = this is BotTank;
 
         if (isBotTank && destroyedBy is PlayerTank playerTank)
+        {
             Level.AddPlayerStatsForDefeatingTank(playerTank.PlayerIndex, this);
+            _afterExplosionText = GameRules.TankScoreByType[Type].ToString();
+        }
 
         Status = TankStatus.Exploding;
         _explosion = new BigExplosion(Level);

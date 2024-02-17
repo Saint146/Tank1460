@@ -38,6 +38,7 @@ public class Bonus : LevelObject
     {
         Level.SoundPlayer.Play(Sound.BonusPickup);
         Level.RewardPlayerWithPoints(playerTank.PlayerIndex, PointsRewardForBonus);
+        Level.CreateFloatingText(BoundingRectangle.Center, PointsRewardForBonus.ToString(), 49.0 * Tank1460Game.OneFrameSpan);
 
         switch (Type)
         {
@@ -88,6 +89,7 @@ public class Bonus : LevelObject
     private void ApplyEffectOnBot(BotTank botTank)
     {
         Level.SoundPlayer.Play(Sound.BonusPickup);
+        Level.CreateFloatingText(BoundingRectangle.Center, "BRUH", 49.0 * Tank1460Game.OneFrameSpan);
 
         switch (Type)
         {

@@ -131,6 +131,22 @@ public class ContentManagerEx : ContentManager
         return result;
     }
 
+    public Font LoadFont(string fontName, string chars, Color? fontColor = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fontName);
+
+        var key = $"{fontName.Replace('\\', '/')}{RecolorSeparator}{fontColor?.PackedValue.ToString() ?? string.Empty}";
+        if (_fonts.TryGetValue(key, out var font))
+            return font;
+
+        var texture = Load<Texture2D>(fontName);
+        if (fontColor.HasValue)
+            texture = texture.RecolorAsCopy(Color.Black, fontColor.Value);
+
+        font = _fonts[key] = new Font(texture, chars);
+        return font;
+    }
+
     public Font LoadFont(string fontName, Color? fontColor = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fontName);

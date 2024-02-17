@@ -558,6 +558,8 @@ public class Tank1460Game : Game
 
     private void Level_GameOver(Level level)
     {
+        _gameState = level.GetGameState();
+
         Status = GameStatus.InLostScoreScreen;
         LoadScoreScreen(showBonus: false);
     }

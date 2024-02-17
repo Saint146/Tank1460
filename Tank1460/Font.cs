@@ -12,25 +12,32 @@ public class Font
 
     public int CharHeight { get; }
 
-    private const string
-        Chars = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,""'?♥#&-_:©!‼│║↑↓→← "; // Дальше пока не надо.
+    private const string DefaultChars = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,""'?♥#&-_:©!‼│║↑↓→← ";
+
+    private readonly string _chars;
 
     private readonly Texture2D _texture;
     private readonly Color[] _textureData;
     private readonly Dictionary<char, Rectangle> _charTexturePositions = new();
 
-    public Font(Texture2D fontTexture)
+    public Font(Texture2D fontTexture, string chars)
     {
         ArgumentNullException.ThrowIfNull(fontTexture);
+        ArgumentException.ThrowIfNullOrEmpty(chars);
 
         _texture = fontTexture;
         _textureData = new Color[_texture.Width * _texture.Height];
         _texture.GetData(_textureData);
 
+        _chars = chars;
         CharHeight = _texture.Height;
-        CharWidth = _texture.Width / Chars.Length;
+        CharWidth = _texture.Width / _chars.Length;
 
         InitTexturePositions();
+    }
+
+    public Font(Texture2D fontTexture) : this(fontTexture, DefaultChars)
+    {
     }
 
     public void Draw(string text, SpriteBatch spriteBatch, Point startingPosition)
@@ -40,10 +47,9 @@ public class Font
         var position = startingPosition.ToVector2();
         foreach (var c in text)
         {
-            if (c == ' ')
-                continue;
+            if (c != ' ')
+                spriteBatch.Draw(_texture, position, _charTexturePositions[c], Color.White);
 
-            spriteBatch.Draw(_texture, position, _charTexturePositions[c], Color.White);
             position.X += CharWidth;
         }
     }
@@ -80,7 +86,7 @@ public class Font
         for (var i = 0; i < data.Length; i++)
         {
             var c = lines[i / linePixelCount][i % linePixelCount % t.Width / CharWidth];
-            data[i] = _textureData[i % linePixelCount % CharWidth + CharWidth * Chars.IndexOf(c) + i % linePixelCount / t.Width * _texture.Width];
+            data[i] = _textureData[i % linePixelCount % CharWidth + CharWidth * _chars.IndexOf(c) + i % linePixelCount / t.Width * _texture.Width];
         }
 
         t.SetData(data);
@@ -177,12 +183,12 @@ public class Font
 
     private void InitTexturePositions()
     {
-        for (var i = 0; i < Chars.Length; i++)
+        for (var i = 0; i < _chars.Length; i++)
         {
-            _charTexturePositions.Add(Chars[i], new Rectangle(i * CharWidth, 0, CharWidth, CharHeight));
+            _charTexturePositions.Add(_chars[i], new Rectangle(i * CharWidth, 0, CharWidth, CharHeight));
         }
     }
-    
+
     private static string[] SplitIntoLines(string text) =>
         text.SplitIntoLines().TopAllToMaxLength();
 
