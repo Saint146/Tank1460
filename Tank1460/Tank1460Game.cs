@@ -92,6 +92,7 @@ public class Tank1460Game : Game
     internal const bool ClassicRules = false;
 
     private int _backbufferWidth, _backbufferHeight;
+    private bool _isMouseInsideWindow;
     private bool _isCustomCursorVisible;
 
     private readonly PlayerInputHandler _playerInputHandler;
@@ -361,11 +362,14 @@ public class Tank1460Game : Game
 
         // Мышь.
         _mouseState = Mouse.GetState();
+        _isMouseInsideWindow = _mouseState.X >= 0 && _mouseState.Y >= 0 && _mouseState.X < _backbufferWidth && _mouseState.Y < _backbufferHeight;
+
+        // Не учитываем нажатия мыши, если курсор за экраном (самый простой случай — клик по заголовку окна в оконном режиме)
+        if (!_isMouseInsideWindow)
+            _mouseState = _mouseState.CopyWithAllButtonsReleased();
+
         // Курсор не обновляет свое состояние, если он отключен или вне экрана.
-        if (_customCursorEnabled)
-            _isCustomCursorVisible = _mouseState.X >= 0 && _mouseState.Y >= 0 && _mouseState.X < _backbufferWidth && _mouseState.Y < _backbufferHeight;
-        else
-            _isCustomCursorVisible = false;
+        _isCustomCursorVisible = _customCursorEnabled && _isMouseInsideWindow;
 
         // Геймпады.
         _gamePadStates = _playerInputHandler.GetActiveGamePadIndices().ToDictionary(index => index, GamePad.GetState);

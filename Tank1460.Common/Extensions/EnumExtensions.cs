@@ -32,4 +32,7 @@ public static class EnumExtensions
 
         return val;
     }
+
+    public static bool HasOneOfFlags<T>(this T flag, params T[] flagValues) where T : struct, Enum =>
+        flagValues.Any(value => flag.HasFlag(value));
 }

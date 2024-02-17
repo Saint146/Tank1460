@@ -46,34 +46,37 @@ internal abstract class Form
         if (Status is not FormStatus.Running)
             return;
 
-        if (playersInputs.Values.Any(inputs => inputs.Pressed.HasFlag(PlayerInputCommands.Down)))
-            CursorDown();
-        else if (playersInputs.Values.Any(inputs => inputs.Pressed.HasFlag(PlayerInputCommands.Up)))
-            CursorUp();
-        else if (playersInputs.Values.Any(inputs => inputs.Pressed.HasFlag(PlayerInputCommands.Start)))
-            Enter();
+        foreach (var (playerIndex, playerInputs) in playersInputs)
+        {
+            if (playerInputs.Pressed != PlayerInputCommands.None)
+                OnPress(playerIndex, playerInputs.Pressed);
+        }
 
         _hoveringItem = HitTest(mouseState.Position);
 
         var isMouseDown = mouseState.LeftButton == ButtonState.Pressed;
-        if (!_wasMouseDown && isMouseDown)
+        switch (_wasMouseDown)
         {
-            // Клавишу только что нажали.
-            _wasMouseDown = true;
+            case false when isMouseDown:
+                // Клавишу только что нажали.
+                _wasMouseDown = true;
 
-            _lastPressedItem = _hoveringItem;
-        }
-        else if (_wasMouseDown && !isMouseDown)
-        {
-            // Клавишу только что отпустили.
-            _wasMouseDown = false;
+                _lastPressedItem = _hoveringItem;
+                break;
 
-            if (_lastPressedItem is not null && _lastPressedItem == _hoveringItem)
-                HandleClick(_lastPressedItem);
-            else
-                HandleClick(null);
+            case true when !isMouseDown:
+            {
+                // Клавишу только что отпустили.
+                _wasMouseDown = false;
 
-            _lastPressedItem = null;
+                if (_lastPressedItem is not null && _lastPressedItem == _hoveringItem)
+                    OnClick(_lastPressedItem);
+                else
+                    OnClick(null);
+
+                _lastPressedItem = null;
+                break;
+            }
         }
     }
 
@@ -95,13 +98,9 @@ internal abstract class Form
             item.Draw(spriteBatch);
     }
 
-    protected abstract void CursorUp();
+    protected abstract void OnClick([CanBeNull] FormItem item);
 
-    protected abstract void CursorDown();
-
-    protected abstract void Enter();
-
-    protected abstract void HandleClick([CanBeNull] FormItem item);
+    protected abstract void OnPress(PlayerIndex playerIndex, PlayerInputCommands input);
 
     protected void Exit()
     {

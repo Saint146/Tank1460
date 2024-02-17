@@ -16,4 +16,16 @@ public static class MouseStateExtensions
             mouseState.XButton1,
             mouseState.XButton2
         );
+
+    public static MouseState CopyWithAllButtonsReleased(this MouseState mouseState) =>
+        new(
+            mouseState.X,
+            mouseState.Y,
+            mouseState.ScrollWheelValue,
+            ButtonState.Released,
+            ButtonState.Released,
+            ButtonState.Released,
+            ButtonState.Released,
+            ButtonState.Released
+        );
 }

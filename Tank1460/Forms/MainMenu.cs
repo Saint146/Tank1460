@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tank;
+using Tank1460.Input;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
 
@@ -41,24 +42,7 @@ internal class MainMenu : Form
         CreateCursor();
     }
 
-    protected override void CursorUp()
-    {
-        PlayerCount = 3 - PlayerCount;
-        UpdateCursorPosition();
-    }
-
-    protected override void CursorDown()
-    {
-        PlayerCount = 3 - PlayerCount;
-        UpdateCursorPosition();
-    }
-
-    protected override void Enter()
-    {
-        Exit();
-    }
-
-    protected override void HandleClick(FormItem item)
+    protected override void OnClick(FormItem item)
     {
         if (item == _cursor)
         {
@@ -70,6 +54,26 @@ internal class MainMenu : Form
 
         PlayerCount = item == _player1Button ? 1 : 2;
         Exit();
+    }
+
+    protected override void OnPress(PlayerIndex playerIndex, PlayerInputCommands input)
+    {
+        // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+        switch (input)
+        {
+            case PlayerInputCommands.Up:
+            case PlayerInputCommands.Down:
+                PlayerCount = 3 - PlayerCount;
+                UpdateCursorPosition();
+                break;
+
+            case PlayerInputCommands.ShootTurbo:
+            case PlayerInputCommands.Shoot:
+            case PlayerInputCommands.Start:
+                Exit();
+                break;
+
+        }
     }
 
     private void CreateTitle()

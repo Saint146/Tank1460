@@ -1,14 +1,15 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Collections.Generic;
-using Microsoft.Xna.Framework.Graphics;
+using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object;
 using Tank1460.Common.Level.Object.Tank;
+using Tank1460.Input;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
 
 namespace Tank1460.Forms;
 
-class ScoreScreen : Form
+internal class ScoreScreen : Form
 {
     private readonly int _levelNumber;
     private readonly GameState _gameState;
@@ -37,21 +38,15 @@ class ScoreScreen : Form
         CreateTankImages();
     }
 
-    protected override void CursorUp()
-    {
-    }
-
-    protected override void CursorDown()
-    {
-    }
-
-    protected override void Enter()
-    {
-    }
-
-    protected override void HandleClick(FormItem item)
+    protected override void OnClick(FormItem item)
     {
         Exit();
+    }
+
+    protected override void OnPress(PlayerIndex playerIndex, PlayerInputCommands input)
+    {
+        if (input.HasOneOfFlags(PlayerInputCommands.Shoot, PlayerInputCommands.ShootTurbo, PlayerInputCommands.Start))
+            Exit();
     }
 
     private void CreateTankImages()
