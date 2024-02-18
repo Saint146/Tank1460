@@ -86,7 +86,7 @@ public class BonusManager
         {
             if (KeyboardEx.HasBeenPressed(Keys.B) || (KeyboardEx.IsPressed(Keys.LeftShift) && KeyboardEx.IsPressed(Keys.B)))
             {
-                Spawn(BonusType.Clock);
+                Spawn(BonusType.Shovel);
             }
         }
 #endif

@@ -259,7 +259,7 @@ public class Level : IDisposable
     public bool CanTankPassThroughTile(Tank tank, Point tilePoint)
     {
         var tileObjects = _tileObjectMap.ElementAtOrDefault(tilePoint.X, tilePoint.Y);
-        return tileObjects?.All(o => !o.CollisionType.HasFlag(CollisionType.Impassable) && (!o.CollisionType.HasFlag(CollisionType.PassablyOnlyByShip) || tank.HasShip)) == true;
+        return tileObjects?.All(o => !o.CollisionType.HasFlag(CollisionType.Impassable) && (!o.CollisionType.HasFlag(CollisionType.PassableOnlyByShip) || tank.HasShip)) == true;
     }
 
     public void HandleFalconDestroyed(Falcon falcon)

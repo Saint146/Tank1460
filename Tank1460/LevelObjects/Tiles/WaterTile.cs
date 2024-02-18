@@ -12,7 +12,7 @@ class WaterTile : Tile
     public override TileType Type => TileType.Water;
 
 
-    public override CollisionType CollisionType => CollisionType.PassablyOnlyByShip;
+    public override CollisionType CollisionType => CollisionType.PassableOnlyByShip;
 
     protected override IAnimation GetAnimation() => new Animation(Level.Content.Load<Texture2D>(@"Sprites/Tiles/Water"), 32.0 * Tank1460Game.OneFrameSpan, true);
 

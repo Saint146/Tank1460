@@ -6,7 +6,6 @@ using System.Linq;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tile;
 using Tank1460.LevelObjects;
-using Tank1460.LevelObjects.Tiles;
 
 namespace Tank1460;
 
@@ -29,6 +28,38 @@ internal class ArmoredFalconEffect : LevelEffect
 
         _currentEffectTime = 0.0;
         _time = 0.0;
+    }
+
+    public override void Update(GameTime gameTime)
+    {
+        _time += gameTime.ElapsedGameTime.TotalSeconds;
+        if (_time <= _currentEffectTime) return;
+
+        while (_time > _currentEffectTime)
+        {
+            if (!_effectTimes.TryDequeue(out var newEffect))
+            {
+                // Когда время закончилось, всегда деактивируем эффект.
+                _isArmorUp = false;
+                RestoreFalconsSurroundings();
+                Remove();
+                return;
+            }
+
+            _time -= _currentEffectTime;
+
+            _isArmorUp = newEffect.IsArmorUp;
+            _currentEffectTime = newEffect.fullEffectTime;
+        }
+
+        if (_isArmorUp)
+            ArmorFalcons();
+        else
+            RestoreFalconsSurroundings();
+    }
+
+    public override void Draw(SpriteBatch spriteBatch, Rectangle levelBounds)
+    {
     }
 
     private void ArmorFalcons()
@@ -62,7 +93,7 @@ internal class ArmoredFalconEffect : LevelEffect
     {
         var effectTimes = new Queue<(bool IsArmorUp, double fullEffectTime)>();
 
-       var initialEffectTime = fullEffectTime - FlashesCount * 2 * FlashesTime;
+        var initialEffectTime = fullEffectTime - FlashesCount * 2 * FlashesTime;
 
         Debug.Assert(initialEffectTime > 0);
 
@@ -77,15 +108,14 @@ internal class ArmoredFalconEffect : LevelEffect
     }
 
     /// <summary>
-    /// Считать окружение соколов и составить для каждого список типов тайлов, которые останутся после завершения бонуса.
+    /// Считать окружение соколов (не текущее, а из структуры) и составить для каждого список типов тайлов, которые останутся после завершения бонуса.
     /// </summary>
     private static Dictionary<Falcon, Dictionary<Point, TileType>> ScanOldTiles(Level level)
     {
         var oldTiles = new Dictionary<Falcon, Dictionary<Point, TileType>>();
         foreach (var falcon in level.Falcons)
         {
-            var falconTiles = new Dictionary<Point, TileType>();
-            oldTiles[falcon] = falconTiles;
+            var falconTiles = oldTiles[falcon] = new Dictionary<Point, TileType>();
 
             var falconRect = falcon.TileRectangle;
             falconRect.Inflate(1, 1);
@@ -94,44 +124,12 @@ internal class ArmoredFalconEffect : LevelEffect
 
             foreach (var point in points)
             {
-                var oldTile = level.GetTile(point.X, point.Y);
+                var oldTile = level.Structure.Tiles[point.X, point.Y];
                 // Если были кирпичи или пусто, то вернём кирпичи. Иначе пишем то, что было.
-                falconTiles[point] = oldTile is null or BrickTile ? TileType.Brick : oldTile.Type;
+                falconTiles[point] = oldTile is TileType.Empty or TileType.Brick ? TileType.Brick : oldTile;
             }
         }
 
         return oldTiles;
-    }
-
-    public override void Update(GameTime gameTime)
-    {
-        _time += gameTime.ElapsedGameTime.TotalSeconds;
-        if (_time <= _currentEffectTime) return;
-
-        while (_time > _currentEffectTime)
-        {
-            if (!_effectTimes.TryDequeue(out var newEffect))
-            {
-                // Когда время закончилось, всегда деактивируем эффект.
-                _isArmorUp = false;
-                RestoreFalconsSurroundings();
-                Remove();
-                return;
-            }
-
-            _time -= _currentEffectTime;
-
-            _isArmorUp = newEffect.IsArmorUp;
-            _currentEffectTime = newEffect.fullEffectTime;
-        }
-
-        if (_isArmorUp)
-            ArmorFalcons();
-        else
-            RestoreFalconsSurroundings();
-    }
-
-    public override void Draw(SpriteBatch spriteBatch, Rectangle levelBounds)
-    {
     }
 }

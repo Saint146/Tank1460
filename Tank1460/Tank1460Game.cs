@@ -9,13 +9,12 @@ using System.Linq;
 using Tank1460.Common;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
+using Tank1460.Forms;
 using Tank1460.Input;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tiles;
-using Tank1460.Forms;
 using Tank1460.SaveLoad;
 using Tank1460.SaveLoad.Settings;
-using Tank1460.Common.Level.Object.Tank;
 
 namespace Tank1460;
 
@@ -132,13 +131,9 @@ public class Tank1460Game : Game
 
         Status = GameStatus.Initializing;
 
-#pragma warning disable CS0162
-        if (Fps == 60) return;
-
         _graphics.SynchronizeWithVerticalRetrace = false;
         //IsFixedTimeStep = false; // Вроде бы и без этого работает
         TargetElapsedTime = TimeSpan.FromMilliseconds(1000.0 / Fps);
-#pragma warning restore CS0162
     }
 
     protected override void Initialize()

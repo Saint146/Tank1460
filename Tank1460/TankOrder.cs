@@ -5,7 +5,7 @@ namespace Tank1460;
 [Flags]
 public enum TankOrder
 {
-    None = 0x0,
+    None = 0,
 
     MoveUp = 1 << 0,
     MoveDown = 1 << 1,
