@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Tank1460.Audio;
 using Tank1460.Common.Extensions;
 using Tank1460.Input;
 using Tank1460.LevelObjects.Tiles;
@@ -8,6 +9,8 @@ namespace Tank1460.Forms;
 
 internal class GameOverScreen : Form
 {
+    private readonly ISoundPlayer _soundPlayer;
+
     private const string Text = "GAME\nOVER";
 
     private const int CenterX = 16 * Tile.DefaultWidth;
@@ -15,7 +18,14 @@ internal class GameOverScreen : Form
 
     public GameOverScreen(ContentManagerEx content) : base(content)
     {
+        _soundPlayer = new SoundPlayer(content);
         CreateText();
+        _soundPlayer.Play(Sound.GameOver);
+    }
+
+    protected override void OnUpdate(GameTime gameTime)
+    {
+        _soundPlayer.Perform(gameTime);
     }
 
     protected override void OnClick(FormItem item)

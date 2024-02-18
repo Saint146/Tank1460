@@ -473,9 +473,10 @@ public class Level : IDisposable
                     return true;
 
                 Status = LevelStatus.Win;
+                SoundPlayer.StopAll();
                 LevelComplete?.Invoke(this);
 
-                return true;
+                return false;
 
             case LevelStatus.LostPreDelay:
                 _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
@@ -498,10 +499,10 @@ public class Level : IDisposable
                 Status = LevelStatus.GameOver;
                 _levelEffects.RemoveAll();
                 SoundPlayer.StopAll();
-                //SoundPlayer.Unmute();
+                SoundPlayer.Unmute();
                 GameOver?.Invoke(this);
 
-                return true;
+                return false;
 
             default:
                 throw new ArgumentOutOfRangeException();

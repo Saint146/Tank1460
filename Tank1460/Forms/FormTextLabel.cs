@@ -4,6 +4,8 @@ namespace Tank1460.Forms;
 
 class FormTextLabel : FormItem
 {
+    public Point SizeInChars { get; }
+
     public string Text
     {
         get => Animation.Text;
@@ -14,6 +16,7 @@ class FormTextLabel : FormItem
 
     public FormTextLabel(Font font, Point sizeInChars) : base(new(x: font.CharWidth * sizeInChars.X, y: font.CharHeight * sizeInChars.Y))
     {
+        SizeInChars = sizeInChars;
         Animation = new TextAnimation(font, sizeInChars);
     }
 

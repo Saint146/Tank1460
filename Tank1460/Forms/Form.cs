@@ -65,7 +65,6 @@ internal abstract class Form
                 break;
 
             case true when !isMouseDown:
-            {
                 // Клавишу только что отпустили.
                 _wasMouseDown = false;
 
@@ -76,7 +75,6 @@ internal abstract class Form
 
                 _lastPressedItem = null;
                 break;
-            }
         }
     }
 
@@ -90,6 +88,8 @@ internal abstract class Form
             item.SetStatus(itemVisualStatus);
             item.Update(gameTime);
         }
+
+        OnUpdate(gameTime);
     }
 
     public void Draw(SpriteBatch spriteBatch)
@@ -98,6 +98,8 @@ internal abstract class Form
             if (item.Visible)
                 item.Draw(spriteBatch);
     }
+
+    protected abstract void OnUpdate(GameTime gameTime);
 
     protected abstract void OnClick([CanBeNull] FormItem item);
 

@@ -42,6 +42,10 @@ internal class MainMenu : Form
         CreateCursor();
     }
 
+    protected override void OnUpdate(GameTime gameTime)
+    {
+    }
+
     protected override void OnClick(FormItem item)
     {
         if (item == _cursor)

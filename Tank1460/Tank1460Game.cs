@@ -15,6 +15,7 @@ using Tank1460.LevelObjects.Tiles;
 using Tank1460.Forms;
 using Tank1460.SaveLoad;
 using Tank1460.SaveLoad.Settings;
+using Tank1460.Common.Level.Object.Tank;
 
 namespace Tank1460;
 
@@ -364,8 +365,8 @@ public class Tank1460Game : Game
         _mouseState = Mouse.GetState();
         _isMouseInsideWindow = _mouseState.X >= 0 && _mouseState.Y >= 0 && _mouseState.X < _backbufferWidth && _mouseState.Y < _backbufferHeight;
 
-        // Не учитываем нажатия мыши, если курсор за экраном (самый простой случай — клик по заголовку окна в оконном режиме)
-        if (!_isMouseInsideWindow)
+        // Не учитываем нажатия мыши, если окно неактивно или курсор за экраном (самый простой случай — клик по заголовку окна в оконном режиме)
+        if (!_isMouseInsideWindow || !IsActive)
             _mouseState = _mouseState.CopyWithAllButtonsReleased();
 
         // Курсор не обновляет свое состояние, если он отключен или вне экрана.
@@ -489,7 +490,8 @@ public class Tank1460Game : Game
         Debug.Assert(_level is not null);
         Debug.Assert(_form is null);
 
-        _form = new ScoreScreen(Content, LevelNumber, 20000, _gameState, _level.Stats, showBonus);
+        var levelStats = _level.Stats;
+        _form = new ScoreScreen(Content, LevelNumber, 20000, _gameState, levelStats, showBonus);
     }
 
     private void LoadGameOverScreen()
