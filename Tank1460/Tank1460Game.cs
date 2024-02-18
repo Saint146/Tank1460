@@ -553,6 +553,8 @@ public class Tank1460Game : Game
     {
         _gameState = level.GetGameState();
 
+        _gameState.PlayersStates[PlayerIndex.One].Score = 19000;
+
         Status = GameStatus.InWinScoreScreen;
         LoadScoreScreen(showBonus: true);
     }

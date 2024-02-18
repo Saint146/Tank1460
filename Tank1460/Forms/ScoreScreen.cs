@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Tank1460.Audio;
 using Tank1460.Common.Extensions;
@@ -38,8 +39,11 @@ internal class ScoreScreen : Form
     // Лейблы.
     private readonly Dictionary<PlayerIndex, Dictionary<TankType, (FormTextLabel FragsLabel, FormTextLabel ScoreLabel)>> _playersTypedScoreLabels = new();
     private readonly Dictionary<PlayerIndex, (FormTextLabel FragsLabel, FormTextLabel ScoreLabel)> _playersTotalScoreLabels = new();
+
     private FormTextLabel _bonusLabel1;
     private FormTextLabel _bonusLabel2;
+
+    private bool _bonusHasEarnedOneUp;
 
     public ScoreScreen(ContentManagerEx content, int levelNumber, int highscore, GameState gameState, LevelStats levelStats, bool showBonus) : base(content)
     {
@@ -222,7 +226,7 @@ internal class ScoreScreen : Form
             {
                 var player = playersWithMaxFrags[0].Key;
 
-                _gameState.PlayersStates[player].Score += BonusPoints;
+                RewardPlayerWithPoints(player, BonusPoints);
 
                 var x = StartingPositionX + (player == PlayerIndex.One ? 0 : 19 * Tile.DefaultWidth);
 
@@ -248,6 +252,20 @@ internal class ScoreScreen : Form
         AddItem(CreateTextImage(text, whiteFont), new Point(StartingPositionX, StartingPositionY));
         AddItem(CreateTextImage(yellowText, yellowFont), new Point(StartingPositionX, StartingPositionY));
         AddItem(CreateTextImage(redText, redFont), new Point(StartingPositionX, StartingPositionY));
+    }
+
+    private void RewardPlayerWithPoints(PlayerIndex playerIndex, int points)
+    {
+        Debug.Assert(points > 0);
+
+        var oneUpsGained = GameRules.GetOneUpsGained(_gameState.PlayersStates[playerIndex].Score, points);
+        _gameState.PlayersStates[playerIndex].Score += points;
+
+        if (oneUpsGained > 0)
+        {
+            _gameState.PlayersStates[playerIndex].LivesRemaining += oneUpsGained;
+            _bonusHasEarnedOneUp = true;
+        }
     }
 
     private IEnumerable<(Action Action, double ActionDelay)> CreateTimedActions()
@@ -311,7 +329,7 @@ internal class ScoreScreen : Form
                     _playersTotalScoreLabels[player].ScoreLabel.Text =
                         string.Format($"{{0,{_playersTotalScoreLabels[player].ScoreLabel.SizeInChars.X}}}", _gameState.PlayersStates[player].Score);
 
-                _soundPlayer.Play(Sound.Reward);
+                _soundPlayer.Play(_bonusHasEarnedOneUp ? Sound.OneUp : Sound.Reward);
             }, 9 * Tank1460Game.OneFrameSpan);
 
         // Последнее ожидание можно пропустить.

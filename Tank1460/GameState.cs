@@ -6,9 +6,14 @@ namespace Tank1460;
 
 public class GameState
 {
-    public Dictionary<PlayerIndex, PlayerState> PlayersStates { get; }
+    public Dictionary<PlayerIndex, PlayerState> PlayersStates { get; private set; }
 
     public GameState(IEnumerable<PlayerIndex> playersInGame)
+    {
+        Reset(playersInGame);
+    }
+
+    public void Reset(IEnumerable<PlayerIndex> playersInGame)
     {
         PlayersStates = playersInGame.ToDictionary(playerIndex => playerIndex,
                                                    _ => new PlayerState

@@ -47,7 +47,7 @@ public class Bonus : LevelObject
                 break;
 
             case BonusType.OneUp:
-                Level.GetPlayerSpawner(playerTank.PlayerIndex).AddOneUp();
+                Level.GetPlayerSpawner(playerTank.PlayerIndex).AddOneUps();
                 break;
 
             case BonusType.Pistol:

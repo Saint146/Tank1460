@@ -55,10 +55,12 @@ public class PlayerSpawner
         StartSpawnTimer();
     }
 
-    public void AddOneUp()
+    public void AddOneUps(int count = 1)
     {
+        Debug.Assert(count > 0);
+
         _level.SoundPlayer.Play(Sound.OneUp);
-        LivesRemaining++;
+        LivesRemaining += count;
     }
 
     public bool CanDonateLife() => LivesRemaining > 1;

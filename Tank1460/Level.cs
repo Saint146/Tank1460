@@ -408,17 +408,11 @@ public class Level : IDisposable
     {
         Debug.Assert(points > 0);
 
-        // TODO: Проверить логику оригинала.
-        const int pointsForOneUp = 20000;
+        var oneUpsGained = GameRules.GetOneUpsGained(PlayersScore[playerIndex], points);
+        PlayersScore[playerIndex] += points;
 
-        var nearestOneUpPoints = (PlayersScore[playerIndex] + 1).CeilingByBase(pointsForOneUp);
-        var newPoints = PlayersScore[playerIndex] += points;
-
-        while (nearestOneUpPoints <= newPoints)
-        {
-            PlayerSpawners[playerIndex].AddOneUp();
-            nearestOneUpPoints = (nearestOneUpPoints + 1).CeilingByBase(pointsForOneUp);
-        }
+        if (oneUpsGained > 0)
+            PlayerSpawners[playerIndex].AddOneUps(oneUpsGained);
     }
 
     internal void CreateFloatingText(Point centerPosition, string text, double effectTime)

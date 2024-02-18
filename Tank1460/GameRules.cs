@@ -16,4 +16,12 @@ internal static class GameRules
         { TankType.Type6, 300 },
         { TankType.Type7, 400 }
     };
+
+    public static int GetOneUpsGained(int oldScore, int scoreGained)
+    {
+        // TODO: Проверить логику оригинала.
+        const int pointsForOneUp = 20000;
+
+        return (oldScore + scoreGained) / pointsForOneUp - oldScore / pointsForOneUp;
+    }
 }
