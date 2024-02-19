@@ -49,7 +49,7 @@ public abstract class LevelObject : DrawableObject
         Sprite.Draw(spriteBatch, Position.ToVector2());
 
 #if DEBUG
-        if (Tank1460Game.ShowObjectsBoundaries)
+        if (GameRules.ShowObjectsBoundaries)
         {
             spriteBatch.DrawRectangle(BoundingRectangle, Color.Red);
             spriteBatch.DrawPoint(Position.X, Position.Y, Color.Magenta);

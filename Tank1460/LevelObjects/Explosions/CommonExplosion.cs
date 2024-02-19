@@ -8,5 +8,5 @@ public class CommonExplosion : Explosion
 
     protected override string TexturePath() => @"Sprites/Explosions/Common";
 
-    protected override double FrameTime() => 3 * Tank1460Game.OneFrameSpan;
+    protected override double FrameTime() => GameRules.TimeInFrames(3);
 }

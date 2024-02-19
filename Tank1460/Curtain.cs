@@ -11,7 +11,7 @@ internal class Curtain
 
     private readonly Color _color;
 
-    private const double TickTime = Tank1460Game.OneFrameSpan;
+    private readonly double _tickTime = GameRules.TimeInFrames(1);
     private const int OpenedPosition = 0;
     private const int ClosedPosition = 24;
     private const int ClosedDelay = 5;
@@ -46,9 +46,9 @@ internal class Curtain
     {
         _time += gameTime.ElapsedGameTime.TotalSeconds;
 
-        while (_time > TickTime)
+        while (_time > _tickTime)
         {
-            _time -= TickTime;
+            _time -= _tickTime;
             _position += _step;
 
             if (_step > 0 && _position <= _targetPosition || _step < 0 && _position >= _targetPosition)

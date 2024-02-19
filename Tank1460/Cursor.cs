@@ -27,7 +27,7 @@ internal class Cursor
 
         var allCursors = allTypes.Select(type => content.Load<Texture2D>($"Sprites/Cursor/{type}")).ToArray();
 
-        _animation = new ShiftingAnimation(allCursors, double.MaxValue, true, Tank1460Game.OneFrameSpan * 240);
+        _animation = new ShiftingAnimation(allCursors, double.MaxValue, true, GameRules.TimeInFrames(240));
     }
 
     public void Update(GameTime gameTime, MouseState mouseState, float scale)

@@ -18,7 +18,7 @@ public class PlayerSpawner
     public Rectangle Bounds { get; }
 
     private readonly Level _level;
-    private const double RespawnInterval = 0 * Tank1460Game.OneFrameSpan;
+    private const double RespawnInterval = 0.0;
 
     private double _timeToSpawnRemaining;
     private bool _spawnIsDue;

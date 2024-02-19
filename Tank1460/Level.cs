@@ -90,16 +90,16 @@ public class Level : IDisposable
     private double _delayEffectTime;
     private LevelStatus _statusBeforePause;
 
-    public Level(IServiceProvider serviceProvider, LevelStructure levelStructure, int levelNumber, GameState startingGameState)
+    public Level(GameServiceContainer serviceProvider, LevelStructure levelStructure, int levelNumber, GameState startingGameState)
     {
         Structure = levelStructure;
         LevelNumber = levelNumber;
         PlayersInGame = startingGameState.PlayersStates.Keys.ToArray();
         Stats = new LevelStats(PlayersInGame);
 
-        Content = new ContentManagerEx(serviceProvider, "Content");
+        Content = serviceProvider.GetService<ContentManagerEx>();
+        SoundPlayer = serviceProvider.GetService<ISoundPlayer>();
 
-        SoundPlayer = new SoundPlayer(Content);
         BotManager = new BotManager(this, TotalBots, MaxAliveBots());
         BonusManager = new BonusManager(this, MaxBonusesOnScreen);
         LoadTiles(levelStructure.Tiles);
@@ -271,7 +271,6 @@ public class Level : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        Content.Unload();
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -320,7 +319,7 @@ public class Level : IDisposable
     {
         Status = LevelStatus.WinDelay;
         _delayTime = 0.0;
-        _delayEffectTime = 144 * Tank1460Game.OneFrameSpan;
+        _delayEffectTime = GameRules.TimeInFrames(144);
     }
 
     public void Start()
@@ -482,7 +481,7 @@ public class Level : IDisposable
                 Status = LevelStatus.LostDelay;
 
                 _delayTime = 0.0;
-                _delayEffectTime = 252 * Tank1460Game.OneFrameSpan;
+                _delayEffectTime = GameRules.TimeInFrames(252);
                 return true;
 
             case LevelStatus.LostDelay:
@@ -645,7 +644,7 @@ public class Level : IDisposable
             return;
 
         Status = LevelStatus.LostPreDelay;
-        _delayEffectTime = 36 * Tank1460Game.OneFrameSpan;
+        _delayEffectTime = GameRules.TimeInFrames(36);
     }
 
     private Tile CreateFalcon(int x, int y)

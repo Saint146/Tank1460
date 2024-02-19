@@ -4,7 +4,7 @@ using Tank1460.Common.Level.Object.Tile;
 
 namespace Tank1460.LevelObjects.Tiles;
 
-class WaterTile : Tile
+internal class WaterTile : Tile
 {
     public WaterTile(Level level) : base(level)
     {
@@ -14,7 +14,7 @@ class WaterTile : Tile
 
     public override CollisionType CollisionType => CollisionType.PassableOnlyByShip;
 
-    protected override IAnimation GetAnimation() => new Animation(Level.Content.Load<Texture2D>(@"Sprites/Tiles/Water"), 32.0 * Tank1460Game.OneFrameSpan, true);
+    protected override IAnimation GetAnimation() => new Animation(Level.Content.Load<Texture2D>(@"Sprites/Tiles/Water"), GameRules.TimeInFrames(32), true);
 
     public override void Update(GameTime gameTime)
     {

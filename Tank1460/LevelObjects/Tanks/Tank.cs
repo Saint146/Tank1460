@@ -50,7 +50,7 @@ public abstract class Tank : MoveableLevelObject
     /// </summary>
     protected abstract int[] SpawnAnimationTimesInFrames();
 
-    private const double FireDelay = 2 * Tank1460Game.OneFrameSpan;
+    private readonly double _fireDelay = GameRules.TimeInFrames(2);
     private IReadOnlyDictionary<ObjectDirection, IAnimation> _animations;
     private IAnimation _spawnAnimation;
     private Explosion _explosion;
@@ -94,7 +94,7 @@ public abstract class Tank : MoveableLevelObject
 
             case TankStatus.Exploding when _explosion.ToRemove:
                 if (!string.IsNullOrEmpty(_afterExplosionText))
-                    Level.CreateFloatingText(BoundingRectangle.Center, _afterExplosionText, 12.0 * Tank1460Game.OneFrameSpan);
+                    Level.CreateFloatingText(BoundingRectangle.Center, _afterExplosionText, GameRules.TimeInFrames(12));
                 
                 _explosion = null;
                 Status = TankStatus.Destroyed;
@@ -149,7 +149,7 @@ public abstract class Tank : MoveableLevelObject
         if (_activeEffects.HasEffect<Immobility>())
             return;
 
-        _activeEffects.Add(new Immobility(272 * Tank1460Game.OneFrameSpan));
+        _activeEffects.Add(new Immobility(GameRules.TimeInFrames(272)));
     }
 
     public void SetBonusCount(int newBonusCount)
@@ -207,7 +207,7 @@ public abstract class Tank : MoveableLevelObject
     protected override void LoadContent()
     {
         // Звезда при респауне.
-        var spawnAnimationTimes = SpawnAnimationTimesInFrames().Select(t => t * Tank1460Game.OneFrameSpan).ToArray();
+        var spawnAnimationTimes = SpawnAnimationTimesInFrames().Select(GameRules.TimeInFrames).ToArray();
         _spawnAnimation = new Animation(Level.Content.Load<Texture2D>(@"Sprites/Effects/SpawnNova"), spawnAnimationTimes, false);
     }
 
@@ -259,7 +259,7 @@ public abstract class Tank : MoveableLevelObject
         return new ShiftingAnimation(new[] { bonusTexture, plainTexture },
                                      double.MaxValue,
                                      true,
-                                     8 * Tank1460Game.OneFrameSpan);
+                                     GameRules.TimeInFrames(8));
     }
 
     protected override IAnimation GetDefaultAnimation() => _spawnAnimation;
@@ -386,7 +386,7 @@ public abstract class Tank : MoveableLevelObject
         if (gameTime.TotalGameTime.TotalSeconds < _timeTillReload)
             return;
 
-        _timeTillReload = gameTime.TotalGameTime.TotalSeconds + FireDelay;
+        _timeTillReload = gameTime.TotalGameTime.TotalSeconds + _fireDelay;
         var shell = new Shell(Level, Direction, _shellSpeed, this, _shellProperties);
         shell.SpawnViaCenterPosition(BoundingRectangle.GetEdgeCenter(Direction));
         _shells.Add(shell);

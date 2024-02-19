@@ -12,7 +12,7 @@ public class GameOverLevelEffect : LevelEffect
 
     protected readonly AnimationPlayer Sprite = new();
 
-    private const double TickTime = Tank1460Game.OneFrameSpan;
+    private readonly double _tickTime = GameRules.TimeInFrames(1);
 
     /// <summary>
     /// За сколько надпись доходит до конца при геймовере для игрока.
@@ -24,7 +24,7 @@ public class GameOverLevelEffect : LevelEffect
     /// </summary>
     private const int GlobalTickLength = 130;
 
-    private const double EffectTime = Tank1460Game.OneFrameSpan * 288;
+    private readonly double _effectTime = GameRules.TimeInFrames(288);
 
     private readonly Vector2 _targetPosition;
     private readonly Vector2 _step;
@@ -86,7 +86,7 @@ public class GameOverLevelEffect : LevelEffect
     public override void Update(GameTime gameTime)
     {
         _time += gameTime.ElapsedGameTime.TotalSeconds;
-        if (_time >= EffectTime)
+        if (_time >= _effectTime)
             Remove();
 
         if (_isOnTarget)
@@ -94,9 +94,9 @@ public class GameOverLevelEffect : LevelEffect
 
         _moveTime += gameTime.ElapsedGameTime.TotalSeconds;
 
-        while (_moveTime > TickTime)
+        while (_moveTime > _tickTime)
         {
-            _moveTime -= TickTime;
+            _moveTime -= _tickTime;
 
             if (_position.TryStep(_step, _targetPosition))
                 continue;

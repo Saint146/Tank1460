@@ -112,7 +112,7 @@ internal class MainMenu : Form
             normalTexture: Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"),
             hoverTexture: Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"),
             pressedTexture: Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", @"Sprites/_R/Tank/Red"),
-            frameTime: 4 * Tank1460Game.OneFrameSpan);
+            frameTime: GameRules.TimeInFrames(4));
 
         AddItem(_cursor);
         UpdateCursorPosition();

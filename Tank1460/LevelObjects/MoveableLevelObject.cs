@@ -50,7 +50,7 @@ public abstract class MoveableLevelObject : LevelObject
     protected void SetMovingSpeed(double newMovingSpeed)
     {
         MovingSpeed = newMovingSpeed;
-        _timeToMove = Tank1460Game.OneFrameSpan / MovingSpeed;
+        _timeToMove = GameRules.TimeInFrames(1) / MovingSpeed;
         _time = 0.0;
     }
 

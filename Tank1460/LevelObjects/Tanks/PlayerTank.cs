@@ -75,15 +75,10 @@ public class PlayerTank : Tank
         }
     }
 
-    public void AddPointsReward(int points)
-    {
-
-    }
-
     protected override void OnSpawn()
     {
         base.OnSpawn();
-        AddTimedInvulnerability(184 * Tank1460Game.OneFrameSpan);
+        AddTimedInvulnerability(GameRules.TimeInFrames(184));
     }
 
     protected override void HandleDamaged(Tank damagedBy)

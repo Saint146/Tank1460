@@ -8,8 +8,5 @@ public class BigExplosion : Explosion
 
     protected override string TexturePath() => @"Sprites/Explosions/Big";
 
-    protected override double FrameTime()
-    {
-        return 4 * Tank1460Game.OneFrameSpan;
-    }
+    protected override double FrameTime() => GameRules.TimeInFrames(4);
 }

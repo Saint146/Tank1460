@@ -34,6 +34,6 @@ public class PauseLevelEffect : LevelEffect
         var font = content.LoadFont(@"Sprites/Font/Pixel8", new Color(0xff0027d1));
         var textTexture = font.CreateTexture(Text);
 
-        _animation = new BlinkingAnimation(textTexture, 16 * Tank1460Game.OneFrameSpan);
+        _animation = new BlinkingAnimation(textTexture, GameRules.TimeInFrames(16));
     }
 }

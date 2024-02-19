@@ -41,11 +41,10 @@ public class BotManager
 
 #if !DEBUG
     private readonly double _periodLength;
-    private const double PeriodResetTime = 16384.0 * Tank1460Game.OneFrameSpan;
+    private const double PeriodResetTime = GameRules.TimeInFrames(16384);
 #else
     private double _periodLength;
-    private double PeriodResetTime = 4320.0 * Tank1460Game.OneFrameSpan;
-
+    private double PeriodResetTime = GameRules.TimeInFrames(4320);
 #endif
 
     public BotManager(Level level, int totalBots, int maxAliveBots)
@@ -55,11 +54,11 @@ public class BotManager
         _maxAliveBots = maxAliveBots;
         _tankTypes = ComposeTankTypeQueue(_level.Structure?.BotTypes);
 
-        _respawnInterval = (190 - level.LevelNumber * 4 - (level.PlayerCount - 1) * 20) * Tank1460Game.OneFrameSpan;
+        _respawnInterval = GameRules.TimeInFrames(190 - level.LevelNumber * 4 - (level.PlayerCount - 1) * 20);
         _periodLength = _respawnInterval * 8;
 
         if (!_level.ClassicRules)
-            _respawnInterval = 8 * Tank1460Game.OneFrameSpan;
+            _respawnInterval = GameRules.TimeInFrames(8);
 
         SpawnIsReady();
     }

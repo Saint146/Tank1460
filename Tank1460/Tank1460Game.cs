@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Tank1460.Audio;
 using Tank1460.Common;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
@@ -20,19 +21,6 @@ namespace Tank1460;
 
 public class Tank1460Game : Game
 {
-    private const int Fps = 60;
-
-    /// <summary>
-    /// Длительность одного кадра в секундах.
-    /// TODO: Убрать необходимость всем указывать время или скорость с использованием этой константы. Лучше, чтобы всё было в кадрах и пикселях на кадр.
-    /// </summary>
-    public const double OneFrameSpan = 1.0 / Fps;
-
-#if DEBUG
-    public static bool ShowObjectsBoundaries;
-    public static bool ShowBotsPeriods = true;
-#endif
-
     internal GameStatus Status { get; private set; }
 
     private new ContentManagerEx Content { get; }
@@ -103,6 +91,7 @@ public class Tank1460Game : Game
     private GameState _gameState;
     private Point _windowPosition;
     private Point _windowSize;
+    private ISoundPlayer _soundPlayer;
 
     private PlayerIndex[] AllPlayers { get; } = { PlayerIndex.One, PlayerIndex.Two };
 
@@ -121,6 +110,9 @@ public class Tank1460Game : Game
     {
         Window.AllowUserResizing = true;
         Content = new ContentManagerEx(Services, "Content");
+        Services.AddService(Content);
+        Services.AddService(typeof(ISoundPlayer), new SoundPlayer(Content));
+
         IsFixedTimeStep = true;
 
         _graphics = new GraphicsDeviceManager(this);
@@ -133,7 +125,7 @@ public class Tank1460Game : Game
 
         _graphics.SynchronizeWithVerticalRetrace = false;
         //IsFixedTimeStep = false; // Вроде бы и без этого работает
-        TargetElapsedTime = TimeSpan.FromMilliseconds(1000.0 / Fps);
+        TargetElapsedTime = TimeSpan.FromSeconds(GameRules.TimeInFrames(1));
     }
 
     protected override void Initialize()
@@ -149,6 +141,7 @@ public class Tank1460Game : Game
 
         _levelHud = new LevelHud(Content);
         _cursor = new Cursor(Content);
+        _soundPlayer = Services.GetService<ISoundPlayer>();
 
         PreloadLevelsContent();
 
@@ -383,12 +376,10 @@ public class Tank1460Game : Game
 
 #if DEBUG
         // F5 — Включить/отключить отображение границ объектов и занимаемых тайлов
-        if (KeyboardEx.HasBeenPressed(Keys.F5))
-            ShowObjectsBoundaries = !ShowObjectsBoundaries;
+        if (KeyboardEx.HasBeenPressed(Keys.F5)) GameRules.ShowObjectsBoundaries = !GameRules.ShowObjectsBoundaries;
 
         // F6 — Включить/отключить отображение "периодов" стандартного ИИ ботов
-        if (KeyboardEx.HasBeenPressed(Keys.F6))
-            ShowBotsPeriods = !ShowBotsPeriods;
+        if (KeyboardEx.HasBeenPressed(Keys.F6)) GameRules.ShowBotsPeriods = !GameRules.ShowBotsPeriods;
 
         // F7 — Включить/отключить системный курсор
         if (KeyboardEx.HasBeenPressed(Keys.F7))

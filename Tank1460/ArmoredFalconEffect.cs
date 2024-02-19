@@ -19,7 +19,7 @@ internal class ArmoredFalconEffect : LevelEffect
     private bool _isArmorUp;
 
     private const int FlashesCount = 6;
-    private const double FlashesTime = 16 * Tank1460Game.OneFrameSpan;
+    private static readonly double FlashesTime = GameRules.TimeInFrames(16);
 
     public ArmoredFalconEffect(Level level, double effectTime) : base(level)
     {

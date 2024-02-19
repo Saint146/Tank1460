@@ -31,19 +31,19 @@ public class Bonus : LevelObject
 
     protected override void LoadContent()
     {
-        _animation = new Animation(Level.Content.Load<Texture2D>($@"Sprites/Bonus/{Type}"), 8.0 * Tank1460Game.OneFrameSpan, true);
+        _animation = new Animation(Level.Content.Load<Texture2D>($@"Sprites/Bonus/{Type}"), GameRules.TimeInFrames(8), true);
     }
 
     private void ApplyEffectOnPlayer(PlayerTank playerTank)
     {
         Level.SoundPlayer.Play(Sound.BonusPickup);
         Level.RewardPlayerWithPoints(playerTank.PlayerIndex, PointsRewardForBonus);
-        Level.CreateFloatingText(BoundingRectangle.Center, PointsRewardForBonus.ToString(), 49.0 * Tank1460Game.OneFrameSpan);
+        Level.CreateFloatingText(BoundingRectangle.Center, PointsRewardForBonus.ToString(), GameRules.TimeInFrames(49));
 
         switch (Type)
         {
             case BonusType.Armor:
-                playerTank.AddTimedInvulnerability(ArmorTimeInFrames * Tank1460Game.OneFrameSpan);
+                playerTank.AddTimedInvulnerability(GameRules.TimeInFrames(ArmorTimeInFrames));
                 break;
 
             case BonusType.OneUp:
@@ -75,11 +75,11 @@ public class Bonus : LevelObject
 
             case BonusType.Shovel:
                 Level.RemoveAllEffects<UnprotectedFalconEffect>();
-                Level.ArmorFalcons(ShovelTimeInFrames * Tank1460Game.OneFrameSpan);
+                Level.ArmorFalcons(GameRules.TimeInFrames(ShovelTimeInFrames));
                 break;
 
             case BonusType.Clock:
-                Level.BotManager.AddParalyze(ClockOnBotsTimeInFrames * Tank1460Game.OneFrameSpan);
+                Level.BotManager.AddParalyze(GameRules.TimeInFrames(ClockOnBotsTimeInFrames));
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -89,7 +89,7 @@ public class Bonus : LevelObject
     private void ApplyEffectOnBot(BotTank botTank)
     {
         Level.SoundPlayer.Play(Sound.BonusPickup);
-        Level.CreateFloatingText(BoundingRectangle.Center, "BRUH", 49.0 * Tank1460Game.OneFrameSpan);
+        Level.CreateFloatingText(BoundingRectangle.Center, "BRUH", GameRules.TimeInFrames(49));
 
         switch (Type)
         {

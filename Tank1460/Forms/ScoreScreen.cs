@@ -270,7 +270,7 @@ internal class ScoreScreen : Form
 
     private IEnumerable<(Action Action, double ActionDelay)> CreateTimedActions()
     {
-        yield return (() => { }, 27 * Tank1460Game.OneFrameSpan);
+        yield return (() => { }, GameRules.TimeInFrames(27));
 
         foreach (var tankType in TankTypes)
         {
@@ -303,10 +303,10 @@ internal class ScoreScreen : Form
 
                     if (needsTickSound)
                         _soundPlayer.Play(Sound.Tick);
-                }, 9 * Tank1460Game.OneFrameSpan);
+                }, GameRules.TimeInFrames(9));
             }
 
-            yield return (() => { }, 27 * Tank1460Game.OneFrameSpan);
+            yield return (() => { }, GameRules.TimeInFrames(27));
         }
 
         yield return (() =>
@@ -317,7 +317,7 @@ internal class ScoreScreen : Form
                 fragsLabel.Visible = true;
                 scoreLabel.Visible = true;
             }
-        }, 36 * Tank1460Game.OneFrameSpan);
+        }, GameRules.TimeInFrames(36));
 
         if (_bonusLabel1 is not null && _bonusLabel2 is not null)
             yield return (() =>
@@ -330,10 +330,10 @@ internal class ScoreScreen : Form
                         string.Format($"{{0,{_playersTotalScoreLabels[player].ScoreLabel.SizeInChars.X}}}", _gameState.PlayersStates[player].Score);
 
                 _soundPlayer.Play(_bonusHasEarnedOneUp ? Sound.OneUp : Sound.Reward);
-            }, 9 * Tank1460Game.OneFrameSpan);
+            }, GameRules.TimeInFrames(9));
 
         // Последнее ожидание можно пропустить.
-        yield return (() => { }, 36 * Tank1460Game.OneFrameSpan);
-        yield return (() => { }, 108 * Tank1460Game.OneFrameSpan);
+        yield return (() => { }, GameRules.TimeInFrames(36));
+        yield return (() => { }, GameRules.TimeInFrames(108));
     }
 }
