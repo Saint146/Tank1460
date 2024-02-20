@@ -15,17 +15,12 @@ internal enum GameStatus
     /// <summary>
     /// В главном меню.
     /// </summary>
-    InMainMenu,
+    MainMenu,
 
     /// <summary>
     /// В процессе игры на уровне.
     /// </summary>
-    InLevel,
-
-    /// <summary>
-    /// Уровень загружен, шторка открывается.
-    /// </summary>
-    CurtainOpening,
+    Level,
 
     /// <summary>
     /// Уровень закончен или меню закрыто, шторка закрывается.
@@ -33,14 +28,24 @@ internal enum GameStatus
     CurtainClosing,
 
     /// <summary>
+    /// На экране выбора уровня.
+    /// </summary>
+    LevelSelectScreen,
+
+    /// <summary>
+    /// Уровень загружен, шторка открывается.
+    /// </summary>
+    CurtainOpening,
+
+    /// <summary>
     /// На экране подсчёта очков после пройденного уровня.
     /// </summary>
-    InWinScoreScreen,
+    WinScoreScreen,
 
     /// <summary>
     /// На экране подсчёта очков после проигранной игры.
     /// </summary>
-    InLostScoreScreen,
+    LostScoreScreen,
 
     /// <summary>
     /// На экране конца игры.

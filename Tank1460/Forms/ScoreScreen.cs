@@ -7,8 +7,8 @@ using Tank1460.Audio;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object;
 using Tank1460.Common.Level.Object.Tank;
+using Tank1460.Globals;
 using Tank1460.Input;
-using Tank1460.LevelObjects;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
 
@@ -16,7 +16,6 @@ namespace Tank1460.Forms;
 
 internal class ScoreScreen : Form
 {
-    private readonly ISoundPlayer _soundPlayer;
     private readonly int _levelNumber;
     private readonly int _highscore;
     private readonly GameState _gameState;
@@ -28,13 +27,11 @@ internal class ScoreScreen : Form
     private const int StartingPositionY = 1 * Tile.DefaultHeight;
     private const int BonusPoints = 1460;
 
-    private static readonly Color WhiteColor = Color.White;
-    private static readonly Color YellowColor = new(0xff3898fc);
-    private static readonly Color RedColor = new(0xff0027d1);
-
     private static readonly TankType[] TankTypes = { TankType.Type4, TankType.Type5, TankType.Type6, TankType.Type7 };
 
     private TimedActionsQueue _actionsQueue;
+
+    private bool _bonusHasEarnedOneUp;
 
     // Лейблы.
     private readonly Dictionary<PlayerIndex, Dictionary<TankType, (FormTextLabel FragsLabel, FormTextLabel ScoreLabel)>> _playersTypedScoreLabels = new();
@@ -43,13 +40,8 @@ internal class ScoreScreen : Form
     private FormTextLabel _bonusLabel1;
     private FormTextLabel _bonusLabel2;
 
-    private bool _bonusHasEarnedOneUp;
-
-    public ScoreScreen(ContentManagerEx content, int levelNumber, int highscore, GameState gameState, LevelStats levelStats, bool showBonus) : base(content)
+    public ScoreScreen(GameServiceContainer serviceProvider, int levelNumber, int highscore, GameState gameState, LevelStats levelStats, bool showBonus) : base(serviceProvider)
     {
-        // TODO: Оглобалить плеер, это дурдом.
-        _soundPlayer = new SoundPlayer(content);
-
         _levelNumber = levelNumber;
         _highscore = highscore;
         _gameState = gameState;
@@ -66,13 +58,11 @@ internal class ScoreScreen : Form
 
     protected override void OnUpdate(GameTime gameTime)
     {
-        _soundPlayer.Perform(gameTime);
-
         if (_actionsQueue is null)
             return;
 
         _actionsQueue.Update(gameTime);
-        if (!_actionsQueue.ToRemove)
+        if (!_actionsQueue.IsFinished)
             return;
 
         _actionsQueue = null;
@@ -88,7 +78,7 @@ internal class ScoreScreen : Form
         Exit();
     }
 
-    protected override void OnPress(PlayerIndex playerIndex, PlayerInputCommands input)
+    protected override void OnInputPressed(PlayerIndex playerIndex, PlayerInputCommands input)
     {
         // Последнее действие - пустое ожидание
         if (_actionsQueue.Actions.Count > 0)
@@ -117,9 +107,9 @@ internal class ScoreScreen : Form
     // TODO: Не придумал, как нормально одженерить. + сверстать на трёх и четырёх
     private void CreateTextAndLabels()
     {
-        var whiteFont = Content.LoadFont(@"Sprites/Font/Pixel8", WhiteColor);
-        var yellowFont = Content.LoadFont(@"Sprites/Font/Pixel8", YellowColor);
-        var redFont = Content.LoadFont(@"Sprites/Font/Pixel8", RedColor);
+        var whiteFont = Content.LoadFont(@"Sprites/Font/Pixel8", GameColors.White);
+        var yellowFont = Content.LoadFont(@"Sprites/Font/Pixel8", GameColors.Yellow);
+        var redFont = Content.LoadFont(@"Sprites/Font/Pixel8", GameColors.Red);
 
         var isSecondPlayerPresent = _gameState.PlayersStates.Count > 1;
 
@@ -302,7 +292,7 @@ internal class ScoreScreen : Form
                     }
 
                     if (needsTickSound)
-                        _soundPlayer.Play(Sound.Tick);
+                        SoundPlayer.Play(Sound.Tick);
                 }, GameRules.TimeInFrames(9));
             }
 
@@ -329,7 +319,7 @@ internal class ScoreScreen : Form
                     _playersTotalScoreLabels[player].ScoreLabel.Text =
                         string.Format($"{{0,{_playersTotalScoreLabels[player].ScoreLabel.SizeInChars.X}}}", _gameState.PlayersStates[player].Score);
 
-                _soundPlayer.Play(_bonusHasEarnedOneUp ? Sound.OneUp : Sound.Reward);
+                SoundPlayer.Play(_bonusHasEarnedOneUp ? Sound.OneUp : Sound.Reward);
             }, GameRules.TimeInFrames(9));
 
         // Последнее ожидание можно пропустить.

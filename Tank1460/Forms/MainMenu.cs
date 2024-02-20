@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tank;
+using Tank1460.Globals;
 using Tank1460.Input;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
@@ -13,8 +14,6 @@ namespace Tank1460.Forms;
 internal class MainMenu : Form
 {
     public int PlayerCount { get; private set; }
-
-    public int LevelNumber { get; private set; }
 
     private const string TitleText = "TANK\n1460";
     private const string MenuItem1PlayerText = "1 PLAYER";
@@ -32,18 +31,13 @@ internal class MainMenu : Form
     private TankType _cursorTankType;
     private TankColor _cursorTankColor;
 
-    public MainMenu(ContentManagerEx content, int playerCount, int levelNumber) : base(content)
+    public MainMenu(GameServiceContainer serviceProvider, int playerCount) : base(serviceProvider)
     {
         PlayerCount = playerCount;
-        LevelNumber = levelNumber;
 
         CreateMenuItems();
         CreateTitle();
         CreateCursor();
-    }
-
-    protected override void OnUpdate(GameTime gameTime)
-    {
     }
 
     protected override void OnClick(FormItem item)
@@ -60,7 +54,7 @@ internal class MainMenu : Form
         Exit();
     }
 
-    protected override void OnPress(PlayerIndex playerIndex, PlayerInputCommands input)
+    protected override void OnInputPressed(PlayerIndex playerIndex, PlayerInputCommands input)
     {
         // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
         switch (input)
@@ -97,8 +91,8 @@ internal class MainMenu : Form
 
     private void CreateMenuItems()
     {
-        _player1Button = CreateTextButton(MenuItem1PlayerText);
-        _player2Button = CreateTextButton(MenuItem2PlayersText);
+        _player1Button = CreateTextButton(MenuItem1PlayerText, GameColors.White, GameColors.Curtain);
+        _player2Button = CreateTextButton(MenuItem2PlayersText, GameColors.White, GameColors.Curtain);
 
         AddItem(_player1Button, MenuItem1StartingPosition);
         AddItem(_player2Button, MenuItem2StartingPosition);

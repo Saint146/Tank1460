@@ -2,11 +2,11 @@
 using System;
 using System.Collections.Generic;
 
-namespace Tank1460.LevelObjects;
+namespace Tank1460;
 
 internal class TimedActionsQueue
 {
-    public bool ToRemove;
+    public bool IsFinished;
 
     public IReadOnlyCollection<(Action Action, double ActionDelay)> Actions => _actions;
 
@@ -29,6 +29,8 @@ internal class TimedActionsQueue
     public void EnqueueAction(Action action, double actionDelay)
     {
         _actions.Enqueue((action, actionDelay));
+        if (IsFinished)
+            Reset();
     }
 
     public void EnqueueActions(IEnumerable<(Action Action, double ActionDelay)> actions)
@@ -41,17 +43,23 @@ internal class TimedActionsQueue
 
     public void Update(GameTime gameTime)
     {
-        if (ToRemove)
+        if (IsFinished)
             return;
 
         _time += gameTime.ElapsedGameTime.TotalSeconds;
 
-        while (_time >= _nextActionTime && !ToRemove)
+        while (_time >= _nextActionTime && !IsFinished)
         {
             _time -= _nextActionTime;
             DoNextAction();
             DequeueAction();
         }
+    }
+
+    private void Reset()
+    {
+        _time = 0.0;
+        IsFinished = false;
     }
 
     private void DoNextAction()
@@ -63,16 +71,11 @@ internal class TimedActionsQueue
     {
         if (!_actions.TryDequeue(out var action))
         {
-            Remove();
+            IsFinished = true;
             return;
         }
 
         _nextAction = action.Action;
         _nextActionTime = action.ActionDelay;
-    }
-
-    private void Remove()
-    {
-        ToRemove = true;
     }
 }

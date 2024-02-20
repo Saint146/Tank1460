@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MonoGame.Extended;
+using System;
 
 namespace Tank1460.Common;
 
@@ -35,4 +36,12 @@ public static class Rng
     /// Возвращает true с вероятностью 1/<paramref name="n"/>.
     /// </summary>
     public static bool OneIn(int n) => Next(n) == 0;
+
+    /// <summary>
+    /// Случайное число из промежутка.
+    /// </summary>
+    /// <remarks>
+    /// Верхняя граница входит в интервал.
+    /// </remarks>
+    public static int OneInRange(Range<int> range) => Next(range.Min, range.Max + 1);
 }

@@ -6,11 +6,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MonoGame.Extended;
 using Tank1460.Audio;
 using Tank1460.Common;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
 using Tank1460.Forms;
+using Tank1460.Globals;
 using Tank1460.Input;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tiles;
@@ -47,10 +49,6 @@ public class Tank1460Game : Game
         // Отступ после худа
         PostHudIndent;
 
-    private static Color LevelBackColor { get; } = new(0xff7f7f7f);
-
-    private static Color GameBackColor { get; } = Color.Black;
-
     private bool _customCursorEnabled;
     private bool CustomCursorEnabled
     {
@@ -72,6 +70,7 @@ public class Tank1460Game : Game
     private LevelHud _levelHud;
     private Cursor _cursor;
     private Curtain _curtain;
+    private readonly ISoundPlayer _soundPlayer;
 
     private Matrix _levelTransformation;
     private Matrix _formTransformation;
@@ -91,7 +90,7 @@ public class Tank1460Game : Game
     private GameState _gameState;
     private Point _windowPosition;
     private Point _windowSize;
-    private ISoundPlayer _soundPlayer;
+    private bool _allowSelectLevel;
 
     private PlayerIndex[] AllPlayers { get; } = { PlayerIndex.One, PlayerIndex.Two };
 
@@ -99,19 +98,17 @@ public class Tank1460Game : Game
 
     private string LevelFolder { get; set; } = ClassicRules ? "Classic" : "Modern";
 
-    private int LevelNumber { get; set; } =
-#if DEBUG
-        Rng.Next(1, 36);
-#else
-    1;
-#endif
+    private readonly Range<int> _levelsRange = new (1, 36);
+
+    private int LevelNumber { get; set; }
 
     public Tank1460Game()
     {
         Window.AllowUserResizing = true;
         Content = new ContentManagerEx(Services, "Content");
         Services.AddService(Content);
-        Services.AddService(typeof(ISoundPlayer), new SoundPlayer(Content));
+        _soundPlayer = new SoundPlayer(Content);
+        Services.AddService(typeof(ISoundPlayer), _soundPlayer);
 
         IsFixedTimeStep = true;
 
@@ -141,9 +138,16 @@ public class Tank1460Game : Game
 
         _levelHud = new LevelHud(Content);
         _cursor = new Cursor(Content);
-        _soundPlayer = Services.GetService<ISoundPlayer>();
+        Services.GetService<ISoundPlayer>();
 
         PreloadLevelsContent();
+
+        LevelNumber =
+#if DEBUG
+            Rng.OneInRange(_levelsRange);
+#else
+            _levelsRange.Min;
+#endif
 
         Status = GameStatus.Ready;
     }
@@ -175,12 +179,17 @@ public class Tank1460Game : Game
 
         _curtain?.Update(gameTime);
 
+        _soundPlayer.Perform(gameTime);
+
         base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(_form is not null || _level is null ? GameBackColor : LevelBackColor);
+        var colorToFill = _form?.BackColor ??
+                          _level?.BackColor ??
+                          GameColors.LevelBack;
+        GraphicsDevice.Clear(colorToFill);
 
         if (_form is not null)
         {
@@ -254,23 +263,22 @@ public class Tank1460Game : Game
                 break;
 
             case GameStatus.Ready:
-                Status = GameStatus.InMainMenu;
+                Status = GameStatus.MainMenu;
                 UnloadLevel();
                 LoadMainMenu();
                 break;
 
-            case GameStatus.InMainMenu:
+            case GameStatus.MainMenu:
                 if (_form.Status != FormStatus.Exited)
                     break;
 
                 var mainMenu = (MainMenu)_form;
-                LevelNumber = mainMenu.LevelNumber;
                 PlayersInGame = AllPlayers.Take(mainMenu.PlayerCount).ToArray();
                 ResetGameState();
                 StartLoadingLevelSequence();
                 break;
 
-            case GameStatus.InLevel:
+            case GameStatus.Level:
                 break;
 
             case GameStatus.CurtainOpening:
@@ -278,8 +286,18 @@ public class Tank1460Game : Game
                     break;
 
                 _curtain = null;
-                Status = GameStatus.InLevel;
+                Status = GameStatus.Level;
                 _level.Start();
+                break;
+
+            case GameStatus.LevelSelectScreen:
+                if (_form.Status != FormStatus.Exited)
+                    break;
+
+                var levelSelectScreen = (LevelSelectScreen)_form;
+                LevelNumber = levelSelectScreen.LevelNumber;
+                UnloadForm();
+                LoadLevel();
                 break;
 
             case GameStatus.CurtainClosing:
@@ -287,20 +305,21 @@ public class Tank1460Game : Game
                     break;
 
                 _curtain = null;
+                Status = GameStatus.LevelSelectScreen;
                 UnloadLevel();
                 UnloadForm();
-                LoadLevel();
+                LoadLevelSelectScreen();
                 break;
 
-            case GameStatus.InWinScoreScreen:
+            case GameStatus.WinScoreScreen:
                 if (_form.Status != FormStatus.Exited)
                     break;
 
                 UnloadForm();
-                StartLoadingLevelSequence(levelNumber: LevelNumber + 1);
+                StartLoadingLevelSequence(levelNumber: _levelsRange.NextLooping(LevelNumber));
                 break;
 
-            case GameStatus.InLostScoreScreen:
+            case GameStatus.LostScoreScreen:
                 if (_form.Status != FormStatus.Exited)
                     break;
 
@@ -316,7 +335,6 @@ public class Tank1460Game : Game
 
                 UnloadForm();
                 Status = GameStatus.Ready;
-                ResetGameState();
                 break;
 
             case GameStatus.HighscoreScreen:
@@ -342,6 +360,7 @@ public class Tank1460Game : Game
     private void ResetGameState()
     {
         _gameState = new GameState(PlayersInGame);
+        _allowSelectLevel = true;
     }
 
     private PlayerInputCollection HandleInput()
@@ -468,7 +487,7 @@ public class Tank1460Game : Game
         Debug.Assert(_level is null);
         Debug.Assert(_form is null);
 
-        _form = new MainMenu(Content, PlayersInGame.Length, LevelNumber);
+        _form = new MainMenu(Services, PlayersInGame.Length);
     }
 
     private void LoadScoreScreen(bool showBonus)
@@ -477,7 +496,7 @@ public class Tank1460Game : Game
         Debug.Assert(_form is null);
 
         var levelStats = _level.Stats;
-        _form = new ScoreScreen(Content, LevelNumber, 20000, _gameState, levelStats, showBonus);
+        _form = new ScoreScreen(Services, LevelNumber, 20000, _gameState, levelStats, showBonus);
     }
 
     private void LoadGameOverScreen()
@@ -485,7 +504,15 @@ public class Tank1460Game : Game
         Debug.Assert(_level is null);
         Debug.Assert(_form is null);
 
-        _form = new GameOverScreen(Content);
+        _form = new GameOverScreen(Services);
+    }
+
+    private void LoadLevelSelectScreen()
+    {
+        Debug.Assert(_level is null);
+        Debug.Assert(_form is null);
+
+        _form = new LevelSelectScreen(Services, LevelNumber, _levelsRange, !_allowSelectLevel);
     }
 
     /// <summary>
@@ -501,7 +528,7 @@ public class Tank1460Game : Game
         if (levelNumber is not null)
             LevelNumber = levelNumber.Value;
 
-        _curtain = new Curtain(LevelBackColor, CurtainAction.Close);
+        _curtain = new Curtain(GameColors.Curtain, CurtainAction.Close);
         Status = GameStatus.CurtainClosing;
     }
 
@@ -535,7 +562,7 @@ public class Tank1460Game : Game
 
         // TODO: Вынести в сеттер Status
         Status = GameStatus.CurtainOpening;
-        _curtain = new Curtain(LevelBackColor, CurtainAction.Open);
+        _curtain = new Curtain(GameColors.Curtain, CurtainAction.Open);
 
         Debug.WriteLine($"Level {LevelFolder}/{LevelNumber} loaded.");
     }
@@ -544,9 +571,8 @@ public class Tank1460Game : Game
     {
         _gameState = level.GetGameState();
 
-        _gameState.PlayersStates[PlayerIndex.One].Score = 19000;
-
-        Status = GameStatus.InWinScoreScreen;
+        Status = GameStatus.WinScoreScreen;
+        _allowSelectLevel = false;
         LoadScoreScreen(showBonus: true);
     }
 
@@ -554,7 +580,7 @@ public class Tank1460Game : Game
     {
         _gameState = level.GetGameState();
 
-        Status = GameStatus.InLostScoreScreen;
+        Status = GameStatus.LostScoreScreen;
         LoadScoreScreen(showBonus: false);
     }
 

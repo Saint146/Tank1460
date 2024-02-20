@@ -7,7 +7,6 @@ using System.Linq;
 using Tank1460.Common;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tank;
-using Tank1460.Extensions;
 using Tank1460.LevelObjects.Tanks;
 
 namespace Tank1460;
@@ -22,29 +21,29 @@ public class BotManager
 
     private readonly Level _level;
     private readonly List<(int x, int y)> _points = new();
-    private int _pointIndex = 0;
+    private int _pointIndex;
     private readonly double _respawnInterval;
     private double _timeToSpawnRemaining;
     private bool _spawnIsDue;
 
     private readonly int _totalSpawns;
     private readonly Queue<TankType> _tankTypes;
-    private int _botsAlive = 0;
+    private int _botsAlive;
     private readonly int _maxAliveBots;
-    private int _periodIndex = 0;
-    private double _periodTime = 0.0;
+    private int _periodIndex;
+    private double _periodTime;
 
-    private bool _paralyzeIsActive = false;
+    private bool _paralyzeIsActive;
     private double _paralyzeTime;
     private double _paralyzeEffectTime;
     private static readonly int[] ClassicBotBonusNumbers = { 4, 11, 18 };
 
 #if !DEBUG
     private readonly double _periodLength;
-    private const double PeriodResetTime = GameRules.TimeInFrames(16384);
+    private readonly double _periodResetTime = GameRules.TimeInFrames(16384);
 #else
     private double _periodLength;
-    private double PeriodResetTime = GameRules.TimeInFrames(4320);
+    private double _periodResetTime = GameRules.TimeInFrames(4320);
 #endif
 
     public BotManager(Level level, int totalBots, int maxAliveBots)
@@ -84,7 +83,7 @@ public class BotManager
 
                 if (KeyboardEx.HasBeenPressed(key))
                 {
-                    PeriodResetTime = double.MaxValue;
+                    _periodResetTime = double.MaxValue;
                     _periodLength = 1000000.0;
                     _periodTime = _periodLength * digit;
                     break;
@@ -109,7 +108,7 @@ public class BotManager
 
         var elapsedSeconds = gameTime.ElapsedGameTime.TotalSeconds;
         _periodTime += elapsedSeconds;
-        if (_periodTime > PeriodResetTime)
+        if (_periodTime > _periodResetTime)
             _periodTime = 0.0;
         SetPeriodIndex((int)(_periodTime / _periodLength));
 

@@ -68,11 +68,6 @@ public class PlayerTank : Tank
     public void HandleInput(PlayerInput playerInput)
     {
         _playerInput = playerInput;
-
-        if (_playerInput.Pressed.HasFlag(PlayerInputCommands.Start))
-        {
-            // TODO: level handle player pressed start
-        }
     }
 
     protected override void OnSpawn()

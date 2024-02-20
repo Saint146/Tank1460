@@ -10,6 +10,7 @@ using Tank1460.Audio;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
 using Tank1460.Common.Level.Object.Tile;
+using Tank1460.Globals;
 using Tank1460.Input;
 using Tank1460.LevelObjects;
 using Tank1460.LevelObjects.Bonuses;
@@ -40,6 +41,8 @@ public class Level : IDisposable
     public List<Shell> Shells { get; } = new();
 
     public ContentManagerEx Content { get; }
+
+    public Color BackColor => GameColors.Curtain;
 
     public int LevelNumber { get; }
 
@@ -113,9 +116,6 @@ public class Level : IDisposable
         }
 
         Status = LevelStatus.Intro;
-#if !DEBUG
-        SoundPlayer.Play(Sound.Intro);
-#endif
     }
 
     public void AddExplosion(Explosion explosion) => _explosions.Add(explosion);
@@ -208,8 +208,11 @@ public class Level : IDisposable
                 if (!KeyboardEx.HasBeenPressed(key))
                     continue;
 
-                var killerTank = GetPlayerTank((PlayerIndex)(digit - 1));
-                BotManager.ExplodeAll(killerTank);
+                var player = (PlayerIndex)(digit - 1);
+                if (!PlayersInGame.Contains(player))
+                    continue;
+
+                BotManager.ExplodeAll(GetPlayerTank(player));
 
                 break;
             }
@@ -252,8 +255,6 @@ public class Level : IDisposable
         }
 
         _levelEffects.Update(gameTime, Status == LevelStatus.Paused);
-
-        SoundPlayer.Perform(gameTime);
     }
 
     public bool CanTankPassThroughTile(Tank tank, Point tilePoint)

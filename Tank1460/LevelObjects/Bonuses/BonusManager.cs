@@ -65,7 +65,6 @@ public class BonusManager
 
     private (int x, int y) GetRandomBonusSpot()
     {
-        // TODO: Проверить
         var x = Rng.NextEven(_level.TileBounds.Left + 1, _level.TileBounds.Right) - 1;
         var y = Rng.NextEven(_level.TileBounds.Top + 1, _level.TileBounds.Bottom) - 1;
         return (x, y);

@@ -9,23 +9,15 @@ namespace Tank1460.Forms;
 
 internal class GameOverScreen : Form
 {
-    private readonly ISoundPlayer _soundPlayer;
-
     private const string Text = "GAME\nOVER";
 
     private const int CenterX = 16 * Tile.DefaultWidth;
     private const int CenterY = 14 * Tile.DefaultHeight;
 
-    public GameOverScreen(ContentManagerEx content) : base(content)
+    public GameOverScreen(GameServiceContainer serviceProvider) : base(serviceProvider)
     {
-        _soundPlayer = new SoundPlayer(content);
         CreateText();
-        _soundPlayer.Play(Sound.GameOver);
-    }
-
-    protected override void OnUpdate(GameTime gameTime)
-    {
-        _soundPlayer.Perform(gameTime);
+        SoundPlayer.Play(Sound.GameOver);
     }
 
     protected override void OnClick(FormItem item)
@@ -33,7 +25,7 @@ internal class GameOverScreen : Form
         Exit();
     }
 
-    protected override void OnPress(PlayerIndex playerIndex, PlayerInputCommands input)
+    protected override void OnInputPressed(PlayerIndex playerIndex, PlayerInputCommands input)
     {
         if (input.HasOneOfFlags(PlayerInputCommands.Shoot, PlayerInputCommands.ShootTurbo, PlayerInputCommands.Start))
             Exit();

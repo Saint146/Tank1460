@@ -4,7 +4,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
+using Tank1460.Audio;
 using Tank1460.Common.Extensions;
+using Tank1460.Globals;
 using Tank1460.Input;
 
 namespace Tank1460.Forms;
@@ -13,15 +15,14 @@ internal abstract class Form
 {
     public FormStatus Status { get; private set; }
 
+    public Color BackColor { get; protected set; } = GameColors.LevelBack;
+
     protected IReadOnlyDictionary<int, FormItem> Items => _items;
 
     private readonly Dictionary<int, FormItem> _items = new();
 
-    protected static readonly Color DefaultTextNormalColor = Color.White;
-    protected static readonly Color DefaultTextShadowColor = new(0xff7f7f7f);
-    protected static readonly Color DefaultTextPressedColor = new(0x775000e0);
-
-    protected ContentManagerEx Content;
+    protected readonly ContentManagerEx Content;
+    protected readonly ISoundPlayer SoundPlayer;
 
     private bool _wasMouseDown;
 
@@ -35,9 +36,10 @@ internal abstract class Form
     /// </summary>
     private FormItem _hoveringItem;
 
-    protected Form(ContentManagerEx content)
+    protected Form(GameServiceContainer serviceProvider)
     {
-        Content = content;
+        Content = serviceProvider.GetService<ContentManagerEx>();
+        SoundPlayer = serviceProvider.GetService<ISoundPlayer>();
         Status = FormStatus.Running;
     }
 
@@ -49,10 +51,11 @@ internal abstract class Form
         foreach (var (playerIndex, playerInputs) in playersInputs)
         {
             if (playerInputs.Pressed != PlayerInputCommands.None)
-                OnPress(playerIndex, playerInputs.Pressed);
+                OnInputPressed(playerIndex, playerInputs.Pressed);
         }
 
         _hoveringItem = HitTest(mouseState.Position);
+        OnHover(_hoveringItem);
 
         var isMouseDown = mouseState.LeftButton == ButtonState.Pressed;
         switch (_wasMouseDown)
@@ -99,11 +102,21 @@ internal abstract class Form
                 item.Draw(spriteBatch);
     }
 
-    protected abstract void OnUpdate(GameTime gameTime);
+    protected virtual void OnUpdate(GameTime gameTime)
+    {
+    }
 
-    protected abstract void OnClick([CanBeNull] FormItem item);
+    protected virtual void OnHover([CanBeNull] FormItem item)
+    {
+    }
 
-    protected abstract void OnPress(PlayerIndex playerIndex, PlayerInputCommands input);
+    protected virtual void OnClick([CanBeNull] FormItem item)
+    {
+    }
+
+    protected virtual void OnInputPressed(PlayerIndex playerIndex, PlayerInputCommands input)
+    {
+    }
 
     protected void Exit()
     {
@@ -131,15 +144,10 @@ internal abstract class Form
         return new FormImage(animation);
     }
 
-    protected FormButton CreateTextButton(string text,
-                                          Color? normalColor = null,
-                                          Color? shadowColor = null,
-                                          Color? pressedColor = null,
-                                          Point? margins = null)
+    protected FormButton CreateTextButton(string text, Color normalColor, Color shadowColor, Point? margins = null)
     {
-        var normalFont = Content.LoadFont(@"Sprites/Font/Pixel8", normalColor ?? DefaultTextNormalColor);
-        var shadowFont = Content.LoadFont(@"Sprites/Font/Pixel8", shadowColor ?? DefaultTextShadowColor);
-        var pressedFont = Content.LoadFont(@"Sprites/Font/Pixel8", pressedColor ?? DefaultTextPressedColor);
+        var normalFont = Content.LoadFont(@"Sprites/Font/Pixel8", normalColor);
+        var shadowFont = Content.LoadFont(@"Sprites/Font/Pixel8", shadowColor);
         margins ??= normalFont.GetTextSize(" ");
         var halfMargins = margins.Value.Divide(2);
         var itemSize = normalFont.GetTextSize(text) + margins.Value;
@@ -167,9 +175,8 @@ internal abstract class Form
                                                                () =>
                                                                {
                                                                    var texture = templateTexture.Copy();
-                                                                   texture.Draw(shadowFont.CreateTexture(text),
+                                                                   texture.Draw(normalFont.CreateTexture(text),
                                                                                 halfMargins + new Point(1, 1));
-                                                                   texture.Draw(pressedFont.CreateTexture(text), halfMargins);
                                                                    return texture;
                                                                });
 
