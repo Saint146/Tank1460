@@ -120,6 +120,7 @@ internal abstract class Form
 
     protected void Exit()
     {
+        SoundPlayer.StopAll();
         Status = FormStatus.Exited;
     }
 

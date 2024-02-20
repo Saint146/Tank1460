@@ -95,7 +95,7 @@ public class Animation : IAnimation
 
     public void Draw(SpriteBatch spriteBatch, Vector2 position, Rectangle visibleRectangle, float scale)
     {
-        var source = new Rectangle(visibleRectangle.X + FrameIndex * Texture.Height, visibleRectangle.Y, visibleRectangle.Width, visibleRectangle.Height);
+        var source = new Rectangle(visibleRectangle.X + FrameIndex * FrameWidth, visibleRectangle.Y, visibleRectangle.Width, visibleRectangle.Height);
 
         spriteBatch.Draw(Texture, position + visibleRectangle.Location.ToVector2(), source, Color.White, 0.0f, new Vector2(0,0), scale, SpriteEffects.None, 0.0f);
     }

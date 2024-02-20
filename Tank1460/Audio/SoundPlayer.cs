@@ -59,6 +59,12 @@ internal class SoundPlayer : ISoundPlayer
         targetSound.Channels.ForEach(channel => _toPlay[channel] = targetSound);
     }
 
+    public bool IsPlaying(Sound sound)
+    {
+        var targetSound = _sounds[sound];
+        return _wasPlaying.ContainsValue(targetSound);
+    }
+
     public void StopAll()
     {
         foreach (var sound in _wasPlaying.Values.Where(sound => sound.IsPlaying).ToHashSet())
@@ -186,6 +192,7 @@ internal class SoundPlayer : ISoundPlayer
 
         LoadSound(content, Sound.OneUp, SoundChannels.Square1 | SoundChannels.Square2, 5);
 
+        LoadSound(content, Sound.Highscore, SoundChannels.ThreeMelodic, 5);
         LoadSound(content, Sound.Tick, SoundChannels.ThreeMelodic, 6);
         LoadSound(content, Sound.Reward, SoundChannels.ThreeMelodic, 7);
         LoadSound(content, Sound.Intro, SoundChannels.ThreeMelodic, 8);

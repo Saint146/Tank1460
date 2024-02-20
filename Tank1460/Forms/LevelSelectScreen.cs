@@ -122,7 +122,7 @@ internal class LevelSelectScreen : Form
     {
         Debug.Assert(!_closing);
 
-#if DEBUG
+#if !DEBUG
         SoundPlayer.Play(Sound.Intro);
 #endif
 

@@ -8,6 +8,7 @@ internal enum Sound
     ExplosionSmall,
     Fail,
     GameOver,
+    Highscore,
     HitDestroy,
     HitDull,
     HitHurt,

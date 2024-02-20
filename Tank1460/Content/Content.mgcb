@@ -460,6 +460,12 @@
 /processorParam:Quality=Best
 /build:Sounds/8bit/GameOver/1.ogg
 
+#begin Sounds/8bit/Highscore/1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/8bit/Highscore/1.ogg
+
 #begin Sounds/8bit/HitDestroy/1.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
@@ -573,6 +579,54 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/8bit/Tick/4.ogg
+
+#begin Sprites/_R/Pattern/Flashing/0.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/_R/Pattern/Flashing/0.png
+
+#begin Sprites/_R/Pattern/Flashing/1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/_R/Pattern/Flashing/1.png
+
+#begin Sprites/_R/Pattern/Flashing/2.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/_R/Pattern/Flashing/2.png
+
+#begin Sprites/_R/Pattern/Flashing/3.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/_R/Pattern/Flashing/3.png
 
 #begin Sprites/_R/Tank/Gray.png
 /importer:TextureImporter

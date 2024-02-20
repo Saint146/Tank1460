@@ -11,6 +11,8 @@ internal interface ISoundPlayer
 
     void Loop(Sound sound);
 
+    bool IsPlaying(Sound sound);
+
     void StopAll();
 
     void Perform(GameTime gameTime);

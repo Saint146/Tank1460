@@ -102,6 +102,8 @@ public class Tank1460Game : Game
 
     private int LevelNumber { get; set; }
 
+    private int Highscore { get; set; } = 20000;
+
     public Tank1460Game()
     {
         Window.AllowUserResizing = true;
@@ -334,10 +336,24 @@ public class Tank1460Game : Game
                     break;
 
                 UnloadForm();
+                if (UpdateHighscore())
+                {
+                    Status = GameStatus.HighscoreScreen;
+                    LoadHighscoreScreen();
+                    break;
+                }
+
                 Status = GameStatus.Ready;
                 break;
 
             case GameStatus.HighscoreScreen:
+                if (_form.Status != FormStatus.Exited)
+                    break;
+
+                UnloadForm();
+                Status = GameStatus.Ready;
+                break;
+
             default:
                 throw new ArgumentOutOfRangeException(nameof(Status));
         }
@@ -474,6 +490,19 @@ public class Tank1460Game : Game
         return inputs;
     }
 
+    /// <summary>
+    /// Обновить лучший результат и вернуть true, если он побит.
+    /// </summary>
+    private bool UpdateHighscore()
+    {
+        var maxScore = _gameState.PlayersStates.Values.Max(state => state.Score);
+        if (maxScore <= Highscore)
+            return false;
+
+        Highscore = maxScore;
+        return true;
+    }
+
     private void UnloadForm()
     {
         if (_form is null)
@@ -496,7 +525,7 @@ public class Tank1460Game : Game
         Debug.Assert(_form is null);
 
         var levelStats = _level.Stats;
-        _form = new ScoreScreen(Services, LevelNumber, 20000, _gameState, levelStats, showBonus);
+        _form = new ScoreScreen(Services, LevelNumber, Highscore, _gameState, levelStats, showBonus);
     }
 
     private void LoadGameOverScreen()
@@ -513,6 +542,14 @@ public class Tank1460Game : Game
         Debug.Assert(_form is null);
 
         _form = new LevelSelectScreen(Services, LevelNumber, _levelsRange, !_allowSelectLevel);
+    }
+
+    private void LoadHighscoreScreen()
+    {
+        Debug.Assert(_level is null);
+        Debug.Assert(_form is null);
+
+        _form = new HighscoreScreen(Services, Highscore);
     }
 
     /// <summary>
