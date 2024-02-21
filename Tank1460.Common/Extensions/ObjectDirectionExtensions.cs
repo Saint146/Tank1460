@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Tank1460.Common.Level.Object;
 
 namespace Tank1460.Common.Extensions;
@@ -15,9 +16,13 @@ public static class ObjectDirectionExtensions
 
     public static ObjectDirection CounterClockwise(this ObjectDirection direction) => CounterClockwiseMap[direction];
 
-    public static ObjectDirection GetRandomDirection() => AllDirections.GetRandom();
+    public static ObjectDirection GetRandomDirection() => _allDirections.GetRandom();
 
-    private static readonly ObjectDirection[] AllDirections = Enum.GetValues<ObjectDirection>();
+    public static Point ToStep(this ObjectDirection direction) => StepMap[direction];
+
+    public static IReadOnlyCollection<ObjectDirection> AllDirections => _allDirections;
+
+    private static readonly ObjectDirection[] _allDirections = Enum.GetValues<ObjectDirection>();
 
     private static readonly Dictionary<ObjectDirection, ObjectDirection> ClockwiseMap = new()
     {
@@ -35,5 +40,13 @@ public static class ObjectDirectionExtensions
         { ObjectDirection.Right, ObjectDirection.Up },
         { ObjectDirection.Down, ObjectDirection.Right },
         { ObjectDirection.Left, ObjectDirection.Down }
+    };
+
+    private static readonly Dictionary<ObjectDirection, Point> StepMap = new()
+    {
+        { ObjectDirection.Up, new Point(0, -1) },
+        { ObjectDirection.Right, new Point(+1, 0) },
+        { ObjectDirection.Down, new Point(0, +1) },
+        { ObjectDirection.Left, new Point(-1, 0) }
     };
 }

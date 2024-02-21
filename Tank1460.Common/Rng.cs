@@ -43,5 +43,5 @@ public static class Rng
     /// <remarks>
     /// Верхняя граница входит в интервал.
     /// </remarks>
-    public static int OneInRange(Range<int> range) => Next(range.Min, range.Max + 1);
+    public static int FromRange(Range<int> range) => Next(range.Min, range.Max + 1);
 }

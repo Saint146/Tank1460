@@ -12,6 +12,8 @@ namespace Tank1460.LevelObjects.Bonuses;
 
 public class BonusManager
 {
+    public IReadOnlyList<Bonus> Bonuses => _bonuses;
+
     private readonly Level _level;
     private readonly int _maxBonusesOnScreen;
     private readonly List<Bonus> _bonuses = new();

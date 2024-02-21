@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Emit;
+using Tank1460.AI;
 using Tank1460.Audio;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
@@ -67,6 +69,15 @@ public class Level : IDisposable
     internal LevelStats Stats { get; }
 
     internal bool ClassicRules => Tank1460Game.ClassicRules;
+
+    internal ICollection<LevelObject> GetLevelObjectsInTile(int x, int y) => _tileObjectMap[x, y];
+
+    internal HashSet<LevelObject> GetLevelObjectsInTiles(Rectangle tileRectangle)
+    {
+        var objects = new HashSet<LevelObject>();
+        tileRectangle.EnumerateArray(_tileObjectMap, objects.UnionWith);
+        return objects;
+    }
 
     private LevelStatus Status { get; set; }
 
@@ -344,8 +355,7 @@ public class Level : IDisposable
             return new LevelObject[] { null };
 
         // Ограничиваем список всех объектов на уровне теми, что находятся в тех же тайлах.
-        var closeObjects = new HashSet<LevelObject>();
-        levelObject.TileRectangle.EnumerateArray(_tileObjectMap, closeObjects.UnionWith);
+        var closeObjects = GetLevelObjectsInTiles(levelObject.TileRectangle);
 
         // Выкидываем из него лишнее - сам объект и то, что было указано как лишнее.
         closeObjects.Remove(levelObject);
@@ -422,7 +432,7 @@ public class Level : IDisposable
 
     internal void HandlePlayerLostAllLives(PlayerIndex playerIndex)
     {
-        if (PlayersInGame.All(player => PlayerLivesRemaining(player) == 0))
+        if (PlayersInGame.All(player => PlayerSpawners[player].ControlledByAi || PlayerLivesRemaining(player) == 0))
         {
             StartGameOverSequence();
             return;
@@ -644,6 +654,11 @@ public class Level : IDisposable
 
         var playerSpawner = new PlayerSpawner(this, x, y, playerIndex);
         PlayerSpawners.Add(playerIndex, playerSpawner);
+
+#if DEBUG
+        if (playerIndex != PlayerIndex.One)
+            playerSpawner.ControlledByAi = true;
+#endif
 
         return null;
     }

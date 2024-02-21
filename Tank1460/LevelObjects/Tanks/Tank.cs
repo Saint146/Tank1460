@@ -38,11 +38,13 @@ public abstract class Tank : MoveableLevelObject
 
     public TankType Type { get; private set; }
 
+    public ObjectDirection Direction { get; private set; } = ObjectDirection.Up;
+
+    public bool IsFrontTileBlocked { get; private set; } = true;
+
+    public ShellProperties ShellProperties { get; private set; }
+
     protected TankColor Color { get; private set; }
-
-    protected ObjectDirection Direction { get; private set; } = ObjectDirection.Up;
-
-    protected bool IsFrontTileBlocked { get; private set; } = true;
 
     /// <summary>
     /// У танков игроков и ботов разное время звезды перед спауном. Пока способ это отразить - через такую абстракцию.
@@ -58,7 +60,6 @@ public abstract class Tank : MoveableLevelObject
     private readonly List<Shell> _shells = new();
     private readonly TankEffects _activeEffects = new();
     private int _maxShells;
-    private ShellProperties _shellProperties;
     private ShellSpeed _shellSpeed;
     [CanBeNull] private string _afterExplosionText;
 
@@ -116,18 +117,19 @@ public abstract class Tank : MoveableLevelObject
 
                 var order = Think(gameTime);
 
+                // Сначала поворачиваемся, потом стреляем — так AI проще реагировать на опасности.
+                if (!IsImmobile)
+                {
+                    var newDirection = order.ToDirection();
+                    if (newDirection is not null)
+                    {
+                        MoveTo(newDirection.Value);
+                        Level.SoundPlayer.Loop(this is PlayerTank ? Sound.MovePlayer : Sound.MoveBot);
+                    }
+                }
+
                 if (order.HasFlag(TankOrder.Shoot) && !IsPacifist)
                     Shoot(gameTime);
-
-                if (IsImmobile)
-                    break;
-
-                var newDirection = order.ToDirection();
-                if (newDirection is not null)
-                {
-                    MoveTo(newDirection.Value);
-                    Level.SoundPlayer.Loop(this is PlayerTank ? Sound.MovePlayer : Sound.MoveBot);
-                }
 
                 break;
         }
@@ -293,8 +295,6 @@ public abstract class Tank : MoveableLevelObject
         Level.SoundPlayer.Play(isBotTank ? Sound.ExplosionSmall : Sound.ExplosionBig);
     }
 
-    protected bool IsTankCenteredOnTile() => Position.X % Tile.DefaultWidth == 0 && Position.Y % Tile.DefaultHeight == 0;
-
     protected bool IsInvulnerable() => _activeEffects.HasEffect<Invulnerability>();
 
     protected void SetType(TankType type)
@@ -327,7 +327,7 @@ public abstract class Tank : MoveableLevelObject
 
     protected void SetShellProperties(ShellProperties newShellProperties)
     {
-        _shellProperties = newShellProperties;
+        ShellProperties = newShellProperties;
     }
 
     protected abstract TankOrder Think(GameTime gameTime);
@@ -363,7 +363,7 @@ public abstract class Tank : MoveableLevelObject
 
         SetMovingSpeed(properties.TankSpeed);
         _maxShells = properties.MaxShells;
-        _shellProperties = properties.ShellProperties;
+        ShellProperties = properties.ShellProperties;
         _shellSpeed = properties.ShellSpeed;
     }
 
@@ -387,7 +387,7 @@ public abstract class Tank : MoveableLevelObject
             return;
 
         _timeTillReload = gameTime.TotalGameTime.TotalSeconds + _fireDelay;
-        var shell = new Shell(Level, Direction, _shellSpeed, this, _shellProperties);
+        var shell = new Shell(Level, Direction, _shellSpeed, this, ShellProperties);
         shell.SpawnViaCenterPosition(BoundingRectangle.GetEdgeCenter(Direction));
         _shells.Add(shell);
 
@@ -397,7 +397,7 @@ public abstract class Tank : MoveableLevelObject
 
     private void CalcIsFrontTileBlocked()
     {
-        if (!IsTankCenteredOnTile())
+        if (!Position.IsCenteredOnTile())
             IsFrontTileBlocked = false;
         else
             IsFrontTileBlocked = TileRectangle.NearestTiles(Direction)

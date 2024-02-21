@@ -2,13 +2,10 @@
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Tank1460.AI;
 using Tank1460.Audio;
-using Tank1460.Common;
-using Tank1460.Common.Extensions;
-using Tank1460.Common.Level.Object;
 using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Extensions;
-using ObjectDirectionExtensions = Tank1460.Common.Extensions.ObjectDirectionExtensions;
 
 namespace Tank1460.LevelObjects.Tanks;
 
@@ -16,13 +13,13 @@ public class BotTank : Tank
 {
     public int PeriodIndex { get; set; }
 
+    public int Index { get; }
+
     internal int Hp { get; private set; }
 
     protected override int[] SpawnAnimationTimesInFrames() => new[] { 4, 4, 4, 6, 4, 4, 6, 4, 4, 6, 4, 4, 2 };
 
-    private bool _skipThink;
-    private readonly int _index;
-    private TankOrder _botOrder;
+    private readonly BotTankAi _ai;
 
     /// <summary>
     /// Цвет танка в зависимости от хп.
@@ -42,11 +39,10 @@ public class BotTank : Tank
     public BotTank(Level level, TankType type, int hp, int bonusCount, int index, int periodIndex) : base(level, type, HpToTankColor(hp), bonusCount)
     {
         Hp = hp;
-        _index = index;
+        Index = index;
         PeriodIndex = periodIndex;
 
-        // Понеслись!
-        _botOrder = ObjectDirectionExtensions.GetRandomDirection().ToTankOrder();
+        _ai = new ClassicBotTankAi(this, level);
     }
 
     public void GiveArmorPiercingShells()
@@ -75,12 +71,12 @@ public class BotTank : Tank
             case 0:
                 break;
             case 1:
-                var targetPlayer = Level.GetTargetPlayerForBot(_index);
-                Extensions.SpriteBatchExtensions.DrawDebugArrow(spriteBatch, BoundingRectangle, Microsoft.Xna.Framework.Color.Gold, targetPlayer?.BoundingRectangle.Center);
+                var targetPlayer = Level.GetTargetPlayerForBot(Index);
+                spriteBatch.DrawDebugArrow(BoundingRectangle, Microsoft.Xna.Framework.Color.Gold, targetPlayer?.BoundingRectangle.Center);
                 break;
             default:
-                var targetFalcon = Level.GetTargetFalconForBot(_index);
-                Extensions.SpriteBatchExtensions.DrawDebugArrow(spriteBatch, BoundingRectangle, Microsoft.Xna.Framework.Color.Red, targetFalcon?.BoundingRectangle.Center);
+                var targetFalcon = Level.GetTargetFalconForBot(Index);
+                spriteBatch.DrawDebugArrow(BoundingRectangle, Microsoft.Xna.Framework.Color.Red, targetFalcon?.BoundingRectangle.Center);
                 break;
         }
 #endif
@@ -88,25 +84,7 @@ public class BotTank : Tank
 
     protected override TankOrder Think(GameTime gameTime)
     {
-        // По умолчанию движемся туда же, куда и двигались, даже когда не думаем.
-        var newOrder = _botOrder.GetMovementOnly();
-
-        // Думаем только в каждом втором такте (логика оригинала).
-        // TODO: Тут бы тоже время считать по-хорошему как везде, чтобы в случае какого-то лага это все равно срабатывало верно.
-        _skipThink = !_skipThink;
-        if (_skipThink)
-            return newOrder;
-
-        var newThoughtDirection = CheckTileReach();
-        if (newThoughtDirection is not null)
-            newOrder = newThoughtDirection.Value.ToTankOrder();
-
-        // Стреляй, Глеб Егорыч!
-        if (Rng.Next(16) == 0)
-            newOrder |= TankOrder.Shoot;
-
-        _botOrder = newOrder;
-        return newOrder;
+        return _ai.Think();
     }
 
     protected override void HandleDamaged(Tank damagedBy)
@@ -136,69 +114,4 @@ public class BotTank : Tank
 
         SetColor(HpToTankColor(newHp));
     }
-
-    #region --- AI ---
-
-    private ObjectDirection? CheckTileReach()
-    {
-        if (IsTankCenteredOnTile() && Rng.Next(16) == 0)
-            return DecideNewTarget();
-
-        if (IsFrontTileBlocked && Rng.Next(4) == 0)
-            return IsTankCenteredOnTile() ? ChangeDirection() : Direction.Invert();
-
-        return null;
-    }
-
-    private ObjectDirection? DecideNewTarget()
-    {
-        return PeriodIndex switch
-        {
-            0 => ObjectDirectionExtensions.GetRandomDirection(),
-            1 => Hunt(Level.GetTargetPlayerForBot(_index)),
-            _ => Hunt(Level.GetTargetFalconForBot(_index))
-        };
-    }
-
-    private ObjectDirection? ChangeDirection()
-    {
-        if (Rng.Next(2) == 0)
-            return DecideNewTarget();
-
-        return Rng.Next(2) == 0 ? Direction.Clockwise() : Direction.CounterClockwise();
-    }
-
-    private ObjectDirection? Hunt(LevelObject target)
-    {
-        if (target is null)
-            return CheckTileReach();
-
-        var deltaX = target.Position.X - Position.X;
-        var deltaY = target.Position.Y - Position.Y;
-
-        if (deltaX != 0 && deltaY != 0)
-            return Rng.Next(2) == 0 ? DeltaXToDirection(deltaX) : DeltaYToDirection(deltaY);
-
-        if (deltaX != 0)
-            return DeltaXToDirection(deltaX);
-
-        if (deltaY != 0)
-            return DeltaYToDirection(deltaY);
-
-        return ObjectDirectionExtensions.GetRandomDirection();
-    }
-
-    private static ObjectDirection DeltaXToDirection(int deltaX)
-    {
-        Debug.Assert(deltaX != 0);
-        return deltaX < 0 ? ObjectDirection.Left : ObjectDirection.Right;
-    }
-
-    private static ObjectDirection DeltaYToDirection(int deltaY)
-    {
-        Debug.Assert(deltaY != 0);
-        return deltaY < 0 ? ObjectDirection.Up : ObjectDirection.Down;
-    }
-
-    #endregion
 }

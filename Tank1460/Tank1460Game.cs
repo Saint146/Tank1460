@@ -156,7 +156,7 @@ public class Tank1460Game : Game
 
         LevelNumber =
 #if DEBUG
-            Rng.OneInRange(_levelsRange);
+            Rng.FromRange(_levelsRange);
 #else
             _levelsRange.Min;
 #endif
@@ -440,6 +440,7 @@ public class Tank1460Game : Game
         // Геймпады.
         _gamePadStates = _playerInputHandler.GetActiveGamePadIndices().ToDictionary(index => index, GamePad.GetState);
 
+        // Конвертируем весь ввод в команды игроков.
         var inputs = _playerInputHandler.HandleInput(_keyboardState, _gamePadStates);
 
         // Глобальные бинды, включая отладочные.
@@ -451,13 +452,6 @@ public class Tank1460Game : Game
             _graphics.ApplyChanges();
         }
 
-#if DEBUG
-        // F5 — Включить/отключить отображение границ объектов и занимаемых тайлов
-        if (KeyboardEx.HasBeenPressed(Keys.F5)) GameRules.ShowObjectsBoundaries = !GameRules.ShowObjectsBoundaries;
-
-        // F6 — Включить/отключить отображение "периодов" стандартного ИИ ботов
-        if (KeyboardEx.HasBeenPressed(Keys.F6)) GameRules.ShowBotsPeriods = !GameRules.ShowBotsPeriods;
-
         // F7 — Включить/отключить системный курсор
         if (KeyboardEx.HasBeenPressed(Keys.F7))
             CustomCursorEnabled = !CustomCursorEnabled;
@@ -468,6 +462,36 @@ public class Tank1460Game : Game
             _isScalingPixelPerfect = !_isScalingPixelPerfect;
             ScalePresentationArea();
         }
+
+        // Ctrl+Numpad1..Ctrl+Numpad3 — отмасштабировать графику строго к масштабу 1:1..1:3
+        if (_keyboardState.IsKeyDown(Keys.LeftControl))
+        {
+            foreach (var digit in Enumerable.Range(1, 3))
+            {
+                var key = Keys.NumPad0 + digit;
+                if (!KeyboardEx.HasBeenPressed(key))
+                    continue;
+
+                _graphics.IsFullScreen = false;
+                if (Window.IsMaximized())
+                    Window.Restore();
+
+                var size = ScreenPoint.FromPoint(BaseScreenSize.Multiply(digit));
+                _graphics.PreferredBackBufferWidth = size.X;
+                _graphics.PreferredBackBufferHeight = size.Y;
+
+                _graphics.ApplyChanges();
+
+                break;
+            }
+        }
+
+#if DEBUG
+        // F5 — Включить/отключить отображение границ объектов и занимаемых тайлов
+        if (KeyboardEx.HasBeenPressed(Keys.F5)) GameRules.ShowObjectsBoundaries = !GameRules.ShowObjectsBoundaries;
+
+        // F6 — Включить/отключить отображение "периодов" стандартного ИИ ботов
+        if (KeyboardEx.HasBeenPressed(Keys.F6)) GameRules.ShowBotsPeriods = !GameRules.ShowBotsPeriods;
 
         // Del — взорвать все танки игроков
         if (KeyboardEx.HasBeenPressed(Keys.Delete))
@@ -493,29 +517,6 @@ public class Tank1460Game : Game
 
             if (KeyboardEx.HasBeenPressed(Keys.OemMinus))
                 StartLoadingLevelSequence(levelNumber: LevelNumber + 1);
-        }
-
-        // Ctrl+Numpad1..Ctrl+Numpad3 — отмасштабировать графику строго к масштабу 1:1..1:3
-        if (_keyboardState.IsKeyDown(Keys.LeftControl))
-        {
-            foreach (var digit in Enumerable.Range(1, 3))
-            {
-                var key = Keys.NumPad0 + digit;
-                if (!KeyboardEx.HasBeenPressed(key))
-                    continue;
-
-                _graphics.IsFullScreen = false;
-                if (Window.IsMaximized())
-                    Window.Restore();
-
-                var size = ScreenPoint.FromPoint(BaseScreenSize.Multiply(digit));
-                _graphics.PreferredBackBufferWidth = size.X;
-                _graphics.PreferredBackBufferHeight = size.Y;
-
-                _graphics.ApplyChanges();
-
-                break;
-            }
         }
 
         // J — Показать взрывы в случайных точках экрана.

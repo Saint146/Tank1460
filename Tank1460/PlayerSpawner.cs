@@ -17,6 +17,8 @@ public class PlayerSpawner
 
     public Rectangle Bounds { get; }
 
+    public bool ControlledByAi { get; set; }
+
     private readonly Level _level;
     private const double RespawnInterval = 0.0;
 
@@ -48,9 +50,20 @@ public class PlayerSpawner
 
         Tank = null;
 
-        LivesRemaining--;
-        if (LivesRemaining == 0)
-            _level.HandlePlayerLostAllLives(PlayerIndex);
+        switch (LivesRemaining)
+        {
+            case 1 when ControlledByAi:
+                break;
+
+            case 1:
+                LivesRemaining = 0;
+                _level.HandlePlayerLostAllLives(PlayerIndex);
+                break;
+
+            default:
+                LivesRemaining--;
+                break;
+        }
 
         StartSpawnTimer();
     }
@@ -114,7 +127,7 @@ public class PlayerSpawner
         var type = _nextSpawnType ?? (_level.ClassicRules ? TankType.TypeP0 : TankType.TypeP1);
         _nextSpawnType = null;
 
-        Tank = new PlayerTank(_level, PlayerIndex, type);
+        Tank = new PlayerTank(_level, PlayerIndex, type, ControlledByAi);
         Tank.Spawn(Bounds.Location);
 
         if (!_nextSpawnHasShip)
