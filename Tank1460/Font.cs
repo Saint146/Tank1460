@@ -12,7 +12,7 @@ public class Font
 
     public int CharHeight { get; }
 
-    private const string DefaultChars = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,""'?♥#&-_:©!‼ⅠⅡⅢⅣ↑↓→← ";
+    private const string DefaultChars = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,""'?♥#&-_:©!‼ⅠⅡⅢⅣ↑↓→←☐☑ ";
 
     private readonly string _chars;
 

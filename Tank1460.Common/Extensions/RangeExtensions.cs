@@ -35,4 +35,6 @@ public static class RangeExtensions
         for (var i = range.Min; i <= range.Max; i++)
             yield return i;
     }
+
+    public static int Length(this Range<int> range) => range.Max - range.Min + 1;
 }

@@ -17,17 +17,30 @@ internal class MainMenu : Form
 {
     public int PlayerCount { get; private set; }
 
+    public bool AiEnabled { get; private set; }
+
+    public bool ExitSelected { get; private set; }
+
     private readonly Range<int> _playerCountRange;
 
     private const string TitleText = "TANK\n1460";
     private const string MenuItem1PlayerText = "1 PLAYER";
-    private const string MenuItemMultiPlayersText = "{0} PLAYERS";
+    private const string MenuItemMultiPlayersTextFormat = "{0} PLAYERS";
+    private const string AiEnabledTextFormat = "{0} AI ENABLED";
+    private const string ExitButtonText = "QUIT    ";
 
     private const int MenuItemsX = 11 * Tile.DefaultWidth;
-    private const int MenuItem1Y = 15 * Tile.DefaultHeight;
+    private const int MenuItem1Y = 11 * Tile.DefaultHeight;
     private const int MenuItemsYStep = 2 * Tile.DefaultHeight;
 
     private readonly Dictionary<int, FormButton> _playerButtons = new();
+    private FormTextLabel _aiEnabledLabel;
+    private FormButton _exitButton;
+
+    private int _cursorItemIndex;
+    private readonly List<FormItem> _cursorItems = new();
+
+    private FormItem CursorItem => _cursorItems[_cursorItemIndex];
 
     private FormButton _cursor;
     private TankType _cursorTankType;
@@ -38,11 +51,11 @@ internal class MainMenu : Form
                                                                     .Concat(EnumExtensions.GetCombinedFlagValues<TankColor>(2))
                                                                     .ToArray();
 
-
-    public MainMenu(GameServiceContainer serviceProvider, int playerCount, Range<int> playerCountRange) : base(serviceProvider)
+    public MainMenu(GameServiceContainer serviceProvider, int playerCount, Range<int> playerCountRange, bool aiEnabled) : base(serviceProvider)
     {
         _playerCountRange = playerCountRange;
         PlayerCount = playerCount;
+        AiEnabled = aiEnabled;
 
         CreateMenuItems();
         CreateTitle();
@@ -54,6 +67,20 @@ internal class MainMenu : Form
         if (item == _cursor)
         {
             ChangeCursor();
+            return;
+        }
+
+        if (item == _aiEnabledLabel)
+        {
+            AiEnabled = !AiEnabled;
+            UpdateAiEnabledText();
+            return;
+        }
+
+        if (item == _exitButton)
+        {
+            ExitSelected = true;
+            Exit();
             return;
         }
 
@@ -69,19 +96,25 @@ internal class MainMenu : Form
         switch (input)
         {
             case PlayerInputCommands.Up:
-                PlayerCount = _playerCountRange.PrevLooping(PlayerCount);
+                _cursorItemIndex--;
+                if (_cursorItemIndex < 0)
+                    _cursorItemIndex = _cursorItems.Count - 1;
+
                 UpdateCursorPosition();
                 break;
 
             case PlayerInputCommands.Down:
-                PlayerCount = _playerCountRange.NextLooping(PlayerCount);
+                _cursorItemIndex++;
+                if (_cursorItemIndex >= _cursorItems.Count)
+                    _cursorItemIndex = 0;
+
                 UpdateCursorPosition();
                 break;
 
             case PlayerInputCommands.ShootTurbo:
             case PlayerInputCommands.Shoot:
             case PlayerInputCommands.Start:
-                Exit();
+                OnClick(CursorItem);
                 break;
 
         }
@@ -108,12 +141,29 @@ internal class MainMenu : Form
         var first = _playerCountRange.Min;
         foreach (var i in _playerCountRange)
         {
-            var text = i == 1 ? MenuItem1PlayerText : string.Format(MenuItemMultiPlayersText, i);
+            var text = i == 1 ? MenuItem1PlayerText : string.Format(MenuItemMultiPlayersTextFormat, i);
 
             var button = _playerButtons[i] = CreateTextButton(text, GameColors.White, GameColors.Curtain);
 
-            AddItem(button, new Point(MenuItemsX, MenuItem1Y + (i - first) * MenuItemsYStep));
+            AddItem(button,
+                    new Point(x: MenuItemsX,
+                              y: MenuItem1Y + (i - first) * MenuItemsYStep));
+            _cursorItems.Add(button);
         }
+
+        var font = Content.LoadFont(@"Sprites/Font/Pixel8", GameColors.White);
+        _aiEnabledLabel = new FormTextLabel(font, string.Format(AiEnabledTextFormat, ' ').Length, 1);
+        AddItem(_aiEnabledLabel,
+                new Point(x: MenuItemsX + font.CharHeight / 2,
+                          y: MenuItem1Y + (_playerCountRange.Length() + 1) * MenuItemsYStep + font.CharWidth / 2));
+        UpdateAiEnabledText();
+        _cursorItems.Add(_aiEnabledLabel);
+
+        _exitButton = CreateTextButton(ExitButtonText, GameColors.White, GameColors.Curtain);
+        AddItem(_exitButton,
+                new Point(x: MenuItemsX,
+                          y: MenuItem1Y + (_playerCountRange.Length() + 3) * MenuItemsYStep));
+        _cursorItems.Add(_exitButton);
     }
 
     private void CreateCursor()
@@ -132,11 +182,19 @@ internal class MainMenu : Form
 
     private void UpdateCursorPosition()
     {
-        var activeButton = _playerButtons[PlayerCount];
+        // TODO: Убрать всё это в сеттер CursorItem.
+        var (newPlayerCount, playerButton) = _playerButtons.SingleOrDefault(x => x.Value == CursorItem);
+        if (playerButton is not null)
+            PlayerCount = newPlayerCount;
 
-        var x = MenuItemsX - Tile.DefaultWidth - _cursor.Bounds.Width;
-        var y = activeButton.Bounds.Center.Y - _cursor.Bounds.Height / 2f - 1;
-        _cursor.Position = new(x, (int)y);
+        var x = CursorItem.Position.X - Tile.DefaultWidth - _cursor.Bounds.Width;
+        var y = CursorItem.Bounds.Center.Y - _cursor.Bounds.Height / 2f - 1;
+        _cursor.Position = new Point(x, (int)y);
+    }
+
+    private void UpdateAiEnabledText()
+    {
+        _aiEnabledLabel.Text = string.Format(AiEnabledTextFormat, AiEnabled ? "☑" : "☐");
     }
 
     /// <summary>

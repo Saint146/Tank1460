@@ -101,6 +101,7 @@ public class Tank1460Game : Game
     private Point _windowPosition;
     private Point _windowSize;
     private bool _allowSelectLevel;
+    private bool _aiEnabled;
 
     private PlayerIndex[] AllPlayers { get; } = { PlayerIndex.One, PlayerIndex.Two, PlayerIndex.Three, PlayerIndex.Four };
 
@@ -108,7 +109,7 @@ public class Tank1460Game : Game
 
     private string LevelFolder { get; set; } = ClassicRules ? "Classic" : "Modern";
 
-    private readonly Range<int> _levelsRange = new (1, 36);
+    private readonly Range<int> _levelsRange = new(1, 36);
 
     private int LevelNumber { get; set; }
 
@@ -288,6 +289,14 @@ public class Tank1460Game : Game
 
                 var mainMenu = (MainMenu)_form;
                 PlayersInGame = AllPlayers.Take(mainMenu.PlayerCount).ToArray();
+                _aiEnabled = mainMenu.AiEnabled;
+
+                if (mainMenu.ExitSelected)
+                {
+                    Exit();
+                    return;
+                }
+
                 ResetGameState();
                 StartLoadingLevelSequence();
                 break;
@@ -411,13 +420,13 @@ public class Tank1460Game : Game
         switch (_isMouseIdle)
         {
             case false when _isMouseCursorHidden:
-            {
-                // Мышь сдвинулась после скрытия, показываем её.
-                _isMouseCursorHidden = false;
-                if (!_customCursorEnabled)
-                    IsMouseVisible = true;
-                break;
-            }
+                {
+                    // Мышь сдвинулась после скрытия, показываем её.
+                    _isMouseCursorHidden = false;
+                    if (!_customCursorEnabled)
+                        IsMouseVisible = true;
+                    break;
+                }
 
             case true when !wasMouseIdle:
                 // Мышь остановилась после движения, начинаем отсчёт до её скрытия.
@@ -425,13 +434,13 @@ public class Tank1460Game : Game
                 break;
 
             case true when !_isMouseCursorHidden && _mouseIdleTime > MouseIdleTimeToHide:
-            {
-                // Мышь не скрыта и стоит долго, скрываем её.
-                _isMouseCursorHidden = true;
-                if (!_customCursorEnabled)
-                    IsMouseVisible = false;
-                break;
-            }
+                {
+                    // Мышь не скрыта и стоит долго, скрываем её.
+                    _isMouseCursorHidden = true;
+                    if (!_customCursorEnabled)
+                        IsMouseVisible = false;
+                    break;
+                }
         }
 
         // Курсор не обновляет свое состояние, если он отключен или вне экрана.
@@ -561,7 +570,7 @@ public class Tank1460Game : Game
 
         var playersCountRange = new Range<int>(1, AllPlayers.Length);
 
-        _form = new MainMenu(Services, PlayersInGame.Length, playersCountRange);
+        _form = new MainMenu(Services, PlayersInGame.Length, playersCountRange, _aiEnabled);
     }
 
     private void LoadScoreScreen(bool showBonus)
@@ -635,7 +644,7 @@ public class Tank1460Game : Game
         Debug.Assert(_form is null);
 
         var levelStructure = Content.Load<LevelStructure>($"Levels/{LevelFolder}/{LevelNumber}");
-        _level = new Level(Services, levelStructure, LevelNumber, _gameState);
+        _level = new Level(Services, levelStructure, LevelNumber, _aiEnabled, _gameState);
 
         _level.LevelComplete += Level_LevelComplete;
         _level.GameOver += Level_GameOver;
@@ -669,6 +678,9 @@ public class Tank1460Game : Game
     private void LoadSettings()
     {
         var settings = _saveLoadManager.LoadSettings();
+
+        // Настройки игры.
+        _aiEnabled = settings?.Game?.AiEnabled ?? false;
 
         // Настройки управления.
         _playerInputHandler.LoadControlSettings(settings?.Controls);
@@ -714,6 +726,10 @@ public class Tank1460Game : Game
     {
         var settings = new UserSettings
         {
+            Game = new GameSettings
+            {
+                AiEnabled = _aiEnabled
+            },
             Controls = new ControlsSettings
             {
                 CustomCursor = CustomCursorEnabled,

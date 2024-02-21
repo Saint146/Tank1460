@@ -6,8 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection.Emit;
-using Tank1460.AI;
 using Tank1460.Audio;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
@@ -87,6 +85,8 @@ public class Level : IDisposable
 
     private readonly LevelEffects _levelEffects = new();
 
+    private readonly bool _aiEnabled;
+
     // В оригинале именно так: зависит лишь от режима,
     // а не от того, жив ли второй игрок. Даже если уровень стартует, когда один уже без жизней, всё равно будет шесть.
     private int MaxAliveBots() => (PlayersInGame.Length + 1) * 2;
@@ -104,8 +104,9 @@ public class Level : IDisposable
     private double _delayEffectTime;
     private LevelStatus _statusBeforePause;
 
-    public Level(GameServiceContainer serviceProvider, LevelStructure levelStructure, int levelNumber, GameState startingGameState)
+    public Level(GameServiceContainer serviceProvider, LevelStructure levelStructure, int levelNumber, bool aiEnabled, GameState startingGameState)
     {
+        _aiEnabled = aiEnabled;
         Structure = levelStructure;
         LevelNumber = levelNumber;
         PlayersInGame = startingGameState.PlayersStates.Keys.ToArray();
@@ -665,10 +666,8 @@ public class Level : IDisposable
         var playerSpawner = new PlayerSpawner(this, x, y, playerIndex);
         PlayerSpawners.Add(playerIndex, playerSpawner);
 
-#if DEBUG
-        if (playerIndex != PlayerIndex.One)
+        if (playerIndex != PlayerIndex.One && _aiEnabled)
             playerSpawner.ControlledByAi = true;
-#endif
 
         return null;
     }
