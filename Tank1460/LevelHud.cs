@@ -49,7 +49,10 @@ public class LevelHud
 
         foreach (var playerIndex in level.PlayersInGame)
         {
-            DrawPlayerLives(spriteBatch, currentLocation, PlayerNames[playerIndex], level.PlayerLivesRemaining(playerIndex));
+            var spawner = level.GetPlayerSpawner(playerIndex);
+            var lives = spawner.ControlledByAi ? " " : spawner.LivesRemaining.ToString();
+
+            DrawPlayerLives(spriteBatch, currentLocation, PlayerNames[playerIndex], lives);
             currentLocation.Y += 3 * Tile.DefaultHeight;
         }
 
@@ -74,15 +77,12 @@ public class LevelHud
             spriteBatch.Draw(_bot, currentLocation, Color.White);
     }
 
-    private void DrawPlayerLives(SpriteBatch spriteBatch, Point location, char playerName, int lives)
+    private void DrawPlayerLives(SpriteBatch spriteBatch, Point location, char playerName, string lives)
     {
-        if (--lives < 0)
-            lives = 0;
-
         _font.Draw(playerName.ToString(), spriteBatch, location with { X = location.X - 1 });
         _font.Draw("P", spriteBatch, location with { X = location.X + Tile.DefaultWidth });
         spriteBatch.Draw(_player, location with { Y = location.Y + Tile.DefaultHeight }, Color.White);
-        _font.Draw($"{lives}", spriteBatch, location with { X = location.X + Tile.DefaultWidth, Y = location.Y + Tile.DefaultHeight });
+        _font.Draw(lives, spriteBatch, location with { X = location.X + Tile.DefaultWidth, Y = location.Y + Tile.DefaultHeight });
     }
 
     private void DrawLevelIndex(SpriteBatch spriteBatch, Point location, int levelIndex)

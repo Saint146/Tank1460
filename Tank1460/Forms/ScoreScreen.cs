@@ -119,7 +119,7 @@ internal class ScoreScreen : Form
         var isSecondPlayerPresent = _gameState.PlayersStates.Count > 1;
         var isFourthPlayerPresent = _gameState.PlayersStates.Count > 3;
 
-        var redText = @$"
+        var redText = @"
         HI-SCORE
 
 
@@ -266,7 +266,7 @@ TOTAL";
 
                 var xInTiles = isBasicMode
                     ? player == PlayerIndex.One ? 3 : 21
-                    : 8 * (int)player;
+                    : 8 * (int)player + (player == PlayerIndex.Four ? 0 : 2);
                 var x = StartingPositionX + xInTiles * Tile.DefaultWidth;
 
                 _bonusLabel1 = new FormTextLabel(redFont, 6, 1)

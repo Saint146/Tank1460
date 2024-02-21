@@ -57,5 +57,5 @@ public static class PointExtensions
         );
 
     public static double DistanceTo(this Point point, Point otherPoint) =>
-        Math.Sqrt((point.X - otherPoint.X) ^ 2 + (point.Y - otherPoint.Y) ^ 2);
+        Math.Sqrt((point.X - otherPoint.X) * (point.X - otherPoint.X) + (point.Y - otherPoint.Y) * (point.Y - otherPoint.Y));
 }

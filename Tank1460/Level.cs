@@ -329,6 +329,9 @@ public class Level : IDisposable
 
     public void HandleAllBotsDestroyed()
     {
+        if (Status is LevelStatus.LostPreDelay or LevelStatus.LostDelay)
+            return;
+
         Status = LevelStatus.WinDelay;
         _delayTime = 0.0;
         _delayEffectTime = GameRules.TimeInFrames(144);

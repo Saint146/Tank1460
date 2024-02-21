@@ -13,6 +13,9 @@ public class Shell : MoveableLevelObject
 {
     public ShellStatus Status = ShellStatus.Normal;
 
+    // TODO: Это нужно для ai, чтобы он понимал, попадает он или нет. Но ширина по факту сейчас зависит просто от текстуры.
+    public const int DefaultShellWidth = 3;
+
     private IAnimation _animation;
     public readonly Tank ShotBy;
     private Explosion _explosion;

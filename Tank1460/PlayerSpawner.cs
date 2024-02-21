@@ -80,7 +80,7 @@ public class PlayerSpawner
         LivesRemaining += count;
     }
 
-    public bool CanDonateLife() => LivesRemaining > 1;
+    public bool CanDonateLife() => !ControlledByAi && LivesRemaining > 1;
 
     public void DonateLife(PlayerSpawner receiverSpawner)
     {
