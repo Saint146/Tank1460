@@ -55,4 +55,7 @@ public static class PointExtensions
             x: (int)((point.X - transformation.Translation.X) * 2 / (transformation.Right.X - transformation.Left.X)),
             y: (int)((point.Y - transformation.Translation.Y) * 2 / (transformation.Up.Y - transformation.Down.Y))
         );
+
+    public static double DistanceTo(this Point point, Point otherPoint) =>
+        Math.Sqrt((point.X - otherPoint.X) ^ 2 + (point.Y - otherPoint.Y) ^ 2);
 }

@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.Xna.Framework;
 using Tank1460.Common;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object;
@@ -35,30 +37,47 @@ internal class CommonPlayerTankAi : PlayerTankAi
         if (_skipThink)
             return newOrder;
 
+        // Когда не можем поворачиваться, думаем проще.
+        if (Tank.IsImmobile)
+        {
+            _order = ThinkWhenImmobile();
+            return _order;
+        }
+
+        // Осматриваемся по всем сторонам и оцениваем возможность выстрела, наличие опасности или врага.
         var shotPriorities = new Dictionary<ObjectDirection, ShotPriority>();
-        ObjectDirection? targetDirection = null;
+        ObjectDirection? enemyDirection = null;
+        LevelObject enemy = null;
+        double distanceToEnemy = 0;
         foreach (var direction in ObjectDirectionExtensions.AllDirections)
         {
-            var priority = CheckLine(direction);
+            var (priority, target) = CheckLine(direction);
             switch (priority)
             {
                 case ShotPriority.Danger:
                 {
-                    _order = direction.ToTankOrder() | TankOrder.Shoot;
+                    _order = ReactToDanger(target, direction);
                     return _order;
                 }
 
-                case ShotPriority.Target:
-                    targetDirection = direction;
+                case ShotPriority.Enemy:
+                    var distanceToTarget = Tank.BoundingRectangle.Center.DistanceTo(target.BoundingRectangle.Center);
+                    if (enemy is not null && distanceToEnemy < distanceToTarget)
+                        break;
+
+                    enemyDirection = direction;
+                    enemy = target;
+                    distanceToEnemy = distanceToTarget;
+
                     break;
             }
 
             shotPriorities[direction] = priority;
         }
 
-        if (targetDirection.HasValue)
+        if (enemyDirection.HasValue)
         {
-            _order = targetDirection.Value.ToTankOrder() | TankOrder.Shoot;
+            _order = ReactToEnemy(enemy, enemyDirection.Value);
             return _order;
         }
         
@@ -74,7 +93,74 @@ internal class CommonPlayerTankAi : PlayerTankAi
         return newOrder;
     }
 
-    private ShotPriority CheckLine(ObjectDirection direction)
+    /// <summary>
+    /// Принять приказ, ориентируясь на цель в указанном направлении.
+    /// </summary>
+    private TankOrder ReactToEnemy(LevelObject enemy, ObjectDirection enemyDirection)
+    {
+        // Если цель спереди или сзади, наступаем и стреляем.
+        if (!Tank.Direction.Has90DegreesDifference(enemyDirection))
+            return enemyDirection.ToTankOrder() | TankOrder.Shoot;
+
+        // Если мы к цели под 90 градусов, то поворачиваемся, только если мы достаточно близко к клетке, которая действительно пересекается с целью.
+        // Иначе из-за округления при повороте (см. Tank.TurnTo) окажемся не там и начнём дергаться.
+        var positionAfterTurn = CalcPositionAfter90Turn();
+        if (IsTargetShootableFromPosition(positionAfterTurn, enemy))
+            return enemyDirection.ToTankOrder() | TankOrder.Shoot;
+
+        // TODO: Ехать в направлении врага
+        return Tank.Direction.ToTankOrder();
+    }
+
+    /// <summary>
+    /// Принять приказ, ориентируясь на опасность в указанном направлении.
+    /// </summary>
+    private TankOrder ReactToDanger(LevelObject danger, ObjectDirection dangerDirection)
+    {
+        // Если опасность спереди или сзади, поворачиваемся, но стараемся не ехать, и стреляем.
+        // TODO: На самом деле тут бы учесть, есть ли снаряды и какое расстояние до опасности, чтобы успеть её перебить.
+        if (!Tank.Direction.Has90DegreesDifference(dangerDirection))
+        {
+            if (dangerDirection == Tank.Direction)
+                return TankOrder.Shoot;
+
+            return dangerDirection.ToTankOrder() | TankOrder.Shoot;
+        }
+
+        // Если мы к цели под 90 градусов, то поворачиваемся, только если мы достаточно близко к клетке, которая действительно пересекается с целью.
+        // Иначе из-за округления при повороте (см. Tank.TurnTo) окажемся не там и начнём дергаться.
+        var positionAfterTurn = CalcPositionAfter90Turn();
+        if (IsTargetShootableFromPosition(positionAfterTurn, danger))
+            return dangerDirection.ToTankOrder() | TankOrder.Shoot;
+
+        // TODO: Уворачиваться, т.е. ехать в обратном направлении, если оно доступно.
+        return Tank.Direction.ToTankOrder();
+    }
+
+    private bool IsTargetShootableFromPosition(Point position, LevelObject enemy)
+    {
+        return (position.Y < enemy.Position.Y + enemy.BoundingRectangle.Height &&
+                position.Y + Tank.BoundingRectangle.Height > enemy.Position.Y)
+
+               || (position.X < enemy.Position.X + enemy.BoundingRectangle.Width &&
+                   position.X + Tank.BoundingRectangle.Width > enemy.Position.X);
+    }
+
+    private TankOrder ThinkWhenImmobile()
+    {
+        var (priority, _) = CheckLine(Tank.Direction);
+
+        // Можем только стрелять или не стрелять.
+        return priority switch
+        {
+            ShotPriority.Danger => TankOrder.Shoot,
+            ShotPriority.Enemy => TankOrder.Shoot,
+            ShotPriority.Forbidden => TankOrder.None,
+            _ => Rng.OneIn(16) ? TankOrder.Shoot : TankOrder.None
+        };
+    }
+
+    private (ShotPriority Priority, LevelObject Target) CheckLine(ObjectDirection direction)
     {
         // Получаем прямоугольник перед танком и продвигаемся в том же направлении, пока не найдём что-то интересное или конец карты.
         var testTileRect = PlayerTank.TileRectangle.NearestTiles(direction);
@@ -84,75 +170,65 @@ internal class CommonPlayerTankAi : PlayerTankAi
         {
             var levelObjects = _level.GetLevelObjectsInTiles(testTileRect);
 
-            var foundPreferredTarget = false;
-            var foundDanger = false;
+            LevelObject enemy = null;
+            LevelObject danger = null;
             var foundSomeDestructibles = false;
-            foreach (var targetKind in levelObjects.Select(CheckTarget))
+            foreach (var levelObject in levelObjects)
             {
-                switch (targetKind)
+                // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+                switch (levelObject)
                 {
-                    case ShotTarget.Indestructible:
-                    case ShotTarget.ForbiddenForClearing:
-                    case ShotTarget.ForbiddenForShooting when !foundSomeDestructibles:
-                        return ShotPriority.Forbidden;
+                    case ConcreteTile:
+                        if (!PlayerTank.ShellProperties.HasFlag(ShellProperties.ArmorPiercing))
+                            return (ShotPriority.Forbidden, null);
 
-                    case ShotTarget.Destructible:
                         foundSomeDestructibles = true;
                         break;
 
-                    case ShotTarget.Preferred:
-                        foundPreferredTarget = true;
+                    case BrickTile:
+                        foundSomeDestructibles = true;
                         break;
 
-                    case ShotTarget.Danger:
-                        foundDanger = true;
+                    case Falcon:
+                    case LevelObjects.Tanks.PlayerTank when !foundSomeDestructibles:
+                        return (ShotPriority.Forbidden, null);
+
+                    case BotTank:
+                        enemy = levelObject;
+                        break;
+
+                    case Shell { ShotBy: BotTank }:
+                        danger = levelObject;
                         break;
                 }
             }
 
-            if (foundDanger)
-                return ShotPriority.Danger;
+            if (danger is not null)
+                return (ShotPriority.Danger, danger);
 
-            if (foundPreferredTarget)
-                return ShotPriority.Target;
+            if (enemy is not null)
+                return (ShotPriority.Enemy, enemy);
 
             // Продолжаем смотреть дальше.
             testTileRect.Location += step;
         }
 
-        return ShotPriority.None;
-    }
-
-    private ShotTarget CheckTarget(LevelObject levelObject) =>
-        levelObject switch
-        {
-            BrickTile => ShotTarget.Destructible,
-            Falcon => ShotTarget.ForbiddenForClearing,
-            LevelObjects.Tanks.PlayerTank => ShotTarget.ForbiddenForShooting,
-            ConcreteTile => PlayerTank.ShellProperties.HasFlag(ShellProperties.ArmorPiercing) ? ShotTarget.Destructible : ShotTarget.Indestructible,
-            BotTank => ShotTarget.Preferred,
-            Shell { ShotBy: BotTank } => ShotTarget.Danger,
-            _ => ShotTarget.None
-        };
-
-    private enum ShotTarget
-    {
-        None,
-        Destructible,
-        Indestructible,
-        ForbiddenForShooting,
-        ForbiddenForClearing,
-        Preferred,
-        Danger
+        return (ShotPriority.None, null);
     }
 
     private enum ShotPriority
     {
         None,
         Forbidden,
-        Target,
+        Enemy,
         Danger
     }
+
+    /// <summary>
+    /// Посчитать, где окажется танк при повороте на 90 градусов (см. <see cref="Tank.TurnTo"/>)
+    /// </summary>
+    private Point CalcPositionAfter90Turn() => new((int)Math.Round((double)Tank.Position.X / Tile.DefaultWidth) * Tile.DefaultWidth,
+                                                   (int)Math.Round((double)Tank.Position.Y / Tile.DefaultHeight) * Tile.DefaultHeight);
 
     private ObjectDirection? CheckTileReach()
     {
