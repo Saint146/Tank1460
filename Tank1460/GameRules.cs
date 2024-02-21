@@ -14,14 +14,14 @@ internal static class GameRules
 
     public static readonly Dictionary<TankType, int> TankScoreByType = new()
     {
-        { TankType.Type0, 500 },
-        { TankType.Type1, 500 },
-        { TankType.Type2, 500 },
-        { TankType.Type3, 500 },
-        { TankType.Type4, 100 },
-        { TankType.Type5, 200 },
-        { TankType.Type6, 300 },
-        { TankType.Type7, 400 }
+        { TankType.TypeP0, 500 },
+        { TankType.TypeP1, 500 },
+        { TankType.TypeP2, 500 },
+        { TankType.TypeP3, 500 },
+        { TankType.TypeB0, 100 },
+        { TankType.TypeB1, 200 },
+        { TankType.TypeB2, 300 },
+        { TankType.TypeB3, 400 }
     };
 
     private const int Fps = 60;

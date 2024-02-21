@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 using System.Collections.Generic;
@@ -22,7 +23,9 @@ public class PlayerTank : Tank
     private static readonly Dictionary<PlayerIndex, TankColor> PlayerNumberToColorMap = new()
     {
         { PlayerIndex.One, TankColor.Yellow },
-        { PlayerIndex.Two, TankColor.Green }
+        { PlayerIndex.Two, TankColor.Green },
+        { PlayerIndex.Three, TankColor.Blue },
+        { PlayerIndex.Four, TankColor.Blue | TankColor.Red}
     };
 
     private PlayerInput _playerInput;
@@ -46,23 +49,34 @@ public class PlayerTank : Tank
 
     public void UpgradeUp()
     {
-        if (Type == TankType.Type3)
+        if (Type == TankType.TypeP4)
             return;
 
-        SetType((TankType)(((int)Type + 1) % 4));
+        var newType = (int)Type + 1;
+        if (!Enum.IsDefined(typeof(TankType), newType))
+            newType = (int)TankType.TypeP4;
+
+        SetType((TankType)newType);
     }
 
     public void UpgradeDown()
     {
-        if (Type == TankType.Type0)
+        if (Type == TankType.TypeP0)
             return;
 
-        SetType((TankType)(((int)Type + 3) % 4));
+        var newType = (int)Type - 1;
+        if (!Enum.IsDefined(typeof(TankType), newType))
+            newType = (int)TankType.TypeP0;
+
+        SetType((TankType)newType);
     }
 
-    public void UpgradeMax()
+    public void UpgradeToPistol()
     {
-        SetType(TankType.Type3);
+        if (Type >= TankType.TypeP3)
+            return;
+
+        SetType(TankType.TypeP3);
     }
 
     public void HandleInput(PlayerInput playerInput)
@@ -82,10 +96,10 @@ public class PlayerTank : Tank
         if (GodMode) return;
 #endif
 
-        if (Type == TankType.Type3 && !Level.ClassicRules)
+        if (Type >= TankType.TypeP3 && !Level.ClassicRules)
         {
             Level.SoundPlayer.Play(Sound.HitHurt);
-            SetType(TankType.Type2);
+            SetType(TankType.TypeP2);
             return;
         }
 

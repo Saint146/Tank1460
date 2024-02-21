@@ -231,7 +231,7 @@ public abstract class Tank : MoveableLevelObject
                                                          ObjectDirection direction)
     {
         // Загружаем обычные текстуры в любом случае.
-        var plainTexture = content.LoadRecoloredTexture($"Sprites/Tank/Type{(int)type}/{direction}",
+        var plainTexture = content.LoadRecoloredTexture($"Sprites/Tank/{type}/{direction}",
                                                         $"Sprites/_R/Tank/{color}");
 
         // В случае мигания подгружаем вторые нужные текстуры и подключаем "двумерную" анимацию.
@@ -242,7 +242,7 @@ public abstract class Tank : MoveableLevelObject
                 return new Animation(plainTexture, true);
 
             case TankFlashingType.Bonus:
-                bonusTexture = content.LoadRecoloredTexture($"Sprites/Tank/Type{(int)type}/{direction}",
+                bonusTexture = content.LoadRecoloredTexture($"Sprites/Tank/{type}/{direction}",
                                                             $"Sprites/_R/Tank/Red");
                 break;
 

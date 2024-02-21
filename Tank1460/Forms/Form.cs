@@ -19,11 +19,11 @@ internal abstract class Form
 
     protected IReadOnlyDictionary<int, FormItem> Items => _items;
 
-    private readonly Dictionary<int, FormItem> _items = new();
-
     protected readonly ContentManagerEx Content;
     protected readonly ISoundPlayer SoundPlayer;
 
+
+    private readonly Dictionary<int, FormItem> _items = new();
     private bool _wasMouseDown;
 
     /// <summary>

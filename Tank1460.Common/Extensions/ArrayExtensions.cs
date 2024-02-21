@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Tank1460.Common.Extensions;
 
@@ -14,7 +15,30 @@ public static class ArrayExtensions
         return array[x, y];
     }
 
+    /// <summary>
+    /// Вернуть случайный элемент из массива.
+    /// </summary>
     public static T GetRandom<T>(this T[] array) => array[Rng.Next(array.Length)];
+
+    /// <summary>
+    /// Вернуть <paramref name="maxCount" /> неповторяющихся случайных элемента из массива.
+    /// </summary>
+    /// <remarks>
+    /// Если <paramref name="maxCount"/> ≥ длины массива, вернутся все элементы в случайном порядке.
+    /// </remarks>
+    public static IEnumerable<T> GetRandoms<T>(this T[] array, int maxCount)
+    {
+        if (maxCount > array.Length)
+            maxCount = array.Length;
+
+        var result = new T[maxCount];
+        for (var i = 0; i < maxCount; i++)
+        {
+            result[i] = array.Except(result).ToArray().GetRandom();
+        }
+
+        return result;
+    }
 
     /// <summary>
     /// Дополнить все строки указанными символами до длины максимальной из них.

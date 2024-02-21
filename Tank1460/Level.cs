@@ -202,7 +202,7 @@ public class Level : IDisposable
 
         if (KeyboardEx.IsPressed(Keys.LeftAlt))
         {
-            foreach (var digit in Enumerable.Range(1, 2))
+            foreach (var digit in Enumerable.Range(1, 4))
             {
                 var key = Keys.NumPad0 + digit;
                 if (!KeyboardEx.HasBeenPressed(key))
@@ -510,8 +510,8 @@ public class Level : IDisposable
 
         _tileObjectMap = new List<LevelObject>[width, height];
         for (var y = 0; y < height; y++)
-            for (var x = 0; x < width; x++)
-                _tileObjectMap[x, y] = new List<LevelObject>();
+        for (var x = 0; x < width; x++)
+            _tileObjectMap[x, y] = new List<LevelObject>();
 
         for (var y = 0; y < height; y++)
         {
@@ -528,10 +528,15 @@ public class Level : IDisposable
         TileBounds = new Rectangle(0, 0, width, height);
         Bounds = TileBounds.Multiply(new Point(Tile.DefaultWidth, Tile.DefaultHeight));
 
-        // TODO: Почему-то срабатывает когда не должно.
-        //var playersWithoutSpawners = PlayersInGame.Where(playerIndex => !PlayerSpawners.ContainsKey(playerIndex)).ToList();
-        //if (PlayerSpawners.Count != 0)
-        //    throw new NotSupportedException($"No player spawner for {string.Join(", ", playersWithoutSpawners)} found in the level.");
+        var playersWithoutSpawners = PlayersInGame.Where(playerIndex => !PlayerSpawners.ContainsKey(playerIndex)).ToList();
+
+        // TODO: Временный хардкод для игры вчетвером.
+        if (playersWithoutSpawners.Contains(PlayerIndex.One) || playersWithoutSpawners.Contains(PlayerIndex.Two))
+            throw new NotSupportedException($"No player spawner for {string.Join(", ", playersWithoutSpawners)} found in the level.");
+        if (playersWithoutSpawners.Contains(PlayerIndex.Three))
+            CreatePlayerSpawn(5, 24, PlayerIndex.Three);
+        if (playersWithoutSpawners.Contains(PlayerIndex.Four))
+            CreatePlayerSpawn(19, 24, PlayerIndex.Four);
 
         if (Falcons.Count == 0)
             throw new NotSupportedException("A level must have at least one falcon.");
@@ -610,6 +615,10 @@ public class Level : IDisposable
             TileType.Player1Spawn => CreatePlayerSpawn(x, y, PlayerIndex.One),
 
             TileType.Player2Spawn => CreatePlayerSpawn(x, y, PlayerIndex.Two),
+
+            TileType.Player3Spawn => CreatePlayerSpawn(x, y, PlayerIndex.Three),
+
+            TileType.Player4Spawn => CreatePlayerSpawn(x, y, PlayerIndex.Four),
 
             TileType.BotSpawn => CreateBotSpawn(x, y),
 

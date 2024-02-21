@@ -51,7 +51,7 @@ public class Bonus : LevelObject
                 break;
 
             case BonusType.Pistol:
-                playerTank.UpgradeMax();
+                playerTank.UpgradeToPistol();
                 break;
 
             case BonusType.Star:
@@ -115,8 +115,10 @@ public class Bonus : LevelObject
                     }
                 }
                 break;
+
             case BonusType.Grenade:
-                Level.GetAllPlayerTanks().ForEach(playerTank => playerTank.Explode(botTank));
+                // Взрываем два случайных танка игроков.
+                Level.GetAllPlayerTanks().ToArray().GetRandoms(2).ForEach(playerTank => playerTank.Explode(botTank));
                 break;
 
             case BonusType.Pistol:

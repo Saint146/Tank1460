@@ -628,6 +628,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/_R/Pattern/Flashing/3.png
 
+#begin Sprites/_R/Tank/Blue.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/_R/Tank/Blue.png
+
 #begin Sprites/_R/Tank/Gray.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -1060,7 +1072,7 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Shell/Up.png
 
-#begin Sprites/Tank/Type0/Down.png
+#begin Sprites/Tank/TypeB0/Down.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1070,9 +1082,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type0/Down.png
+/build:Sprites/Tank/TypeB0/Down.png
 
-#begin Sprites/Tank/Type0/Left.png
+#begin Sprites/Tank/TypeB0/Left.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1082,9 +1094,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type0/Left.png
+/build:Sprites/Tank/TypeB0/Left.png
 
-#begin Sprites/Tank/Type0/Right.png
+#begin Sprites/Tank/TypeB0/Right.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1094,9 +1106,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type0/Right.png
+/build:Sprites/Tank/TypeB0/Right.png
 
-#begin Sprites/Tank/Type0/Up.png
+#begin Sprites/Tank/TypeB0/Up.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1106,9 +1118,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type0/Up.png
+/build:Sprites/Tank/TypeB0/Up.png
 
-#begin Sprites/Tank/Type1/Down.png
+#begin Sprites/Tank/TypeB1/Down.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1118,9 +1130,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type1/Down.png
+/build:Sprites/Tank/TypeB1/Down.png
 
-#begin Sprites/Tank/Type1/Left.png
+#begin Sprites/Tank/TypeB1/Left.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1130,9 +1142,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type1/Left.png
+/build:Sprites/Tank/TypeB1/Left.png
 
-#begin Sprites/Tank/Type1/Right.png
+#begin Sprites/Tank/TypeB1/Right.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1142,9 +1154,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type1/Right.png
+/build:Sprites/Tank/TypeB1/Right.png
 
-#begin Sprites/Tank/Type1/Up.png
+#begin Sprites/Tank/TypeB1/Up.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1154,9 +1166,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type1/Up.png
+/build:Sprites/Tank/TypeB1/Up.png
 
-#begin Sprites/Tank/Type2/Down.png
+#begin Sprites/Tank/TypeB2/Down.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1166,9 +1178,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type2/Down.png
+/build:Sprites/Tank/TypeB2/Down.png
 
-#begin Sprites/Tank/Type2/Left.png
+#begin Sprites/Tank/TypeB2/Left.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1178,9 +1190,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type2/Left.png
+/build:Sprites/Tank/TypeB2/Left.png
 
-#begin Sprites/Tank/Type2/Right.png
+#begin Sprites/Tank/TypeB2/Right.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1190,9 +1202,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type2/Right.png
+/build:Sprites/Tank/TypeB2/Right.png
 
-#begin Sprites/Tank/Type2/Up.png
+#begin Sprites/Tank/TypeB2/Up.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1202,9 +1214,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type2/Up.png
+/build:Sprites/Tank/TypeB2/Up.png
 
-#begin Sprites/Tank/Type3/Down.png
+#begin Sprites/Tank/TypeB3/Down.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1214,9 +1226,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type3/Down.png
+/build:Sprites/Tank/TypeB3/Down.png
 
-#begin Sprites/Tank/Type3/Left.png
+#begin Sprites/Tank/TypeB3/Left.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1226,9 +1238,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type3/Left.png
+/build:Sprites/Tank/TypeB3/Left.png
 
-#begin Sprites/Tank/Type3/Right.png
+#begin Sprites/Tank/TypeB3/Right.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1238,9 +1250,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type3/Right.png
+/build:Sprites/Tank/TypeB3/Right.png
 
-#begin Sprites/Tank/Type3/Up.png
+#begin Sprites/Tank/TypeB3/Up.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1250,9 +1262,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type3/Up.png
+/build:Sprites/Tank/TypeB3/Up.png
 
-#begin Sprites/Tank/Type4/Down.png
+#begin Sprites/Tank/TypeP0/Down.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1262,9 +1274,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type4/Down.png
+/build:Sprites/Tank/TypeP0/Down.png
 
-#begin Sprites/Tank/Type4/Left.png
+#begin Sprites/Tank/TypeP0/Left.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1274,9 +1286,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type4/Left.png
+/build:Sprites/Tank/TypeP0/Left.png
 
-#begin Sprites/Tank/Type4/Right.png
+#begin Sprites/Tank/TypeP0/Right.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1286,9 +1298,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type4/Right.png
+/build:Sprites/Tank/TypeP0/Right.png
 
-#begin Sprites/Tank/Type4/Up.png
+#begin Sprites/Tank/TypeP0/Up.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1298,9 +1310,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type4/Up.png
+/build:Sprites/Tank/TypeP0/Up.png
 
-#begin Sprites/Tank/Type5/Down.png
+#begin Sprites/Tank/TypeP1/Down.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1310,9 +1322,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type5/Down.png
+/build:Sprites/Tank/TypeP1/Down.png
 
-#begin Sprites/Tank/Type5/Left.png
+#begin Sprites/Tank/TypeP1/Left.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1322,9 +1334,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type5/Left.png
+/build:Sprites/Tank/TypeP1/Left.png
 
-#begin Sprites/Tank/Type5/Right.png
+#begin Sprites/Tank/TypeP1/Right.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1334,9 +1346,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type5/Right.png
+/build:Sprites/Tank/TypeP1/Right.png
 
-#begin Sprites/Tank/Type5/Up.png
+#begin Sprites/Tank/TypeP1/Up.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1346,9 +1358,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type5/Up.png
+/build:Sprites/Tank/TypeP1/Up.png
 
-#begin Sprites/Tank/Type6/Down.png
+#begin Sprites/Tank/TypeP2/Down.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1358,9 +1370,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type6/Down.png
+/build:Sprites/Tank/TypeP2/Down.png
 
-#begin Sprites/Tank/Type6/Left.png
+#begin Sprites/Tank/TypeP2/Left.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1370,9 +1382,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type6/Left.png
+/build:Sprites/Tank/TypeP2/Left.png
 
-#begin Sprites/Tank/Type6/Right.png
+#begin Sprites/Tank/TypeP2/Right.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1382,9 +1394,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type6/Right.png
+/build:Sprites/Tank/TypeP2/Right.png
 
-#begin Sprites/Tank/Type6/Up.png
+#begin Sprites/Tank/TypeP2/Up.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1394,9 +1406,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type6/Up.png
+/build:Sprites/Tank/TypeP2/Up.png
 
-#begin Sprites/Tank/Type7/Down.png
+#begin Sprites/Tank/TypeP3/Down.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1406,9 +1418,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type7/Down.png
+/build:Sprites/Tank/TypeP3/Down.png
 
-#begin Sprites/Tank/Type7/Left.png
+#begin Sprites/Tank/TypeP3/Left.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1418,9 +1430,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type7/Left.png
+/build:Sprites/Tank/TypeP3/Left.png
 
-#begin Sprites/Tank/Type7/Right.png
+#begin Sprites/Tank/TypeP3/Right.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1430,9 +1442,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type7/Right.png
+/build:Sprites/Tank/TypeP3/Right.png
 
-#begin Sprites/Tank/Type7/Up.png
+#begin Sprites/Tank/TypeP3/Up.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1442,7 +1454,55 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Tank/Type7/Up.png
+/build:Sprites/Tank/TypeP3/Up.png
+
+#begin Sprites/Tank/TypeP4/Down.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Tank/TypeP4/Down.png
+
+#begin Sprites/Tank/TypeP4/Left.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Tank/TypeP4/Left.png
+
+#begin Sprites/Tank/TypeP4/Right.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Tank/TypeP4/Right.png
+
+#begin Sprites/Tank/TypeP4/Up.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Tank/TypeP4/Up.png
 
 #begin Sprites/Tiles/Brick.png
 /importer:TextureImporter

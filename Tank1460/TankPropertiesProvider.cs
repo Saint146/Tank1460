@@ -10,13 +10,15 @@ public static class TankPropertiesProvider
 
     private static readonly Dictionary<TankType, TankProperties> TankTypePropertiesMap = new()
     {
-        { TankType.Type0, new TankProperties(0.75, 1, ShellSpeed.Normal, ShellProperties.Normal) },
-        { TankType.Type1, new TankProperties(0.75, 1, ShellSpeed.Fast, ShellProperties.Normal) },
-        { TankType.Type2, new TankProperties(0.75, 2, ShellSpeed.Fast, ShellProperties.Normal) },
-        { TankType.Type3, new TankProperties(0.75, 2, ShellSpeed.Fast, ShellProperties.ArmorPiercing | ShellProperties.Pruning) },
-        { TankType.Type4, new TankProperties(0.50, 1, ShellSpeed.Normal, ShellProperties.Normal) },
-        { TankType.Type5, new TankProperties(1.00, 1, ShellSpeed.Normal, ShellProperties.Normal) },
-        { TankType.Type6, new TankProperties(0.50, 1, ShellSpeed.Fast, ShellProperties.Normal) },
-        { TankType.Type7, new TankProperties(0.50, 1, ShellSpeed.Normal, ShellProperties.Normal) }
+        { TankType.TypeP0, new TankProperties(0.75, 1, ShellSpeed.Normal, ShellProperties.Normal) },
+        { TankType.TypeP1, new TankProperties(0.75, 1, ShellSpeed.Fast, ShellProperties.Normal) },
+        { TankType.TypeP2, new TankProperties(0.75, 2, ShellSpeed.Fast, ShellProperties.Normal) },
+        { TankType.TypeP3, new TankProperties(0.75, 2, ShellSpeed.Fast, ShellProperties.ArmorPiercing) },
+        { TankType.TypeP4, new TankProperties(0.75, 2, ShellSpeed.Fast, ShellProperties.ArmorPiercing | ShellProperties.Pruning) },
+
+        { TankType.TypeB0, new TankProperties(0.50, 1, ShellSpeed.Normal, ShellProperties.Normal) },
+        { TankType.TypeB1, new TankProperties(1.00, 1, ShellSpeed.Normal, ShellProperties.Normal) },
+        { TankType.TypeB2, new TankProperties(0.50, 1, ShellSpeed.Fast, ShellProperties.Normal) },
+        { TankType.TypeB3, new TankProperties(0.50, 1, ShellSpeed.Normal, ShellProperties.Normal) }
     };
 }

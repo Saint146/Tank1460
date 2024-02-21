@@ -111,7 +111,7 @@ public class PlayerSpawner
         if (Tank is not null)
             return;
 
-        var type = _nextSpawnType ?? (_level.ClassicRules ? TankType.Type0 : TankType.Type1);
+        var type = _nextSpawnType ?? (_level.ClassicRules ? TankType.TypeP0 : TankType.TypeP1);
         _nextSpawnType = null;
 
         Tank = new PlayerTank(_level, PlayerIndex, type);

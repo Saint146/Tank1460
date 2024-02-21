@@ -43,7 +43,7 @@ internal static class InputDefaults
                 }
             },
 
-            PlayerIndex.Two => new()
+            PlayerIndex.Three => new()
             {
                 Bindings = new[]
                 {
@@ -63,6 +63,10 @@ internal static class InputDefaults
                         { Command = PlayerInputCommands.Start, Keys = new[] { Keys.Enter } }
                 }
             },
-            _ => throw new ArgumentOutOfRangeException(nameof(playerIndex), playerIndex, null)
+
+            _ => new()
+            {
+                Bindings = Array.Empty<KeyboardBinding>()
+            }
         };
 }

@@ -1,7 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using MonoGame.Extended;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Globals;
@@ -15,24 +17,31 @@ internal class MainMenu : Form
 {
     public int PlayerCount { get; private set; }
 
+    private readonly Range<int> _playerCountRange;
+
     private const string TitleText = "TANK\n1460";
     private const string MenuItem1PlayerText = "1 PLAYER";
-    private const string MenuItem2PlayersText = "2 PLAYERS";
+    private const string MenuItemMultiPlayersText = "{0} PLAYERS";
+
     private const int MenuItemsX = 11 * Tile.DefaultWidth;
     private const int MenuItem1Y = 15 * Tile.DefaultHeight;
-    private const int MenuItem2Y = 17 * Tile.DefaultHeight;
-    private static readonly Point MenuItem1StartingPosition = new(MenuItemsX, MenuItem1Y);
-    private static readonly Point MenuItem2StartingPosition = new(MenuItemsX, MenuItem2Y);
+    private const int MenuItemsYStep = 2 * Tile.DefaultHeight;
 
-    private FormButton _player1Button;
-    private FormButton _player2Button;
+    private readonly Dictionary<int, FormButton> _playerButtons = new();
+
     private FormButton _cursor;
-
     private TankType _cursorTankType;
     private TankColor _cursorTankColor;
+    private static readonly TankType[] AllPossibleCursorTankTypes = Enum.GetValues<TankType>().ToArray();
+    private static readonly TankColor[] AllPossibleCursorTankColors = Enum.GetValues<TankColor>()
+                                                                    .Where(color => color != TankColor.Red)
+                                                                    .Concat(EnumExtensions.GetCombinedFlagValues<TankColor>(2))
+                                                                    .ToArray();
 
-    public MainMenu(GameServiceContainer serviceProvider, int playerCount) : base(serviceProvider)
+
+    public MainMenu(GameServiceContainer serviceProvider, int playerCount, Range<int> playerCountRange) : base(serviceProvider)
     {
+        _playerCountRange = playerCountRange;
         PlayerCount = playerCount;
 
         CreateMenuItems();
@@ -48,9 +57,9 @@ internal class MainMenu : Form
             return;
         }
 
-        if (item != _player1Button && item != _player2Button) return;
+        if (item is not FormButton button || !_playerButtons.ContainsValue(button)) return;
 
-        PlayerCount = item == _player1Button ? 1 : 2;
+        PlayerCount = _playerButtons.Keys.Single(i => _playerButtons[i] == button);
         Exit();
     }
 
@@ -60,8 +69,12 @@ internal class MainMenu : Form
         switch (input)
         {
             case PlayerInputCommands.Up:
+                PlayerCount = _playerCountRange.PrevLooping(PlayerCount);
+                UpdateCursorPosition();
+                break;
+
             case PlayerInputCommands.Down:
-                PlayerCount = 3 - PlayerCount;
+                PlayerCount = _playerCountRange.NextLooping(PlayerCount);
                 UpdateCursorPosition();
                 break;
 
@@ -76,6 +89,8 @@ internal class MainMenu : Form
 
     private void CreateTitle()
     {
+        var topButton = _playerButtons.First().Value;
+
         var titleFont = Content.LoadOrCreateCustomFont("TitleFont", () =>
         {
             var commonFont = Content.LoadFont(@"Sprites/Font/Pixel8");
@@ -84,23 +99,26 @@ internal class MainMenu : Form
         });
 
         var title = CreateTextImage(TitleText, titleFont);
-        AddItem(title);
-        title.Position = new Point(x: _player1Button.Position.X + _player1Button.Bounds.Width / 2 - title.Bounds.Width / 2,
-                                   y: _player1Button.Position.Y - Tile.DefaultHeight * 2 - title.Bounds.Height);
+        AddItem(title, new Point(x: topButton.Position.X + topButton.Bounds.Width / 2 - title.Bounds.Width / 2,
+                                 y: topButton.Position.Y - Tile.DefaultHeight * 2 - title.Bounds.Height));
     }
 
     private void CreateMenuItems()
     {
-        _player1Button = CreateTextButton(MenuItem1PlayerText, GameColors.White, GameColors.Curtain);
-        _player2Button = CreateTextButton(MenuItem2PlayersText, GameColors.White, GameColors.Curtain);
+        var first = _playerCountRange.Min;
+        foreach (var i in _playerCountRange)
+        {
+            var text = i == 1 ? MenuItem1PlayerText : string.Format(MenuItemMultiPlayersText, i);
 
-        AddItem(_player1Button, MenuItem1StartingPosition);
-        AddItem(_player2Button, MenuItem2StartingPosition);
+            var button = _playerButtons[i] = CreateTextButton(text, GameColors.White, GameColors.Curtain);
+
+            AddItem(button, new Point(MenuItemsX, MenuItem1Y + (i - first) * MenuItemsYStep));
+        }
     }
 
     private void CreateCursor()
     {
-        _cursorTankType = TankType.Type0;
+        _cursorTankType = TankType.TypeP0;
         _cursorTankColor = TankColor.Yellow;
         _cursor = new FormButton(
             normalTexture: Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"),
@@ -114,8 +132,10 @@ internal class MainMenu : Form
 
     private void UpdateCursorPosition()
     {
+        var activeButton = _playerButtons[PlayerCount];
+
         var x = MenuItemsX - Tile.DefaultWidth - _cursor.Bounds.Width;
-        var y = (PlayerCount == 1 ? _player1Button.Bounds : _player2Button.Bounds).Center.Y - _cursor.Bounds.Height / 2f - 1;
+        var y = activeButton.Bounds.Center.Y - _cursor.Bounds.Height / 2f - 1;
         _cursor.Position = new(x, (int)y);
     }
 
@@ -124,21 +144,14 @@ internal class MainMenu : Form
     /// </summary>
     private void ChangeCursor()
     {
-        TankType newType;
-        do
-            newType = Enum.GetValues<TankType>().GetRandom();
-        while (newType == _cursorTankType);
+        _cursorTankType = AllPossibleCursorTankTypes.Where(type => type != _cursorTankType).ToArray().GetRandom();
+        _cursorTankColor = AllPossibleCursorTankColors.Where(color => color != _cursorTankColor).ToArray().GetRandom();
 
-        TankColor newColor;
-        do
-            newColor = Enum.GetValues<TankColor>().Concat(EnumExtensions.GetCombinedFlagValues<TankColor>(2)).ToArray().GetRandom();
-        while (newColor == _cursorTankColor);
-
-        _cursorTankType = newType;
-        _cursorTankColor = newColor;
-
-        _cursor.ChangeTexture(FormItemVisualStatus.Normal, Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"));
-        _cursor.ChangeTexture(FormItemVisualStatus.Hover, Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"));
-        _cursor.ChangeTexture(FormItemVisualStatus.Pressed, Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", @"Sprites/_R/Tank/Red"));
+        _cursor.ChangeTexture(FormItemVisualStatus.Normal,
+                              Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"));
+        _cursor.ChangeTexture(FormItemVisualStatus.Hover,
+                              Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"));
+        _cursor.ChangeTexture(FormItemVisualStatus.Pressed,
+                              Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", @"Sprites/_R/Tank/Red"));
     }
 }

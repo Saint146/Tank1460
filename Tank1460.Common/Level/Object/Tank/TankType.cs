@@ -2,12 +2,15 @@
 
 public enum TankType
 {
-    Type0,
-    Type1,
-    Type2,
-    Type3,
-    Type4,
-    Type5,
-    Type6,
-    Type7
+    TypeP0,
+    TypeP1,
+    TypeP2,
+    TypeP3,
+    TypeP4,
+
+
+    TypeB0,
+    TypeB1,
+    TypeB2,
+    TypeB3
 }

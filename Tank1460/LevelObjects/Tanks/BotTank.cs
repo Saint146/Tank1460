@@ -58,8 +58,8 @@ public class BotTank : Tank
     {
         // TODO: Тут два раза обновляются текстуры
         SetHp(4);
-        SetType(TankType.Type3);
-        var defaultBotSpeed = TankPropertiesProvider.Get(TankType.Type4).TankSpeed;
+        SetType(TankType.TypeP3);
+        var defaultBotSpeed = TankPropertiesProvider.Get(TankType.TypeB0).TankSpeed;
         SetMovingSpeed(defaultBotSpeed);
     }
 

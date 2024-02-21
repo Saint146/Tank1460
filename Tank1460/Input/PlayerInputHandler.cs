@@ -95,9 +95,9 @@ internal class PlayerInputHandler
     {
         // Считываем настройки клавиатуры.
         _keyboardControlsByPlayer = (userSettings?.PlayerControls).EmptyIfNull()
-                                                                 .Where(controls => controls.Keyboard is not null)
-                                                                 .DistinctBy(controls => controls.PlayerIndex)
-                                                                 .ToDictionary(controls => controls.PlayerIndex, controls => controls.Keyboard);
+                                                                  .Where(controls => controls.Keyboard is not null)
+                                                                  .DistinctBy(controls => controls.PlayerIndex)
+                                                                  .ToDictionary(controls => controls.PlayerIndex, controls => controls.Keyboard);
 
         // Если игрок остался без настроек, а у нас для него есть дефолтные, прописываем их ему.
         foreach (var playerIndex in _allPlayers.Where(player => !_keyboardControlsByPlayer.ContainsKey(player)))
@@ -115,6 +115,7 @@ internal class PlayerInputHandler
                                                     .ToDictionary(x => x.Value.Identifier, x => x.Key);
 
         // Приписываем геймпады игрокам в соответствии с настройками.
+        // TODO: По факту сейчас настройки не сохраняются, поэтому тут ничего не происходит, см. тудушку ниже.
         foreach (var controls in (userSettings?.PlayerControls).EmptyIfNull())
         {
             if (!Enum.IsDefined(controls.PlayerIndex))
@@ -132,11 +133,21 @@ internal class PlayerInputHandler
         }
 
         // Приписываем игрокам, оставшимся без геймпадов, те, что могли остаться.
-        foreach (var playerIndex in _allPlayers.Where(player => !_gamePadIndicesAssignedToPlayers.ContainsValue(player)))
+        // Раздавать начинаем с тех, у кого есть пустые бинды на клавиатуре.
+        var playersWithoutKeyboardBindings = _allPlayers.Where(player => Enum.GetValues<PlayerInputCommands>()
+                                                                             .Where(value => value != PlayerInputCommands.None)
+                                                                             .Any(command => _keyboardControlsByPlayer[player].Bindings
+                                                                                      .All(binding => binding.Command != command)));
+
+        // А уже потом раздаём те, что остались, тем, у кого просто нет приписанных геймпадов.
+        var playersWithoutAssignedGamepads = _allPlayers.Where(player => !_gamePadIndicesAssignedToPlayers.ContainsValue(player));
+
+        var playersToAssignFreeGamepadsTo = playersWithoutKeyboardBindings.Union(playersWithoutAssignedGamepads);
+        foreach (var playerIndex in playersToAssignFreeGamepadsTo)
         {
             if (!allConnectedGamepads.Values
                                      .TryGetFirst(out var firstFreeGamepadIndex, gamePadIndex => !_gamePadIndicesAssignedToPlayers.ContainsKey(gamePadIndex)))
-                continue;
+                break;
 
             _gamePadIndicesAssignedToPlayers[firstFreeGamepadIndex] = playerIndex;
             Debug.WriteLine($"Auto-assigned gamepad #{firstFreeGamepadIndex} to player #{playerIndex}");

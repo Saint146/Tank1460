@@ -23,18 +23,19 @@ internal class ScoreScreen : Form
     private readonly bool _showBonus;
     private readonly PlayerIndex[] _players;
 
-    private const int StartingPositionX = 3 * Tile.DefaultWidth;
+    private const int StartingPositionX = 0 * Tile.DefaultWidth;
     private const int StartingPositionY = 1 * Tile.DefaultHeight;
     private const int BonusPoints = 1460;
 
-    private static readonly TankType[] TankTypes = { TankType.Type4, TankType.Type5, TankType.Type6, TankType.Type7 };
+    private static readonly TankType[] TankTypes = { TankType.TypeB0, TankType.TypeB1, TankType.TypeB2, TankType.TypeB3 };
 
     private TimedActionsQueue _actionsQueue;
 
     private bool _bonusHasEarnedOneUp;
 
     // Лейблы.
-    private readonly Dictionary<PlayerIndex, Dictionary<TankType, (FormTextLabel FragsLabel, FormTextLabel ScoreLabel)>> _playersTypedScoreLabels = new();
+    private readonly Dictionary<PlayerIndex, Dictionary<TankType, FormTextLabel>> _playersTypedFragsLabels = new();
+    private readonly Dictionary<PlayerIndex, Dictionary<TankType, FormTextLabel>> _playersTypedScoreLabels = new();
     private readonly Dictionary<PlayerIndex, (FormTextLabel FragsLabel, FormTextLabel ScoreLabel)> _playersTotalScoreLabels = new();
 
     private FormTextLabel _bonusLabel1;
@@ -90,12 +91,14 @@ internal class ScoreScreen : Form
 
     private void CreateTankImages()
     {
-        var x = 15 * Tile.DefaultWidth;
+        var isBasicMode = _gameState.PlayersStates.Count <= 2;
+
+        var x = (isBasicMode ? 15 : 16) * Tile.DefaultWidth;
         var y = (int)(10.5 * Tile.DefaultHeight);
 
         foreach (var tankType in TankTypes)
         {
-            var tankTexture = Content.LoadRecoloredTexture($"Sprites/Tank/Type{(int)tankType}/{ObjectDirection.Up}",
+            var tankTexture = Content.LoadRecoloredTexture($"Sprites/Tank/{tankType}/{ObjectDirection.Up}",
                                                            $"Sprites/_R/Tank/{TankColor.Gray}");
 
             var animation = new Animation(tankTexture, false);
@@ -111,25 +114,35 @@ internal class ScoreScreen : Form
         var yellowFont = Content.LoadFont(@"Sprites/Font/Pixel8", GameColors.Yellow);
         var redFont = Content.LoadFont(@"Sprites/Font/Pixel8", GameColors.Red);
 
+        var isBasicMode = _gameState.PlayersStates.Count <= 2;
+
         var isSecondPlayerPresent = _gameState.PlayersStates.Count > 1;
+        var isFourthPlayerPresent = _gameState.PlayersStates.Count > 3;
 
         var redText = @$"
-     HI-SCORE
+        HI-SCORE
 
 
 
-│-PLAYER{(isSecondPlayerPresent ? "          ║-PLAYER" : "")}
+";
+
+        if (isBasicMode)
+            redText += $"   Ⅰ-PLAYER{(isSecondPlayerPresent ? "          Ⅱ-PLAYER" : "")}";
+        else
+            redText += $"   Ⅰ-P     Ⅱ-P     Ⅲ-P{(isFourthPlayerPresent ? "     Ⅳ-P" : "")}";
+
+        redText += @"
 
 ";
 
         var yellowText = @$"
-              {_highscore,7}";
+                 {_highscore,7}";
 
         var text =
             $@"
 
 
-         STAGE {_levelNumber,2}
+            STAGE {_levelNumber,2}
 
 
 
@@ -139,68 +152,101 @@ internal class ScoreScreen : Form
 
         // Лейблы с количеством фрагов и очков за каждый из типов танков.
         foreach (var player in _players)
+        {
+            _playersTypedFragsLabels[player] = new();
             _playersTypedScoreLabels[player] = new();
+        }
+
         foreach (var tankType in TankTypes)
         {
-            text += @$"
+            text += @"
 
 
-     PTS   ←{(isSecondPlayerPresent ? "  →        PTS" : "")}";
+";
+
+            if (isBasicMode)
+                text += $"        PTS   ←{(isSecondPlayerPresent ? "  →        PTS" : "")}";
+            else
+                text += @"               ←  →";
+
             currentPosition.Y += 3 * Tile.DefaultHeight;
 
             foreach (var player in _players)
             {
-                var scoreLabel = new FormTextLabel(whiteFont, 4, 1)
-                {
-                    Position = currentPosition with
-                    {
-                        X = currentPosition.X + (player == PlayerIndex.One ? 0 : 18) * Tile.DefaultWidth
-                    },
-                    Visible = false
-                };
-                AddItem(scoreLabel);
+                var xInTiles = isBasicMode
+                    ? player == PlayerIndex.One ? 12 : 18
+                    : 5 + 8 * (int)player;
 
                 var fragsLabel = new FormTextLabel(whiteFont, 2, 1)
                 {
                     Position = currentPosition with
                     {
-                        X = currentPosition.X + (player == PlayerIndex.One ? 9 : 15) * Tile.DefaultWidth
+                        X = currentPosition.X + xInTiles * Tile.DefaultWidth
                     },
                     Visible = false
                 };
                 AddItem(fragsLabel);
+                _playersTypedFragsLabels[player][tankType] = fragsLabel;
 
-                _playersTypedScoreLabels[player][tankType] = (fragsLabel, scoreLabel);
+                if (!isBasicMode)
+                    continue;
+
+                var scoreLabel = new FormTextLabel(whiteFont, 4, 1)
+                {
+                    Position = currentPosition with
+                    {
+                        X = currentPosition.X + (player == PlayerIndex.One ? 3 : 21) * Tile.DefaultWidth
+                    },
+                    Visible = false
+                };
+                AddItem(scoreLabel);
+                _playersTypedScoreLabels[player][tankType] = scoreLabel;
             }
         }
 
-        text +=
-            @"
-         ________
-   TOTAL";
+        if (isBasicMode)
+            text +=
+                @"
+            ________
+      TOTAL";
+        else
+            text +=
+                @"
+     __________________________
+TOTAL";
+
         currentPosition.Y += 2 * Tile.DefaultHeight;
 
         var totalPlayerFrags = new Dictionary<PlayerIndex, int>();
         // Лейблы с текущим количеством очков и суммарным числом фрагов.
         foreach (var player in _players)
         {
-            var totalFrags = _levelStats.PlayerStats[player].BotsDefeated.Values.Sum();
-            totalPlayerFrags[player] = totalFrags;
+            var scoreLabelXInTiles = isBasicMode
+                ? player == PlayerIndex.One ? 4 : 22
+                : 8 * (int)player;
 
-            var totalScoreLabel = new FormTextLabel(yellowFont, 8, 1)
+            var totalScoreLabel = new FormTextLabel(yellowFont, 7, 1)
             {
-                Text = $"{_gameState.PlayersStates[player].Score,8}",
-                Position = new Point(x: StartingPositionX + (player == PlayerIndex.One ? 0 : 18) * Tile.DefaultWidth,
+                Text = $"{_gameState.PlayersStates[player].Score,7}",
+                Position = new Point(x: StartingPositionX + scoreLabelXInTiles * Tile.DefaultWidth,
                                      y: StartingPositionY + (redText.CountLines() - 1) * Tile.DefaultHeight),
             };
             AddItem(totalScoreLabel);
+
+
+            var totalFrags = _levelStats.PlayerStats[player].BotsDefeated.Values.Sum();
+            totalPlayerFrags[player] = totalFrags;
+
+            var fragsLabelXInTiles = isBasicMode
+                ? player == PlayerIndex.One ? 12 : 18
+                : 5 + 8 * (int)player;
 
             var totalFragsLabel = new FormTextLabel(whiteFont, 2, 1)
             {
                 Text = $"{totalFrags,2}",
                 Position = currentPosition with
                 {
-                    X = currentPosition.X + (player == PlayerIndex.One ? 9 : 15) * Tile.DefaultWidth
+                    X = currentPosition.X + fragsLabelXInTiles * Tile.DefaultWidth
                 },
                 Visible = false
             };
@@ -218,7 +264,10 @@ internal class ScoreScreen : Form
 
                 RewardPlayerWithPoints(player, BonusPoints);
 
-                var x = StartingPositionX + (player == PlayerIndex.One ? 0 : 19 * Tile.DefaultWidth);
+                var xInTiles = isBasicMode
+                    ? player == PlayerIndex.One ? 3 : 21
+                    : 8 * (int)player;
+                var x = StartingPositionX + xInTiles * Tile.DefaultWidth;
 
                 _bonusLabel1 = new FormTextLabel(redFont, 6, 1)
                 {
@@ -278,7 +327,8 @@ internal class ScoreScreen : Form
                     var needsTickSound = false;
                     foreach (var player in _players)
                     {
-                        var (fragsLabel, scoreLabel) = _playersTypedScoreLabels[player][tankType];
+                        var fragsLabel = _playersTypedFragsLabels[player][tankType];
+                        var scoreLabel = _playersTypedScoreLabels.GetValueOrDefault(player)?.GetValueOrDefault(tankType);
 
                         var frags = Math.Min(tick, _levelStats.PlayerStats[player].BotsDefeated.GetValueOrDefault(tankType));
                         if (frags > 0)
@@ -287,6 +337,8 @@ internal class ScoreScreen : Form
                         fragsLabel.Text = $"{frags,2}";
                         fragsLabel.Visible = true;
 
+                        if (scoreLabel is null)
+                            continue;
                         scoreLabel.Text = $"{frags * scoreMultiplier,4}";
                         scoreLabel.Visible = true;
                     }

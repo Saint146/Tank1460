@@ -17,8 +17,10 @@ public class LevelHud
 
     private static readonly Dictionary<PlayerIndex, char> PlayerNames = new()
     {
-        { PlayerIndex.One, '│' },
-        { PlayerIndex.Two, '║' }
+        { PlayerIndex.One, 'Ⅰ' },
+        { PlayerIndex.Two, 'Ⅱ' },
+        { PlayerIndex.Three, 'Ⅲ' },
+        { PlayerIndex.Four, 'Ⅳ' }
     };
 
     public LevelHud(ContentManagerEx content)
@@ -40,7 +42,11 @@ public class LevelHud
 
         DrawBotSpawnsRemaining(spriteBatch, currentLocation, Math.Min(level.BotSpawnsRemaining, 20));
 
-        currentLocation.Y += 14 * Tile.DefaultHeight;
+        if (level.PlayersInGame.Length <= 2)
+            currentLocation.Y += 14 * Tile.DefaultHeight;
+        else
+            currentLocation.Y += 11 * Tile.DefaultHeight;
+
         foreach (var playerIndex in level.PlayersInGame)
         {
             DrawPlayerLives(spriteBatch, currentLocation, PlayerNames[playerIndex], level.PlayerLivesRemaining(playerIndex));

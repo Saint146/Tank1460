@@ -1,5 +1,6 @@
-﻿using System;
-using MonoGame.Extended;
+﻿using MonoGame.Extended;
+using System;
+using System.Collections.Generic;
 
 namespace Tank1460.Common.Extensions;
 
@@ -24,5 +25,14 @@ public static class RangeExtensions
             return range.Max;
 
         return value - 1;
+    }
+
+    public static IEnumerator<int> GetEnumerator(this Range<int> range)
+        => range.AsEnumerable().GetEnumerator();
+
+    public static IEnumerable<int> AsEnumerable(this Range<int> range)
+    {
+        for (var i = range.Min; i <= range.Max; i++)
+            yield return i;
     }
 }

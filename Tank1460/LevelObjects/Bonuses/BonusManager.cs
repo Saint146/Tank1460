@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Tank1460.Audio;
 using Tank1460.Common;
+using Tank1460.Common.Extensions;
 
 namespace Tank1460.LevelObjects.Bonuses;
 
@@ -85,7 +86,7 @@ public class BonusManager
         {
             if (KeyboardEx.HasBeenPressed(Keys.B) || (KeyboardEx.IsPressed(Keys.LeftShift) && KeyboardEx.IsPressed(Keys.B)))
             {
-                Spawn(BonusType.Shovel);
+                Spawn(new [] { BonusType.Grenade }.GetRandom());
             }
         }
 #endif

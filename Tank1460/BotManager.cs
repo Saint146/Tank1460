@@ -37,6 +37,7 @@ public class BotManager
     private double _paralyzeTime;
     private double _paralyzeEffectTime;
     private static readonly int[] ClassicBotBonusNumbers = { 4, 11, 18 };
+    private static readonly TankType[] AllBotTankTypes = { TankType.TypeB0, TankType.TypeB1, TankType.TypeB2, TankType.TypeB3 };
 
 #if !DEBUG
     private readonly double _periodLength;
@@ -192,7 +193,7 @@ public class BotManager
         int hp, bonusCount;
         if (_level.ClassicRules)
         {
-            hp = type == TankType.Type7 ? 4 : 1;
+            hp = type == TankType.TypeB3 ? 4 : 1;
             bonusCount = ClassicBotBonusNumbers.Contains(botNumber) ? 1 : 0;
         }
         else
@@ -222,7 +223,7 @@ public class BotManager
 
     private static TankType GetRandomType()
     {
-        return (TankType)Rng.Next(4, 8);
+        return AllBotTankTypes.GetRandom();
     }
 
     private (int x, int y) GetNextSpot()

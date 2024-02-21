@@ -92,7 +92,7 @@ public class Tank1460Game : Game
     private Point _windowSize;
     private bool _allowSelectLevel;
 
-    private PlayerIndex[] AllPlayers { get; } = { PlayerIndex.One, PlayerIndex.Two };
+    private PlayerIndex[] AllPlayers { get; } = { PlayerIndex.One, PlayerIndex.Two, PlayerIndex.Three, PlayerIndex.Four };
 
     private PlayerIndex[] PlayersInGame { get; set; } = { PlayerIndex.One };
 
@@ -516,7 +516,9 @@ public class Tank1460Game : Game
         Debug.Assert(_level is null);
         Debug.Assert(_form is null);
 
-        _form = new MainMenu(Services, PlayersInGame.Length);
+        var playersCountRange = new Range<int>(1, AllPlayers.Length);
+
+        _form = new MainMenu(Services, PlayersInGame.Length, playersCountRange);
     }
 
     private void LoadScoreScreen(bool showBonus)

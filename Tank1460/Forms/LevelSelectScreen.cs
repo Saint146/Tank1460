@@ -57,6 +57,14 @@ internal class LevelSelectScreen : Form
             _closingTimer.Update(gameTime);
     }
 
+    protected override void OnHover(FormItem item)
+    {
+        if (_closing)
+            return;
+
+        _leftButton.Visible = _rightButton.Visible = item is not null;
+    }
+
     protected override void OnClick(FormItem item)
     {
         if (_closing)

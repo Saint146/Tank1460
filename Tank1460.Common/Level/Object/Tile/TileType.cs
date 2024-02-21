@@ -10,6 +10,8 @@ public enum TileType
     Ice,
     Player1Spawn,
     Player2Spawn,
+    Player3Spawn,
+    Player4Spawn,
     BotSpawn,
     Falcon
 }
