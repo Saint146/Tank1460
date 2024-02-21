@@ -25,7 +25,7 @@ public class ConcreteTile : DestructibleTile
             Level.SoundPlayer.Play(Sound.HitDestroy);
             Reduce(shell.Direction, DefaultHeight);
         }
-        else if (shell.ShotBy is PlayerTank)
+        else if (shell.ShotBy is PlayerTank { IsControlledByAi: false })
         {
             Level.SoundPlayer.Play(Sound.HitDull);
         }

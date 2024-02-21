@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Tank1460.AI;
 using Tank1460.Audio;
 using Tank1460.Common.Level.Object.Tank;
+using Tank1460.Globals;
 using Tank1460.Input;
 
 namespace Tank1460.LevelObjects.Tanks;
@@ -13,6 +14,8 @@ namespace Tank1460.LevelObjects.Tanks;
 public class PlayerTank : Tank
 {
     public PlayerIndex PlayerIndex { get; }
+
+    public bool IsControlledByAi { get; }
 
 #if DEBUG
     internal bool GodMode;
@@ -26,7 +29,7 @@ public class PlayerTank : Tank
         { PlayerIndex.One, TankColor.Yellow },
         { PlayerIndex.Two, TankColor.Green },
         { PlayerIndex.Three, TankColor.Blue },
-        { PlayerIndex.Four, TankColor.Blue | TankColor.Red}
+        { PlayerIndex.Four, TankColor.Blue | TankColor.Red }
     };
 
     private PlayerInput _playerInput;
@@ -38,6 +41,7 @@ public class PlayerTank : Tank
     public PlayerTank(Level level, PlayerIndex playerIndex, TankType type, bool controlledByAi) : base(level, type, PlayerNumberToColorMap[playerIndex])
     {
         PlayerIndex = playerIndex;
+        IsControlledByAi = controlledByAi;
 
         if (controlledByAi)
             _ai = new CommonPlayerTankAi(this, level);
@@ -114,7 +118,7 @@ public class PlayerTank : Tank
 
     protected override TankOrder Think(GameTime gameTime)
     {
-        if (_ai is not null)
+        if (IsControlledByAi)
             return _ai.Think();
 
         var order = TankOrder.None;

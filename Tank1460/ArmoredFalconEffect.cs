@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tile;
+using Tank1460.Globals;
 using Tank1460.LevelObjects;
 
 namespace Tank1460;

@@ -85,8 +85,6 @@ public class Level : IDisposable
 
     private readonly LevelEffects _levelEffects = new();
 
-    private readonly bool _aiEnabled;
-
     // В оригинале именно так: зависит лишь от режима,
     // а не от того, жив ли второй игрок. Даже если уровень стартует, когда один уже без жизней, всё равно будет шесть.
     private int MaxAliveBots() => (PlayersInGame.Length + 1) * 2;
@@ -104,9 +102,8 @@ public class Level : IDisposable
     private double _delayEffectTime;
     private LevelStatus _statusBeforePause;
 
-    public Level(GameServiceContainer serviceProvider, LevelStructure levelStructure, int levelNumber, bool aiEnabled, GameState startingGameState)
+    public Level(GameServiceContainer serviceProvider, LevelStructure levelStructure, int levelNumber, GameState startingGameState)
     {
-        _aiEnabled = aiEnabled;
         Structure = levelStructure;
         LevelNumber = levelNumber;
         PlayersInGame = startingGameState.PlayersStates.Keys.ToArray();
@@ -666,8 +663,11 @@ public class Level : IDisposable
         var playerSpawner = new PlayerSpawner(this, x, y, playerIndex);
         PlayerSpawners.Add(playerIndex, playerSpawner);
 
-        if (playerIndex != PlayerIndex.One && _aiEnabled)
+        if (playerIndex != PlayerIndex.One && GameRules.AiEnabled)
+        {
             playerSpawner.ControlledByAi = true;
+            playerSpawner.HasInfiniteLives = GameRules.AiHasInfiniteLives;
+        }
 
         return null;
     }

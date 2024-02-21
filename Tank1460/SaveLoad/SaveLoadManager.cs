@@ -11,7 +11,10 @@ internal class SaveLoadManager
     private readonly string _rootSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tank1460");
     private const string SettingsFileName = "settings.json";
 
-    private static readonly JsonSerializerOptions DefaultOptions = new (){ WriteIndented = true };
+    private static readonly JsonSerializerOptions DefaultOptions = new ()
+    {
+        WriteIndented = true,
+    };
 
     public void SaveSettings(UserSettings userSettings)
     {
@@ -47,7 +50,7 @@ internal class SaveLoadManager
         try
         {
             var dataSerialized = File.ReadAllText(filePath);
-            var saveData = JsonSerializer.Deserialize<T>(dataSerialized);
+            var saveData = JsonSerializer.Deserialize<T>(dataSerialized, DefaultOptions);
             return saveData;
         }
         catch (Exception ex)

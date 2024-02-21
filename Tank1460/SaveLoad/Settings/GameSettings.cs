@@ -2,5 +2,7 @@
 
 public class GameSettings
 {
-    public bool AiEnabled { get; set; }
+    public bool? AiEnabled { get; set; }
+
+    public bool? AiHasInfiniteLives { get; set; }
 }

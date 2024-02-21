@@ -1,4 +1,6 @@
-﻿namespace Tank1460.LevelObjects.Explosions;
+﻿using Tank1460.Globals;
+
+namespace Tank1460.LevelObjects.Explosions;
 
 public class BigExplosion : Explosion
 {

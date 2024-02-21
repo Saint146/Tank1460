@@ -4,6 +4,7 @@ using MonoGame.Extended.Content;
 using System.Linq;
 using Tank1460.Audio;
 using Tank1460.Common.Extensions;
+using Tank1460.Globals;
 using Tank1460.Input;
 using Tank1460.LevelObjects.Tiles;
 
@@ -13,14 +14,15 @@ internal class HighscoreScreen : Form
 {
     private const string FirstLine = "HISCORE";
     private const string SecondLineFormat = "{0,7}";
+    private const string ThirdLineFormat = "{0}PLAYER";
 
     private const int PositionX = (int)(Tile.DefaultWidth * 2.5);
     private const int PositionY = (int)(Tile.DefaultHeight * 5.5);
     private const int InterlineIndent = (int)(Tile.DefaultHeight * 2.5);
 
-    public HighscoreScreen(GameServiceContainer serviceProvider, int highscore) : base(serviceProvider)
+    public HighscoreScreen(GameServiceContainer serviceProvider, int highscore, PlayerIndex? player) : base(serviceProvider)
     {
-        CreateText(highscore);
+        CreateText(highscore, player);
         SoundPlayer.StopAll();
         SoundPlayer.Play(Sound.Highscore);
     }
@@ -42,7 +44,7 @@ internal class HighscoreScreen : Form
             Exit();
     }
 
-    private void CreateText(int highscore)
+    private void CreateText(int highscore, PlayerIndex? player)
     {
         var flashingRecolorTextures = Content.MassLoadContent<Texture2D>(@"Sprites/_R/Pattern/Flashing");
 
@@ -58,7 +60,9 @@ internal class HighscoreScreen : Form
         var fontForCalc = flashingFonts[0];
 
         var oneFrameSize = new Point(x: fontForCalc.CharWidth * FirstLine.Length,
-                                     y: fontForCalc.CharHeight * 2 + InterlineIndent);
+                                     y: player.HasValue
+                                         ? fontForCalc.CharHeight * 3 + InterlineIndent * 2
+                                         : fontForCalc.CharHeight * 2 + InterlineIndent);
 
         var texture = new Texture2D(Content.GetGraphicsDevice(), oneFrameSize.X * flashingFonts.Length, oneFrameSize.Y);
 
@@ -70,6 +74,12 @@ internal class HighscoreScreen : Form
 
             texture.Draw(firstLine, new Point(x: oneFrameSize.X * i, y: 0));
             texture.Draw(secondLine, new Point(x: oneFrameSize.X * i, y: firstLine.Height + InterlineIndent));
+
+            if (!player.HasValue)
+                continue;
+
+            var thirdLine = font.CreateTexture(string.Format(ThirdLineFormat, LevelHud.PlayerNames[player.Value]));
+            texture.Draw(thirdLine, new Point(x: oneFrameSize.X * i, y: firstLine.Height + InterlineIndent + secondLine.Height + InterlineIndent));
         }
 
         var animation = new Animation(texture, flashingFonts.Select(_ => GameRules.TimeInFrames(1)).ToArray(), true);

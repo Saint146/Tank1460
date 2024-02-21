@@ -12,6 +12,7 @@ using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Extensions;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tiles;
+using Tank1460.Globals;
 
 namespace Tank1460.LevelObjects.Tanks;
 
@@ -122,10 +123,7 @@ public abstract class Tank : MoveableLevelObject
                 {
                     var newDirection = order.ToDirection();
                     if (newDirection is not null)
-                    {
                         MoveTo(newDirection.Value);
-                        Level.SoundPlayer.Loop(this is PlayerTank ? Sound.MovePlayer : Sound.MoveBot);
-                    }
                 }
 
                 if (order.HasFlag(TankOrder.Shoot) && !IsPacifist)
@@ -272,7 +270,7 @@ public abstract class Tank : MoveableLevelObject
     {
         base.HandleTryMove();
         Sprite.AdvanceAnimation();
-        Level.SoundPlayer.Loop(this is PlayerTank ? Sound.MovePlayer : Sound.MoveBot);
+        Level.SoundPlayer.Loop(this is PlayerTank { IsControlledByAi: false } ? Sound.MovePlayer : Sound.MoveBot);
     }
 
     public void Explode(Tank destroyedBy)
@@ -391,7 +389,7 @@ public abstract class Tank : MoveableLevelObject
         shell.SpawnViaCenterPosition(BoundingRectangle.GetEdgeCenter(Direction));
         _shells.Add(shell);
 
-        if (this is PlayerTank)
+        if (this is PlayerTank { IsControlledByAi: false })
             Level.SoundPlayer.Play(Sound.Shot);
     }
 

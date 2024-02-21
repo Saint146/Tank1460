@@ -115,7 +115,7 @@ public class Shell : MoveableLevelObject
             if (levelObject is null)
             {
                 // Граница уровня.
-                if (ShotBy is PlayerTank)
+                if (ShotBy is PlayerTank { IsControlledByAi: false })
                     Level.SoundPlayer.Play(Sound.HitDull);
 
                 Explode();

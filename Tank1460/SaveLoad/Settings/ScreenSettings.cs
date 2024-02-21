@@ -2,11 +2,11 @@
 
 public class ScreenSettings
 {
-    public ScreenMode Mode { get; set; }
+    public ScreenMode? Mode { get; set; }
 
-    public ScreenPoint Position { get; set; }
+    public ScreenPoint? Position { get; set; }
 
-    public ScreenPoint Size { get; set; }
+    public ScreenPoint? Size { get; set; }
 
-    public bool IsMaximized { get; set; }
+    public bool? IsMaximized { get; set; }
 }

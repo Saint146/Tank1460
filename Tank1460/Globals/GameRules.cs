@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Tank1460.Common.Level.Object.Tank;
 
-namespace Tank1460;
+namespace Tank1460.Globals;
 
 internal static class GameRules
 {
@@ -26,13 +26,17 @@ internal static class GameRules
         { TankType.B9, 500 }
     };
 
+    public static bool AiEnabled { get; set; }
+
+    public static bool AiHasInfiniteLives { get; set; }
+
     private const int Fps = 60;
 
     /// <summary>
     /// Длительность одного кадра в секундах.
     /// </summary>
     private const double OneFrameSpan = 1.0d / Fps;
-    
+
     public static int GetOneUpsGained(int oldScore, int scoreGained)
     {
         // TODO: Проверить логику оригинала.

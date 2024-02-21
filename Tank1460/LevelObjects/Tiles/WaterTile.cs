@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Tank1460.Common.Level.Object.Tile;
+using Tank1460.Globals;
 
 namespace Tank1460.LevelObjects.Tiles;
 

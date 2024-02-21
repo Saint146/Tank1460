@@ -22,6 +22,8 @@ public class PlayerSpawner
 
     public bool ControlledByAi { get; set; }
 
+    public bool HasInfiniteLives { get; set; }
+
     private readonly Level _level;
     private const double RespawnInterval = 0.0;
 
@@ -56,7 +58,7 @@ public class PlayerSpawner
 
         switch (LivesRemaining)
         {
-            case 1 when ControlledByAi:
+            case 1 when HasInfiniteLives:
                 break;
 
             case 1:
@@ -80,7 +82,7 @@ public class PlayerSpawner
         LivesRemaining += count;
     }
 
-    public bool CanDonateLife() => !ControlledByAi && LivesRemaining > 1;
+    public bool CanDonateLife() => !HasInfiniteLives && LivesRemaining > 1;
 
     public void DonateLife(PlayerSpawner receiverSpawner)
     {

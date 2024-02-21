@@ -149,6 +149,9 @@ internal class MainMenu : Form
                     new Point(x: MenuItemsX,
                               y: MenuItem1Y + (i - first) * MenuItemsYStep));
             _cursorItems.Add(button);
+
+            if (i == PlayerCount)
+                _cursorItemIndex = _cursorItems.Count - 1;
         }
 
         var font = Content.LoadFont(@"Sprites/Font/Pixel8", GameColors.White);

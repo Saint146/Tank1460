@@ -2,5 +2,5 @@
 
 public class GraphicsSettings
 {
-    public bool PixelPerfectScaling { get; set; }
+    public bool? PixelPerfectScaling { get; set; }
 }

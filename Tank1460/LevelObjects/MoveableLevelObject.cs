@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using Tank1460.Common.Level.Object;
+using Tank1460.Globals;
 
 namespace Tank1460.LevelObjects;
 

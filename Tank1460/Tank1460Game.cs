@@ -88,7 +88,7 @@ public class Tank1460Game : Game
     // TODO: Перенести внутрь Cursor.
     private bool _isMouseCursorHidden;
     private Point _mousePosition;
-    private double _mouseIdleTime = 0;
+    private double _mouseIdleTime;
     private bool _isMouseIdle;
     private const double MouseIdleTimeToHide = 3.0;
 
@@ -101,7 +101,6 @@ public class Tank1460Game : Game
     private Point _windowPosition;
     private Point _windowSize;
     private bool _allowSelectLevel;
-    private bool _aiEnabled;
 
     private PlayerIndex[] AllPlayers { get; } = { PlayerIndex.One, PlayerIndex.Two, PlayerIndex.Three, PlayerIndex.Four };
 
@@ -289,7 +288,7 @@ public class Tank1460Game : Game
 
                 var mainMenu = (MainMenu)_form;
                 PlayersInGame = AllPlayers.Take(mainMenu.PlayerCount).ToArray();
-                _aiEnabled = mainMenu.AiEnabled;
+                GameRules.AiEnabled = mainMenu.AiEnabled;
 
                 if (mainMenu.ExitSelected)
                 {
@@ -357,10 +356,11 @@ public class Tank1460Game : Game
                     break;
 
                 UnloadForm();
-                if (UpdateHighscore())
+                UpdateHighscore(out var highscoredPlayer);
+                if (highscoredPlayer is not null)
                 {
                     Status = GameStatus.HighscoreScreen;
-                    LoadHighscoreScreen();
+                    LoadHighscoreScreen(highscoredPlayer);
                     break;
                 }
 
@@ -414,7 +414,7 @@ public class Tank1460Game : Game
             _mouseState = _mouseState.CopyWithAllButtonsReleased();
 
         var wasMouseIdle = _isMouseIdle;
-        _isMouseIdle = _mouseState.Position == _mousePosition;
+        _isMouseIdle = _mouseState.Position == _mousePosition && _mouseState.LeftButton == ButtonState.Released;
         _mousePosition = _mouseState.Position;
 
         switch (_isMouseIdle)
@@ -543,16 +543,19 @@ public class Tank1460Game : Game
     }
 
     /// <summary>
-    /// Обновить лучший результат и вернуть true, если он побит.
+    /// Обновить лучший результат и если какой-то игрок его побил, вернуть его.
     /// </summary>
-    private bool UpdateHighscore()
+    private void UpdateHighscore(out PlayerIndex? highscoredPlayer)
     {
-        var maxScore = _gameState.PlayersStates.Values.Max(state => state.Score);
-        if (maxScore <= Highscore)
-            return false;
+        var (player, state) = _gameState.PlayersStates.MaxBy(x => x.Value.Score);
+        if (state.Score <= Highscore)
+        {
+            highscoredPlayer = null;
+            return;
+        }
 
-        Highscore = maxScore;
-        return true;
+        highscoredPlayer = player;
+        Highscore = state.Score;
     }
 
     private void UnloadForm()
@@ -570,7 +573,7 @@ public class Tank1460Game : Game
 
         var playersCountRange = new Range<int>(1, AllPlayers.Length);
 
-        _form = new MainMenu(Services, PlayersInGame.Length, playersCountRange, _aiEnabled);
+        _form = new MainMenu(Services, PlayersInGame.Length, playersCountRange, GameRules.AiEnabled);
     }
 
     private void LoadScoreScreen(bool showBonus)
@@ -598,12 +601,12 @@ public class Tank1460Game : Game
         _form = new LevelSelectScreen(Services, LevelNumber, _levelsRange, !_allowSelectLevel);
     }
 
-    private void LoadHighscoreScreen()
+    private void LoadHighscoreScreen(PlayerIndex? highscoredPlayer)
     {
         Debug.Assert(_level is null);
         Debug.Assert(_form is null);
 
-        _form = new HighscoreScreen(Services, Highscore);
+        _form = new HighscoreScreen(Services, Highscore, highscoredPlayer);
     }
 
     /// <summary>
@@ -644,7 +647,7 @@ public class Tank1460Game : Game
         Debug.Assert(_form is null);
 
         var levelStructure = Content.Load<LevelStructure>($"Levels/{LevelFolder}/{LevelNumber}");
-        _level = new Level(Services, levelStructure, LevelNumber, _aiEnabled, _gameState);
+        _level = new Level(Services, levelStructure, LevelNumber, _gameState);
 
         _level.LevelComplete += Level_LevelComplete;
         _level.GameOver += Level_GameOver;
@@ -680,7 +683,8 @@ public class Tank1460Game : Game
         var settings = _saveLoadManager.LoadSettings();
 
         // Настройки игры.
-        _aiEnabled = settings?.Game?.AiEnabled ?? false;
+        GameRules.AiEnabled = settings?.Game?.AiEnabled ?? false;
+        GameRules.AiHasInfiniteLives = settings?.Game?.AiHasInfiniteLives ?? true;
 
         // Настройки управления.
         _playerInputHandler.LoadControlSettings(settings?.Controls);
@@ -728,7 +732,8 @@ public class Tank1460Game : Game
         {
             Game = new GameSettings
             {
-                AiEnabled = _aiEnabled
+                AiEnabled = GameRules.AiEnabled,
+                AiHasInfiniteLives = GameRules.AiHasInfiniteLives
             },
             Controls = new ControlsSettings
             {

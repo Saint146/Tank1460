@@ -11,17 +11,17 @@ public class LevelHud
 {
     public static readonly int HudWidth = 2 * Tile.DefaultWidth;
 
-    private Font _font;
-
-    private Texture2D _bot, _player, _levelFlag;
-
-    private static readonly Dictionary<PlayerIndex, char> PlayerNames = new()
+    public static readonly Dictionary<PlayerIndex, char> PlayerNames = new()
     {
         { PlayerIndex.One, 'Ⅰ' },
         { PlayerIndex.Two, 'Ⅱ' },
         { PlayerIndex.Three, 'Ⅲ' },
         { PlayerIndex.Four, 'Ⅳ' }
     };
+
+    private Font _font;
+
+    private Texture2D _bot, _player, _levelFlag;
 
     public LevelHud(ContentManagerEx content)
     {
@@ -50,7 +50,7 @@ public class LevelHud
         foreach (var playerIndex in level.PlayersInGame)
         {
             var spawner = level.GetPlayerSpawner(playerIndex);
-            var lives = spawner.ControlledByAi ? " " : spawner.LivesRemaining.ToString();
+            var lives = spawner.HasInfiniteLives ? " " : spawner.LivesRemaining.ToString();
 
             DrawPlayerLives(spriteBatch, currentLocation, PlayerNames[playerIndex], lives);
             currentLocation.Y += 3 * Tile.DefaultHeight;

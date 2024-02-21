@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 using Tank1460.Common.Extensions;
 using Tank1460.Extensions;
+using Tank1460.Globals;
 
 namespace Tank1460.LevelObjects;
 
