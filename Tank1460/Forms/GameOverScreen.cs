@@ -17,6 +17,7 @@ internal class GameOverScreen : Form
     public GameOverScreen(GameServiceContainer serviceProvider) : base(serviceProvider)
     {
         CreateText();
+        SoundPlayer.StopAll();
         SoundPlayer.Play(Sound.GameOver);
     }
 

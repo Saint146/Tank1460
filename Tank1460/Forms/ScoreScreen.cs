@@ -51,10 +51,10 @@ internal class ScoreScreen : Form
         _players = _gameState.PlayersStates.Keys.ToArray();
 
         CreateTextAndLabels();
-
         CreateTankImages();
-
         _actionsQueue = new TimedActionsQueue(CreateTimedActions());
+
+        SoundPlayer.StopAll();
     }
 
     protected override void OnUpdate(GameTime gameTime)

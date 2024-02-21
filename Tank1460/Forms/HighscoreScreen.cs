@@ -21,6 +21,7 @@ internal class HighscoreScreen : Form
     public HighscoreScreen(GameServiceContainer serviceProvider, int highscore) : base(serviceProvider)
     {
         CreateText(highscore);
+        SoundPlayer.StopAll();
         SoundPlayer.Play(Sound.Highscore);
     }
 
