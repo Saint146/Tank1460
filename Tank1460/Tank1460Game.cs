@@ -82,6 +82,16 @@ public class Tank1460Game : Game
     private bool _isMouseInsideWindow;
     private bool _isCustomCursorVisible;
 
+    /// <summary>
+    /// Курсор мыши временно скрыт по соображениям юзабилити.
+    /// </summary>
+    // TODO: Перенести внутрь Cursor.
+    private bool _isMouseCursorHidden;
+    private Point _mousePosition;
+    private double _mouseIdleTime = 0;
+    private bool _isMouseIdle;
+    private const double MouseIdleTimeToHide = 3.0;
+
     private readonly PlayerInputHandler _playerInputHandler;
     private MouseState _mouseState;
     private KeyboardState _keyboardState;
@@ -182,6 +192,8 @@ public class Tank1460Game : Game
         _curtain?.Update(gameTime);
 
         _soundPlayer.Perform(gameTime);
+
+        _mouseIdleTime += gameTime.ElapsedGameTime.TotalSeconds;
 
         base.Update(gameTime);
     }
@@ -392,8 +404,38 @@ public class Tank1460Game : Game
         if (!_isMouseInsideWindow || !IsActive)
             _mouseState = _mouseState.CopyWithAllButtonsReleased();
 
+        var wasMouseIdle = _isMouseIdle;
+        _isMouseIdle = _mouseState.Position == _mousePosition;
+        _mousePosition = _mouseState.Position;
+
+        switch (_isMouseIdle)
+        {
+            case false when _isMouseCursorHidden:
+            {
+                // Мышь сдвинулась после скрытия, показываем её.
+                _isMouseCursorHidden = false;
+                if (!_customCursorEnabled)
+                    IsMouseVisible = true;
+                break;
+            }
+
+            case true when !wasMouseIdle:
+                // Мышь остановилась после движения, начинаем отсчёт до её скрытия.
+                _mouseIdleTime = 0.0;
+                break;
+
+            case true when !_isMouseCursorHidden && _mouseIdleTime > MouseIdleTimeToHide:
+            {
+                // Мышь не скрыта и стоит долго, скрываем её.
+                _isMouseCursorHidden = true;
+                if (!_customCursorEnabled)
+                    IsMouseVisible = false;
+                break;
+            }
+        }
+
         // Курсор не обновляет свое состояние, если он отключен или вне экрана.
-        _isCustomCursorVisible = _customCursorEnabled && _isMouseInsideWindow;
+        _isCustomCursorVisible = _customCursorEnabled && _isMouseInsideWindow && !_isMouseCursorHidden;
 
         // Геймпады.
         _gamePadStates = _playerInputHandler.GetActiveGamePadIndices().ToDictionary(index => index, GamePad.GetState);
