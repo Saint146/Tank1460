@@ -7,6 +7,7 @@ public abstract class Tile : LevelObject
 {
     public const int DefaultWidth = 8;
     public const int DefaultHeight = 8;
+    public static readonly Point DefaultSize = new(DefaultWidth, DefaultHeight);
 
     private IAnimation _animation;
 

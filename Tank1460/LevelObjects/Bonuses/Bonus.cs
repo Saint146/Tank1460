@@ -122,7 +122,7 @@ public class Bonus : LevelObject
                 break;
 
             case BonusType.Pistol:
-                botTank.TransformIntoType3();
+                botTank.TransformIntoType9();
                 break;
 
             case BonusType.Star:

@@ -50,13 +50,11 @@ public class BotTank : Tank
         SetShellProperties(ShellProperties.ArmorPiercing);
     }
 
-    public void TransformIntoType3()
+    public void TransformIntoType9()
     {
         // TODO: Тут два раза обновляются текстуры
         SetHp(4);
-        SetType(TankType.TypeP3);
-        var defaultBotSpeed = TankPropertiesProvider.Get(TankType.TypeB0).TankSpeed;
-        SetMovingSpeed(defaultBotSpeed);
+        SetType(TankType.B9);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)

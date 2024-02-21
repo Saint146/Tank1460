@@ -118,7 +118,7 @@ internal class MainMenu : Form
 
     private void CreateCursor()
     {
-        _cursorTankType = TankType.TypeP0;
+        _cursorTankType = TankType.P0;
         _cursorTankColor = TankColor.Yellow;
         _cursor = new FormButton(
             normalTexture: Content.LoadRecoloredTexture($"Sprites/Tank/{_cursorTankType}/Right", $"Sprites/_R/Tank/{_cursorTankColor}"),

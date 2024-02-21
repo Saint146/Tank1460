@@ -27,7 +27,7 @@ internal class ScoreScreen : Form
     private const int StartingPositionY = 1 * Tile.DefaultHeight;
     private const int BonusPoints = 1460;
 
-    private static readonly TankType[] TankTypes = { TankType.TypeB0, TankType.TypeB1, TankType.TypeB2, TankType.TypeB3 };
+    private static readonly TankType[] TankTypes = { TankType.B0, TankType.B1, TankType.B2, TankType.B3 };
 
     private TimedActionsQueue _actionsQueue;
 

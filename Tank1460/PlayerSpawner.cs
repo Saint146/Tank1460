@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Tank1460.Audio;
+using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tank;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
@@ -14,6 +15,8 @@ public class PlayerSpawner
     public PlayerTank Tank { get; private set; }
 
     public int LivesRemaining { get; set; } = 3;
+
+    public Rectangle TileBounds { get; }
 
     public Rectangle Bounds { get; }
 
@@ -35,7 +38,8 @@ public class PlayerSpawner
         _level = level;
 
         // TODO: Ну да, хардкод размера.
-        Bounds = new Rectangle(x * Tile.DefaultWidth, y * Tile.DefaultHeight, 2 * Tile.DefaultWidth, 2 * Tile.DefaultHeight);
+        TileBounds = new Rectangle(x, y, 2, 2);
+        Bounds = TileBounds.Multiply(Tile.DefaultSize);
 
         SpawnIsReady();
     }
@@ -124,7 +128,7 @@ public class PlayerSpawner
         if (Tank is not null)
             return;
 
-        var type = _nextSpawnType ?? (_level.ClassicRules ? TankType.TypeP0 : TankType.TypeP1);
+        var type = _nextSpawnType ?? (_level.ClassicRules ? TankType.P0 : TankType.P1);
         _nextSpawnType = null;
 
         Tank = new PlayerTank(_level, PlayerIndex, type, ControlledByAi);

@@ -548,6 +548,13 @@ public class Level : IDisposable
         if (playersWithoutSpawners.Contains(PlayerIndex.Four))
             CreatePlayerSpawn(19, 24, PlayerIndex.Four);
 
+        // Очищаем тайлы, наслаивающиеся на спавнеров и орлов.
+        foreach (var spawner in PlayerSpawners.Values)
+            spawner.TileBounds.GetAllPoints().ForEach(point => TryRemoveTileAt(point.X, point.Y));
+
+        foreach (var falcon in Falcons)
+            falcon.TileRectangle.GetAllPoints().ForEach(point => TryRemoveTileAt(point.X, point.Y));
+
         if (Falcons.Count == 0)
             throw new NotSupportedException("A level must have at least one falcon.");
     }

@@ -55,34 +55,34 @@ public class PlayerTank : Tank
 
     public void UpgradeUp()
     {
-        if (Type == TankType.TypeP4)
+        if (Type == TankType.P4)
             return;
 
         var newType = (int)Type + 1;
         if (!Enum.IsDefined(typeof(TankType), newType))
-            newType = (int)TankType.TypeP4;
+            newType = (int)TankType.P4;
 
         SetType((TankType)newType);
     }
 
     public void UpgradeDown()
     {
-        if (Type == TankType.TypeP0)
+        if (Type == TankType.P0)
             return;
 
         var newType = (int)Type - 1;
         if (!Enum.IsDefined(typeof(TankType), newType))
-            newType = (int)TankType.TypeP0;
+            newType = (int)TankType.P0;
 
         SetType((TankType)newType);
     }
 
     public void UpgradeToPistol()
     {
-        if (Type >= TankType.TypeP3)
+        if (Type >= TankType.P3)
             return;
 
-        SetType(TankType.TypeP3);
+        SetType(TankType.P3);
     }
 
     public void HandleInput(PlayerInput playerInput)
@@ -102,10 +102,10 @@ public class PlayerTank : Tank
         if (GodMode) return;
 #endif
 
-        if (Type >= TankType.TypeP3 && !Level.ClassicRules)
+        if (Type >= TankType.P3 && !Level.ClassicRules)
         {
             Level.SoundPlayer.Play(Sound.HitHurt);
-            SetType(TankType.TypeP2);
+            SetType(TankType.P2);
             return;
         }
 

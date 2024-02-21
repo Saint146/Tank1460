@@ -88,7 +88,7 @@ public class BonusManager
         {
             if (KeyboardEx.HasBeenPressed(Keys.B) || (KeyboardEx.IsPressed(Keys.LeftShift) && KeyboardEx.IsPressed(Keys.B)))
             {
-                Spawn(new [] { BonusType.Grenade }.GetRandom());
+                Spawn(new [] { BonusType.Pistol }.GetRandom());
             }
         }
 #endif
