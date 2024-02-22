@@ -51,6 +51,7 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Tank1460.Common\Tank1460.Common.csproj" />
+	  <ProjectReference Include="..\Tank1460.ProceduralGeneration\Tank1460.ProceduralGeneration.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">

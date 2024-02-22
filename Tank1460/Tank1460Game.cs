@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http.Headers;
 using MonoGame.Extended;
 using Tank1460.Audio;
 using Tank1460.Common;
@@ -16,6 +17,8 @@ using Tank1460.Globals;
 using Tank1460.Input;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tiles;
+using Tank1460.ProceduralGeneration.Generators;
+using Tank1460.ProceduralGeneration.Options;
 using Tank1460.SaveLoad;
 using Tank1460.SaveLoad.Settings;
 
@@ -319,7 +322,9 @@ public class Tank1460Game : Game
                 var levelSelectScreen = (LevelSelectScreen)_form;
                 LevelNumber = levelSelectScreen.LevelNumber;
                 UnloadForm();
-                LoadLevel();
+
+                LoadLevel(Content.Load<LevelStructure>($"Levels/{LevelFolder}/{LevelNumber}"), LevelNumber);
+
                 break;
 
             case GameStatus.CurtainClosing:
@@ -509,8 +514,12 @@ public class Tank1460Game : Game
         }
 
         // Shift+0..Shift+9 — загрузить уровень Test/%d
+        // Shift+Space — сгенерировать и загрузить уровень
         if (_keyboardState.IsKeyDown(Keys.LeftShift))
         {
+            if (KeyboardEx.HasBeenPressed(Keys.Space))
+                LoadRandomLevel();
+
             foreach (var digit in Enumerable.Range(0, 10))
             {
                 var key = Keys.D0 + digit;
@@ -640,14 +649,12 @@ public class Tank1460Game : Game
         ScalePresentationArea();
     }
 
-    private void LoadLevel()
+    private void LoadLevel(LevelStructure structure, int levelNumberToShow)
     {
-        Debug.WriteLine($"Loading level {LevelFolder}/{LevelNumber}...");
         Debug.Assert(_level is null);
         Debug.Assert(_form is null);
 
-        var levelStructure = Content.Load<LevelStructure>($"Levels/{LevelFolder}/{LevelNumber}");
-        _level = new Level(Services, levelStructure, LevelNumber, _gameState);
+        _level = new Level(Services, structure, levelNumberToShow, _gameState);
 
         _level.LevelComplete += Level_LevelComplete;
         _level.GameOver += Level_GameOver;
@@ -657,8 +664,6 @@ public class Tank1460Game : Game
         // TODO: Вынести в сеттер Status
         Status = GameStatus.CurtainOpening;
         _curtain = new Curtain(GameColors.Curtain, CurtainAction.Open);
-
-        Debug.WriteLine($"Level {LevelFolder}/{LevelNumber} loaded.");
     }
 
     private void Level_LevelComplete(Level level)
@@ -754,6 +759,19 @@ public class Tank1460Game : Game
         };
 
         _saveLoadManager.SaveSettings(settings);
+    }
+
+    private void LoadRandomLevel()
+    {
+        var generator = new LevelGenerator(new LevelGenerationOptions
+        {
+            Size = new Point(26, 26)
+        });
+
+        var levelStructure = generator.GenerateLevel();
+
+        UnloadLevel();
+        LoadLevel(levelStructure, -1);
     }
 
     private void ScalePresentationArea()
