@@ -2,6 +2,8 @@
 
 public class ScreenSettings
 {
+    public int? DisplayIndex { get; set; }
+
     public ScreenMode? Mode { get; set; }
 
     public ScreenPoint? Position { get; set; }

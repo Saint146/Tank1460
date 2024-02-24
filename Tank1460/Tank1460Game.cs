@@ -100,9 +100,10 @@ public class Tank1460Game : Game
     private Dictionary<int, GamePadState> _gamePadStates;
 
     private GameState _gameState;
-    private Point _windowPosition;
-    private Point _windowSize;
     private bool _allowSelectLevel;
+
+    private Point _windowedPosition;
+    private Point _windowedSize;
 
     private PlayerIndex[] AllPlayers { get; } = { PlayerIndex.One, PlayerIndex.Two, PlayerIndex.Three, PlayerIndex.Four };
 
@@ -168,10 +169,10 @@ public class Tank1460Game : Game
 
     protected override void Update(GameTime gameTime)
     {
-        // Если размер экрана изменился.
-        if (_backbufferHeight != GraphicsDevice.PresentationParameters.BackBufferHeight ||
-            _backbufferWidth != GraphicsDevice.PresentationParameters.BackBufferWidth)
-            ScalePresentationArea();
+        var windowSizeChanged = _backbufferHeight != GraphicsDevice.PresentationParameters.BackBufferHeight ||
+                                _backbufferWidth != GraphicsDevice.PresentationParameters.BackBufferWidth;
+        if (windowSizeChanged)
+            OnWindowSizeChanged();
 
         var inputs = HandleInput();
 
@@ -699,17 +700,20 @@ public class Tank1460Game : Game
         // Масштабирование.
         _isScalingPixelPerfect = settings?.Graphics?.PixelPerfectScaling ?? true;
 
-        // Позиция окна.
+        // Позиция окна и активный дисплей.
         var position = settings?.Screen?.Position;
+        var displayIndex = settings?.Screen?.DisplayIndex ?? 0;
         if (position.HasValue)
-            Window.Position = position.Value.ToPoint();
-        _windowPosition = Window.Position;
+        {
+            Window.SetDisplayRelativePosition(displayIndex, position.Value.ToPoint());
+        }
+        _windowedPosition = Window.Position;
 
         // Размер окна.
         var size = settings?.Screen?.Size ?? ScreenPoint.FromPoint(BaseScreenSize.Multiply(DefaultScale));
         _graphics.PreferredBackBufferWidth = size.X;
         _graphics.PreferredBackBufferHeight = size.Y;
-        _windowSize = size.ToPoint();
+        _windowedSize = size.ToPoint();
 
         // Режим экрана.
         _graphics.HardwareModeSwitch = false;
@@ -727,11 +731,13 @@ public class Tank1460Game : Game
         if (isMaximized is true)
             Window.Maximize();
 
-        ScalePresentationArea();
+        //ScalePresentationArea();
     }
 
     private void SaveSettings()
     {
+        var (displayIndex, displayBounds) = Window.GetContainingDisplay();
+
         var settings = new UserSettings
         {
             Game = new GameSettings
@@ -750,9 +756,10 @@ public class Tank1460Game : Game
             },
             Screen = new ScreenSettings
             {
+                DisplayIndex = displayIndex,
                 Mode = _graphics.IsFullScreen ? ScreenMode.Borderless : ScreenMode.Window,
-                Position = ScreenPoint.FromPoint(_windowPosition),
-                Size = ScreenPoint.FromPoint(_windowSize),
+                Position = ScreenPoint.FromPoint(_windowedPosition - displayBounds.Location),
+                Size = ScreenPoint.FromPoint(_windowedSize),
                 IsMaximized = Window.IsMaximized()
             }
         };
@@ -773,15 +780,23 @@ public class Tank1460Game : Game
         LoadLevel(levelStructure);
     }
 
-    private void ScalePresentationArea()
+    private void OnWindowSizeChanged()
     {
-        // Запоминаем положение и размер окна, только если находимся в окне, чтобы потом хранить именно его.
-        if (!_graphics.IsFullScreen && !Window.IsMaximized())
+        if (!_graphics.IsFullScreen || Window.IsMaximized())
         {
-            _windowPosition = Window.Position;
-            _windowSize = Window.ClientBounds.Size;
+            // Запоминаем положение и размер окна, только если находимся в окне, чтобы потом хранить именно его.
+            _windowedPosition = Window.Position;
+            _windowedSize = Window.ClientBounds.Size;
         }
 
+        ScalePresentationArea();
+    }
+
+    /// <summary>
+    /// Вызывать, если изменились или размеры окна игры или размеры внутриигрового поля.
+    /// </summary>
+    private void ScalePresentationArea()
+    {
         _backbufferWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
         _backbufferHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
 
