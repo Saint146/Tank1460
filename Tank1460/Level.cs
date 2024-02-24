@@ -9,6 +9,7 @@ using System.Linq;
 using Tank1460.Audio;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
+using Tank1460.Common.Level.Object;
 using Tank1460.Common.Level.Object.Tile;
 using Tank1460.Globals;
 using Tank1460.Input;
@@ -44,6 +45,8 @@ public class Level : IDisposable
 
     public Color BackColor => GameColors.Curtain;
 
+    public string ShortName { get; }
+
     public int LevelNumber { get; }
 
     public Rectangle TileBounds { get; private set; }
@@ -62,7 +65,7 @@ public class Level : IDisposable
 
     internal ISoundPlayer SoundPlayer { get; }
 
-    internal LevelStructure Structure { get; }
+    internal LevelModel Model { get; }
 
     internal LevelStats Stats { get; }
 
@@ -102,10 +105,16 @@ public class Level : IDisposable
     private double _delayEffectTime;
     private LevelStatus _statusBeforePause;
 
-    public Level(GameServiceContainer serviceProvider, LevelStructure levelStructure, int levelNumber, GameState startingGameState)
+    public Level(GameServiceContainer serviceProvider, LevelModel levelModel, GameState startingGameState)
     {
-        Structure = levelStructure;
+        Model = levelModel;
+        ShortName = levelModel.ShortName;
+
+        // TODO: Попробовать выкинуть этот номер всё-таки.
+        if (!int.TryParse(ShortName, out var levelNumber))
+            levelNumber = -1;
         LevelNumber = levelNumber;
+
         PlayersInGame = startingGameState.PlayersStates.Keys.ToArray();
         Stats = new LevelStats(PlayersInGame);
 
@@ -114,7 +123,8 @@ public class Level : IDisposable
 
         BotManager = new BotManager(this, TotalBots, MaxAliveBots());
         BonusManager = new BonusManager(this, MaxBonusesOnScreen);
-        LoadTiles(levelStructure.Tiles);
+        LoadTiles(levelModel.Tiles);
+        LoadObjects(levelModel.Objects);
 
         // Load starting game state.
         foreach (var (playerIndex, playerState) in startingGameState.PlayersStates)
@@ -528,7 +538,7 @@ public class Level : IDisposable
         {
             for (var x = 0; x < width; x++)
             {
-                var tile = LoadTile(tileTypes[x, y], x, y);
+                var tile = LoadTile(tileTypes[x, y]);
                 if (tile is null)
                     continue;
 
@@ -538,26 +548,132 @@ public class Level : IDisposable
 
         TileBounds = new Rectangle(0, 0, width, height);
         Bounds = TileBounds.Multiply(new Point(Tile.DefaultWidth, Tile.DefaultHeight));
+    }
 
+    private Tile LoadTile(TileType tileType)
+    {
+        // TODO: Заменить на фабричный метод.
+        return tileType switch
+        {
+            TileType.Empty => null,
+
+            TileType.Brick => new BrickTile(this),
+
+            TileType.Concrete => new ConcreteTile(this),
+
+            TileType.Water => new WaterTile(this),
+
+            TileType.Forest => new ForestTile(this),
+
+            TileType.Ice => new IceTile(this),
+
+            _ => throw new NotSupportedException()
+        };
+    }
+
+    private void LoadObjects(LevelObjectModel[] objectModels)
+    {
+        foreach(var objectModel in objectModels.EmptyIfNull())
+            switch (objectModel)
+            {
+                case BotSpawnerModel botSpawnerModel:
+                    CreateBotSpawn(botSpawnerModel.Bounds);
+                    break;
+
+                case FalconModel falcon:
+                    CreateFalcon(falcon.Bounds);
+                    break;
+
+                case PlayerSpawnerModel playerSpawnerModel:
+                    CreatePlayerSpawn(playerSpawnerModel.Bounds, playerSpawnerModel.Player);
+                    break;
+
+                default:
+                    throw new NotSupportedException();
+            }
+
+        CreateMissingRequiredObjects();
+
+        ClearTilesUnderObjects();
+    }
+
+    private void CreatePlayerSpawn(Rectangle tileBounds, PlayerIndex playerIndex)
+    {
+        if (!PlayersInGame.Contains(playerIndex))
+            return;
+
+        if (PlayerSpawners.ContainsKey(playerIndex))
+            throw new NotSupportedException($"A level may only have one player {playerIndex} spawn.");
+
+        var playerSpawner = new PlayerSpawner(this, tileBounds, playerIndex);
+        PlayerSpawners.Add(playerIndex, playerSpawner);
+
+        if (playerIndex == PlayerIndex.One || !GameRules.AiEnabled)
+            return;
+
+        playerSpawner.ControlledByAi = true;
+        playerSpawner.HasInfiniteLives = GameRules.AiHasInfiniteLives;
+    }
+
+    private void CreateFalcon(Rectangle tileBounds)
+    {
+        var falcon = new Falcon(this, tileBounds.Size);
+        Falcons.Add(falcon);
+
+        falcon.Spawn(tileBounds.Location * Tile.DefaultSize);
+    }
+
+    private void CreateBotSpawn(Rectangle tileBounds)
+    {
+        BotManager.AddSpawnPoint(tileBounds);
+    }
+
+    private void CreateMissingRequiredObjects()
+    {
         var playersWithoutSpawners = PlayersInGame.Where(playerIndex => !PlayerSpawners.ContainsKey(playerIndex)).ToList();
 
-        // TODO: Временный хардкод для игры вчетвером.
-        if (playersWithoutSpawners.Contains(PlayerIndex.One) || playersWithoutSpawners.Contains(PlayerIndex.Two))
-            throw new NotSupportedException($"No player spawner for {string.Join(", ", playersWithoutSpawners)} found in the level.");
-        if (playersWithoutSpawners.Contains(PlayerIndex.Three))
-            CreatePlayerSpawn(5, 24, PlayerIndex.Three);
-        if (playersWithoutSpawners.Contains(PlayerIndex.Four))
-            CreatePlayerSpawn(19, 24, PlayerIndex.Four);
+        // TODO: Временный хардкод, пока не дойдут руки переделать сами файлы уровней.
+        if (Falcons.Count == 0)
+            CreateFalcon(new Rectangle(12, 24, 2, 2));
 
-        // Очищаем тайлы, наслаивающиеся на спавнеров и орлов.
+        if (BotManager.SpawnAreas.Count == 0)
+        {
+            CreateBotSpawn(new Rectangle(0, 0, 2, 2));
+            CreateBotSpawn(new Rectangle(12, 0, 2, 2));
+            CreateBotSpawn(new Rectangle(24, 0, 2, 2));
+        }
+
+        if (playersWithoutSpawners.Contains(PlayerIndex.One))
+            CreatePlayerSpawn(new Rectangle(8, 24, 2, 2), PlayerIndex.One);
+
+        if (playersWithoutSpawners.Contains(PlayerIndex.Two))
+            CreatePlayerSpawn(new Rectangle(16, 24, 2, 2), PlayerIndex.Two);
+
+        if (playersWithoutSpawners.Contains(PlayerIndex.Three))
+            CreatePlayerSpawn(new Rectangle(5, 24, 2, 2), PlayerIndex.Three);
+
+        if (playersWithoutSpawners.Contains(PlayerIndex.Four))
+            CreatePlayerSpawn(new Rectangle(19, 24, 2, 2), PlayerIndex.Four);
+    }
+
+    private void ClearTilesUnderObjects()
+    {
+        var pointsToClear = new HashSet<Point>();
+ 
         foreach (var spawner in PlayerSpawners.Values)
-            spawner.TileBounds.GetAllPoints().ForEach(point => TryRemoveTileAt(point.X, point.Y));
+            spawner.TileBounds.GetAllPoints().ForEach(point => pointsToClear.Add(point));
 
         foreach (var falcon in Falcons)
-            falcon.TileRectangle.GetAllPoints().ForEach(point => TryRemoveTileAt(point.X, point.Y));
+            falcon.TileRectangle.GetAllPoints().ForEach(point => pointsToClear.Add(point));
 
-        if (Falcons.Count == 0)
-            throw new NotSupportedException("A level must have at least one falcon.");
+        foreach (var point in pointsToClear)
+        {
+            var tile = GetTile(point.X, point.Y);
+            if (tile is { CollisionType: not CollisionType.None })
+            {
+                tile.Remove();
+            }
+        }
     }
 
     private void TogglePause()
@@ -613,65 +729,6 @@ public class Level : IDisposable
         _levelEffects.RemoveAll<GameOverLevelEffect>(effect => effect.PlayerIndex == playerIndex);
     }
 
-    private Tile LoadTile(TileType tileType, int x, int y)
-    {
-        // TODO: Убрать объекты из типов тайлов и заменить на фабричный метод.
-        return tileType switch
-        {
-            TileType.Empty => null,
-
-            TileType.Brick => new BrickTile(this),
-
-            TileType.Concrete => new ConcreteTile(this),
-
-            TileType.Water => new WaterTile(this),
-
-            TileType.Forest => new ForestTile(this),
-
-            TileType.Ice => new IceTile(this),
-
-            TileType.Player1Spawn => CreatePlayerSpawn(x, y, PlayerIndex.One),
-
-            TileType.Player2Spawn => CreatePlayerSpawn(x, y, PlayerIndex.Two),
-
-            TileType.Player3Spawn => CreatePlayerSpawn(x, y, PlayerIndex.Three),
-
-            TileType.Player4Spawn => CreatePlayerSpawn(x, y, PlayerIndex.Four),
-
-            TileType.BotSpawn => CreateBotSpawn(x, y),
-
-            TileType.Falcon => CreateFalcon(x, y),
-
-            _ => throw new NotSupportedException()
-        };
-    }
-
-    private Tile CreateBotSpawn(int x, int y)
-    {
-        BotManager.AddSpawnPoint(x, y);
-        return null;
-    }
-
-    private Tile CreatePlayerSpawn(int x, int y, PlayerIndex playerIndex)
-    {
-        if (!PlayersInGame.Contains(playerIndex))
-            return null;
-
-        if (PlayerSpawners.ContainsKey(playerIndex))
-            throw new NotSupportedException($"A level may only have one player {playerIndex} spawn.");
-
-        var playerSpawner = new PlayerSpawner(this, x, y, playerIndex);
-        PlayerSpawners.Add(playerIndex, playerSpawner);
-
-        if (playerIndex != PlayerIndex.One && GameRules.AiEnabled)
-        {
-            playerSpawner.ControlledByAi = true;
-            playerSpawner.HasInfiniteLives = GameRules.AiHasInfiniteLives;
-        }
-
-        return null;
-    }
-
     private void StartGameOverSequence()
     {
         if (Status is LevelStatus.LostPreDelay or LevelStatus.LostDelay)
@@ -679,16 +736,6 @@ public class Level : IDisposable
 
         Status = LevelStatus.LostPreDelay;
         _delayEffectTime = GameRules.TimeInFrames(36);
-    }
-
-    private Tile CreateFalcon(int x, int y)
-    {
-        var falcon = new Falcon(this);
-        Falcons.Add(falcon);
-
-        falcon.Spawn(new Point(x * Tile.DefaultWidth, y * Tile.DefaultHeight));
-
-        return null;
     }
 
     private bool DetectOutOfBoundsCollisionSimple(Rectangle tileRect)

@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework.Content;
+using System;
 using System.Collections.Generic;
 using System.Xml.Linq;
-using Microsoft.Xna.Framework.Content;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
 using Tank1460.Common.Level.Object.Tank;
@@ -9,18 +9,24 @@ using Tank1460.Common.Level.Object.Tile;
 
 namespace Tank1460.Common.ContentPipeline;
 
-internal class LvlContentTypeReader : ContentTypeReader<LevelStructure>
+internal class LvlContentTypeReader : ContentTypeReader<LevelModel>
 {
-    protected override LevelStructure Read(ContentReader input, LevelStructure existingInstance)
+    protected override LevelModel Read(ContentReader input, LevelModel existingInstance)
     {
         var xml = input.ReadString();
         var document = XDocument.Parse(xml);
 
         var levelElement = document.Element("level") ?? throw new Exception("Cannot find root element 'level'.");
 
+        var infoElement = levelElement.Element("info") ?? throw new Exception("Cannot find element 'level/info'.");
+        var shortName = infoElement.Attribute("shortName")?.Value ?? throw new Exception("Cannot find attribute 'shortName' of the 'level/info' element.");
+        var fullPath = infoElement.Attribute("fullPath")?.Value ?? throw new Exception("Cannot find attribute 'fullPath' of the 'level/info' element.");
+
         var tilesAsString = levelElement.Element("tiles")?.Value ?? throw new Exception("Cannot find element 'level/tiles'.");
-        return new LevelStructure
+        return new LevelModel
         {
+            ShortName = shortName,
+            FullPath = fullPath,
             Tiles = DeserializeTiles(tilesAsString),
             BotTypes = DeserializeBotTypes(levelElement.Element("botTypes")?.Value)
         };
@@ -60,7 +66,7 @@ internal class LvlContentTypeReader : ContentTypeReader<LevelStructure>
         return tiles;
     }
 
-    private static IReadOnlyList<(TankType, int)> DeserializeBotTypes(string botTypesAsString)
+    private static (TankType, int)[] DeserializeBotTypes(string botTypesAsString)
     {
         if (botTypesAsString is null)
             return null;
@@ -79,7 +85,7 @@ internal class LvlContentTypeReader : ContentTypeReader<LevelStructure>
             result.Add(((TankType)botType, botCount));
         }
 
-        return result;
+        return result.ToArray();
     }
 
     private static TileType TileTypeFromChar(char tileType) => tileType switch
@@ -102,19 +108,9 @@ internal class LvlContentTypeReader : ContentTypeReader<LevelStructure>
         // Ice
         '/' => TileType.Ice,
 
-        // Player 1 start point
-        '1' => TileType.Player1Spawn,
+        // TODO: Убрать после того, как приберусь в файлах левелов.
+        '1' or '2' or 'R' or 's' => TileType.Empty,
 
-        // Player 2 start point
-        '2' => TileType.Player2Spawn,
-
-        // Bot spawn point
-        'R' => TileType.BotSpawn,
-
-        // Falcon
-        's' => TileType.Falcon,
-
-        // Unknown tile type character
-        _ => throw new NotSupportedException()
+        _ => throw new ArgumentOutOfRangeException(nameof(tileType), tileType, null)
     };
 }

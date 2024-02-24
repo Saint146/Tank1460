@@ -9,6 +9,7 @@ using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Globals;
 using Tank1460.LevelObjects.Tanks;
+using Tank1460.LevelObjects.Tiles;
 
 namespace Tank1460;
 
@@ -16,12 +17,14 @@ public class BotManager
 {
     public int SpawnsRemaining { get; private set; }
 
+    public IReadOnlyList<Rectangle> SpawnAreas => _areas;
+
     public IReadOnlyList<BotTank> BotTanks => _botTanks;
 
     private readonly List<BotTank> _botTanks = new();
 
     private readonly Level _level;
-    private readonly List<(int x, int y)> _points = new();
+    private readonly List<Rectangle> _areas = new();
     private int _pointIndex;
     private readonly double _respawnInterval;
     private double _timeToSpawnRemaining;
@@ -40,6 +43,9 @@ public class BotManager
     private static readonly int[] ClassicBotBonusNumbers = { 4, 11, 18 };
     private static readonly TankType[] AllBotTankTypes = { TankType.B0, TankType.B1, TankType.B2, TankType.B3 };
 
+    // TODO: Куда бы это убрать-то.
+    private static readonly Point TankTileSize = new(2, 2);
+
 #if !DEBUG
     private readonly double _periodLength;
     private readonly double _periodResetTime = GameRules.TimeInFrames(16384);
@@ -53,7 +59,7 @@ public class BotManager
         _level = level;
         SpawnsRemaining = _totalSpawns = totalBots;
         _maxAliveBots = maxAliveBots;
-        _tankTypes = ComposeTankTypeQueue(_level.Structure?.BotTypes);
+        _tankTypes = ComposeTankTypeQueue(_level.Model?.BotTypes);
 
         _respawnInterval = GameRules.TimeInFrames(190 - level.LevelNumber * 4 - (level.PlayerCount - 1) * 20);
         _periodLength = _respawnInterval * 8;
@@ -64,9 +70,9 @@ public class BotManager
         SpawnIsReady();
     }
 
-    public void AddSpawnPoint(int x, int y)
+    public void AddSpawnPoint(Rectangle tileRectangle)
     {
-        _points.Add((x, y));
+        _areas.Add(tileRectangle);
     }
 
     public void AddOneUp()
@@ -178,13 +184,11 @@ public class BotManager
         if (SpawnsRemaining <= 0 || _botsAlive >= _maxAliveBots)
             return;
 
-        Debug.Assert(_points.Count > 0);
+        Debug.Assert(_areas.Count > 0);
 
         SpawnsRemaining--;
 
-        var (x, y) = GetNextSpot();
-
-        var position = Level.GetTileBounds(x, y).Location;
+        var position = GetNextSpot() * Tile.DefaultSize;
 
         if (_tankTypes?.TryDequeue(out var type) is not true)
             type = GetRandomType();
@@ -227,12 +231,14 @@ public class BotManager
         return AllBotTankTypes.GetRandom();
     }
 
-    private (int x, int y) GetNextSpot()
+    private Point GetNextSpot()
     {
-        if (++_pointIndex >= _points.Count)
+        if (++_pointIndex >= _areas.Count)
             _pointIndex = 0;
 
-        return _points[_pointIndex];
+        var area = _areas[_pointIndex];
+
+        return area.GetRandomSubrect(TankTileSize).Location;
     }
 
     private void HandleBotDestroyed(BotTank botTank)

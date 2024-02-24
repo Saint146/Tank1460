@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Xna.Framework;
 
 namespace Tank1460.Common.Extensions;
 
@@ -53,4 +54,7 @@ public static class ArrayExtensions
 
         return resultArray;
     }
+
+    public static bool ContainsCoords<T>(this T[,] array, int x, int y)
+        => x >= 0 && x < array.GetLength(0) && y >= 0 && y < array.GetLength(1);
 }

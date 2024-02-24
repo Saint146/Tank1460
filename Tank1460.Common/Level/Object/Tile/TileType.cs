@@ -7,11 +7,5 @@ public enum TileType
     Concrete,
     Water,
     Forest,
-    Ice,
-    Player1Spawn,
-    Player2Spawn,
-    Player3Spawn,
-    Player4Spawn,
-    BotSpawn,
-    Falcon
+    Ice
 }

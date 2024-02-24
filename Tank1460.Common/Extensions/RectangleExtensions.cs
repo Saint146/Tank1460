@@ -164,6 +164,16 @@ public static class RectangleExtensions
         return new Point(x, y);
     }
 
+    public static Rectangle GetRandomSubrect(this Rectangle rectangle, Point subRectSize)
+    {
+        if (rectangle.Size == subRectSize)
+            return rectangle;
+
+        var x = Rng.Next(rectangle.Left, rectangle.Width - subRectSize.X + 1);
+        var y = Rng.Next(rectangle.Top, rectangle.Height - subRectSize.Y + 1);
+        return new Rectangle(x, y, subRectSize.X, subRectSize.Y);
+    }
+
     public static Rectangle Multiply(this Rectangle rectangle, Point point)
     {
         return new Rectangle(rectangle.X * point.X, rectangle.Y * point.Y, rectangle.Width * point.X, rectangle.Height * point.Y);

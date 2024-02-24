@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Xml.Linq;
 using Microsoft.Xna.Framework.Content.Pipeline;
@@ -11,11 +12,16 @@ public class LvlContentImporter : ContentImporter<string>
     public override string Import(string filename, ContentImporterContext context)
     {
         var xml = File.ReadAllText(filename);
-        ThrowIfInvalidXml(xml);
+
+        var shortName = Path.GetFileNameWithoutExtension(filename);
+        xml = ValidateAndAddInfo(xml, shortName, filename);
+
+        Debugger.Log(9, "A", xml);
+
         return xml;
     }
 
-    private static void ThrowIfInvalidXml(string xml)
+    private static string ValidateAndAddInfo(string xml, string shortName, string fullPath)
     {
         if (string.IsNullOrEmpty(xml))
             throw new InvalidContentException("The lvl file is empty.");
@@ -32,5 +38,11 @@ public class LvlContentImporter : ContentImporter<string>
 
         var levelElement = document.Element("level") ?? throw new Exception("Invalid level: cannot find root element 'level'.");
         _ = levelElement.Element("tiles")?.Value ?? throw new Exception("Invalid level: cannot find element 'level/tiles'.");
+
+        levelElement.AddFirst(new XElement("info",
+                                           new XAttribute("shortName", shortName),
+                                           new XAttribute("fullPath", fullPath)));
+
+        return document.ToString();
     }
 }

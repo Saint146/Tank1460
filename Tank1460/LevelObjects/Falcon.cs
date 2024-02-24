@@ -14,8 +14,9 @@ public class Falcon : LevelObject
 
     public FalconStatus Status { get; private set; }
 
-    public Falcon(Level level) : base(level)
+    public Falcon(Level level, Point size) : base(level)
     {
+        // TODO: Size check.
     }
 
     public override CollisionType CollisionType => CollisionType.ShootableAndImpassable;

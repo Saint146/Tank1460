@@ -2,12 +2,11 @@
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.Http.Headers;
-using MonoGame.Extended;
 using Tank1460.Audio;
 using Tank1460.Common;
 using Tank1460.Common.Extensions;
@@ -323,7 +322,7 @@ public class Tank1460Game : Game
                 LevelNumber = levelSelectScreen.LevelNumber;
                 UnloadForm();
 
-                LoadLevel(Content.Load<LevelStructure>($"Levels/{LevelFolder}/{LevelNumber}"), LevelNumber);
+                LoadLevel(Content.Load<LevelModel>($"Levels/{LevelFolder}/{LevelNumber}"));
 
                 break;
 
@@ -396,7 +395,7 @@ public class Tank1460Game : Game
         // TODO: Перенести внутрь левела и прочих вложенных объектов (чтобы каждый объект сам говорил, что ему предзагружать).
         Content.MassLoadContent<Texture2D>("Sprites", "*.*", recurse: true);
         Content.MassLoadContent<SoundEffect>("Sounds", "*.*", recurse: true);
-        //Content.MassLoadContent<LevelStructure>("Levels", "*.*", recurse: true);
+        //Content.MassLoadContent<LevelModel>("Levels", "*.*", recurse: true);
     }
 
     private void ResetGameState()
@@ -649,12 +648,12 @@ public class Tank1460Game : Game
         ScalePresentationArea();
     }
 
-    private void LoadLevel(LevelStructure structure, int levelNumberToShow)
+    private void LoadLevel(LevelModel model)
     {
         Debug.Assert(_level is null);
         Debug.Assert(_form is null);
 
-        _level = new Level(Services, structure, levelNumberToShow, _gameState);
+        _level = new Level(Services, model, _gameState);
 
         _level.LevelComplete += Level_LevelComplete;
         _level.GameOver += Level_GameOver;
@@ -771,7 +770,7 @@ public class Tank1460Game : Game
         var levelStructure = generator.GenerateLevel();
 
         UnloadLevel();
-        LoadLevel(levelStructure, -1);
+        LoadLevel(levelStructure);
     }
 
     private void ScalePresentationArea()

@@ -125,7 +125,7 @@ internal class ArmoredFalconEffect : LevelEffect
 
             foreach (var point in points)
             {
-                var oldTile = level.Structure.Tiles[point.X, point.Y];
+                var oldTile = level.Model.Tiles[point.X, point.Y];
                 // Если были кирпичи или пусто, то вернём кирпичи. Иначе пишем то, что было.
                 falconTiles[point] = oldTile is TileType.Empty or TileType.Brick ? TileType.Brick : oldTile;
             }

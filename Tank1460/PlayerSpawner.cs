@@ -34,13 +34,12 @@ public class PlayerSpawner
     private TankType? _nextSpawnType;
     private bool _nextSpawnHasShip;
 
-    public PlayerSpawner(Level level, int x, int y, PlayerIndex playerIndex)
+    public PlayerSpawner(Level level, Rectangle tileBounds, PlayerIndex playerIndex)
     {
         PlayerIndex = playerIndex;
         _level = level;
 
-        // TODO: Ну да, хардкод размера.
-        TileBounds = new Rectangle(x, y, 2, 2);
+        TileBounds = tileBounds;
         Bounds = TileBounds.Multiply(Tile.DefaultSize);
 
         SpawnIsReady();
