@@ -20,6 +20,7 @@ public class Bonus : LevelObject
     private const int ClockOnBotsTimeInFrames = 640;
 
     private const int PointsRewardForBonus = 500;
+    private const string BotEffectText = "BRUH";
 
     public Bonus(Level level, BonusType type) : base(level)
     {
@@ -90,7 +91,7 @@ public class Bonus : LevelObject
     private void ApplyEffectOnBot(BotTank botTank)
     {
         Level.SoundPlayer.Play(Sound.BonusPickup);
-        Level.CreateFloatingText(BoundingRectangle.Center, "BRUH", GameRules.TimeInFrames(49));
+        Level.CreateFloatingText(BoundingRectangle.Center, BotEffectText, GameRules.TimeInFrames(49));
 
         switch (Type)
         {
@@ -100,7 +101,12 @@ public class Bonus : LevelObject
 
             case BonusType.OneUp:
                 //Level.BotManager.AddOneUp();
-                foreach (var tank in Level.BotManager.BotTanks)
+
+                // Даём бонус не всем: взявшему танку и не более чем определенному количеству остальных.
+                // TODO: Завязать на BotManager.MaxAliveBots
+                const int maxBotsGainingArmor = 5;
+                var botTanks = Level.BotManager.BotTanks.ToArray().Except(new[] { botTank }).ToArray().GetRandoms(maxBotsGainingArmor).Union(new[] { botTank });
+                foreach (var tank in botTanks)
                 {
                     if (tank.BonusCount > 0)
                     {
