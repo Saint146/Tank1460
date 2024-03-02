@@ -40,6 +40,8 @@ public static class PointExtensions
         return new Point(x, y);
     }
 
+    public static int DistanceEstimate(this Point point) => Math.Abs(point.X) + Math.Abs(point.Y);
+
     public static Point Multiply(this Point point, int multiplier) => new(point.X * multiplier, point.Y * multiplier);
 
     public static Point Divide(this Point point, int divisor) => new(point.X / divisor, point.Y / divisor);

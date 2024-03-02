@@ -21,6 +21,8 @@ internal class CommonPlayerTankAi : PlayerTankAi
     private bool _skipThink;
     private LevelObject _target;
 
+    private const bool IsAggressive = true;
+
     public CommonPlayerTankAi(PlayerTank tank, Level level) : base(tank)
     {
         _level = level;
@@ -81,13 +83,16 @@ internal class CommonPlayerTankAi : PlayerTankAi
             return _order;
         }
         
-        var newThoughtDirection = CheckTileReach();
+        var newThoughtDirection = CommonMovement();
         if (newThoughtDirection is not null)
             newOrder = newThoughtDirection.Value.ToTankOrder();
 
         // Стреляй, Глеб Егорыч!
-        if (Rng.OneIn(4) && shotPriorities[newThoughtDirection ?? Tank.Direction] != ShotPriority.Forbidden)
-            newOrder |= TankOrder.Shoot;
+        if (shotPriorities[newThoughtDirection ?? Tank.Direction] != ShotPriority.Forbidden)
+        {
+            if (Tank.IsFrontTileBlocked || Rng.OneIn(16))
+                newOrder |= TankOrder.Shoot;
+        }
 
         _order = newOrder;
         return newOrder;
@@ -259,10 +264,12 @@ internal class CommonPlayerTankAi : PlayerTankAi
     private Point CalcPositionAfter90Turn() => new((int)Math.Round((double)Tank.Position.X / Tile.DefaultWidth) * Tile.DefaultWidth,
                                                    (int)Math.Round((double)Tank.Position.Y / Tile.DefaultHeight) * Tile.DefaultHeight);
 
+    private ObjectDirection? CommonMovement() => CheckTileReach();
+
     private ObjectDirection? CheckTileReach()
     {
         if (PlayerTank.Position.IsCenteredOnTile() && Rng.Next(16) == 0)
-            return DecideNewTarget();
+            return RefreshAndHuntTarget();
 
         if (PlayerTank.IsFrontTileBlocked && Rng.Next(4) == 0)
             return PlayerTank.Position.IsCenteredOnTile() ? ChangeDirection() : PlayerTank.Direction.Invert();
@@ -270,34 +277,49 @@ internal class CommonPlayerTankAi : PlayerTankAi
         return null;
     }
 
-    private ObjectDirection? DecideNewTarget()
+    private ObjectDirection? RefreshAndHuntTarget()
+    {
+        RefreshTarget();
+        return _target is not null ? HuntCurrentTarget() : ObjectDirectionExtensions.GetRandomDirection();
+    }
+
+    private void RefreshTarget()
     {
         if (_target is { ToRemove: false })
-            return Hunt(_target);
+            return;
 
         if (_level.BonusManager.Bonuses.Count != 0)
-            return Hunt(_level.BonusManager.Bonuses.ToArray().GetRandom());
+        {
+            ChangeTarget(_level.BonusManager.Bonuses.ToArray().GetRandom());
+            return;
+        }
 
         if (_level.BotManager.BotTanks.Count != 0)
-            return Hunt(_level.BotManager.BotTanks.ToArray().GetRandom());
+        {
+            ChangeTarget(_level.BotManager.BotTanks.ToArray().GetRandom());
+            return;
+        }
 
-        return ObjectDirectionExtensions.GetRandomDirection();
+        ChangeTarget(null);
+    }
+
+
+    private void ChangeTarget(LevelObject newTarget)
+    {
+        _target = newTarget;
     }
 
     private ObjectDirection? ChangeDirection()
     {
         if (Rng.Next(2) == 0)
-            return DecideNewTarget();
+            return RefreshAndHuntTarget();
 
         return Rng.Next(2) == 0 ? PlayerTank.Direction.Clockwise() : PlayerTank.Direction.CounterClockwise();
     }
 
     private ObjectDirection? Hunt(LevelObject target)
     {
-        if (target is null)
-            return CheckTileReach();
-
-        _target = target;
+        Debug.Assert(target is not null);
 
         var deltaX = target.Position.X - PlayerTank.Position.X;
         var deltaY = target.Position.Y - PlayerTank.Position.Y;
@@ -312,6 +334,16 @@ internal class CommonPlayerTankAi : PlayerTankAi
             return DeltaYToDirection(deltaY);
 
         return ObjectDirectionExtensions.GetRandomDirection();
+    }
+
+    private ObjectDirection? HuntCurrentTarget()
+    {
+#pragma warning disable CS0162
+        if (!IsAggressive)
+            return Hunt(_target);
+#pragma warning restore CS0162
+
+
     }
 
     private static ObjectDirection DeltaXToDirection(int deltaX)

@@ -109,6 +109,7 @@ public class Tank1460Game : Game
 
     private PlayerIndex[] PlayersInGame { get; set; } = { PlayerIndex.One };
 
+    // ReSharper disable once HeuristicUnreachableCode
     private string LevelFolder { get; set; } = ClassicRules ? "Classic" : "Modern";
 
     private readonly Range<int> _levelsRange = new(1, 36);
@@ -654,6 +655,7 @@ public class Tank1460Game : Game
         Debug.Assert(_level is null);
         Debug.Assert(_form is null);
 
+        _allowSelectLevel = false;
         _level = new Level(Services, model, _gameState);
 
         _level.LevelComplete += Level_LevelComplete;
@@ -671,7 +673,6 @@ public class Tank1460Game : Game
         _gameState = level.GetGameState();
 
         Status = GameStatus.WinScoreScreen;
-        _allowSelectLevel = false;
         LoadScoreScreen(showBonus: true);
     }
 

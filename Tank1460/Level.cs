@@ -236,6 +236,14 @@ public class Level : IDisposable
                 break;
             }
         }
+
+        if (KeyboardEx.IsPressed(Keys.Home))
+        {
+            foreach (var tank in BotManager.BotTanks)
+            {
+                tank.IsPacifist = true;
+            }
+        }
 #endif
     }
 

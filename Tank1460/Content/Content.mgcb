@@ -389,6 +389,11 @@
 /processor:LvlContentProcessor
 /build:Levels/Test/3.lvl
 
+#begin Levels/Test/4.lvl
+/importer:LvlContentImporter
+/processor:LvlContentProcessor
+/build:Levels/Test/4.lvl
+
 #begin Levels/Test/9.lvl
 /importer:LvlContentImporter
 /processor:LvlContentProcessor

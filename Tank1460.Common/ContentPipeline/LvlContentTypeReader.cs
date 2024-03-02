@@ -1,9 +1,12 @@
 ﻿using Microsoft.Xna.Framework.Content;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Linq;
+using Microsoft.Xna.Framework;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
+using Tank1460.Common.Level.Object;
 using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Common.Level.Object.Tile;
 
@@ -21,13 +24,17 @@ internal class LvlContentTypeReader : ContentTypeReader<LevelModel>
         var infoElement = levelElement.Element("info") ?? throw new Exception("Cannot find element 'level/info'.");
         var shortName = infoElement.Attribute("shortName")?.Value ?? throw new Exception("Cannot find attribute 'shortName' of the 'level/info' element.");
         var fullPath = infoElement.Attribute("fullPath")?.Value ?? throw new Exception("Cannot find attribute 'fullPath' of the 'level/info' element.");
-
+        
         var tilesAsString = levelElement.Element("tiles")?.Value ?? throw new Exception("Cannot find element 'level/tiles'.");
+
+        var objectsElement = levelElement.Element("objects");
+
         return new LevelModel
         {
             ShortName = shortName,
             FullPath = fullPath,
             Tiles = DeserializeTiles(tilesAsString),
+            Objects = DeserializeObjects(objectsElement).ToArray(),
             BotTypes = DeserializeBotTypes(levelElement.Element("botTypes")?.Value)
         };
     }
@@ -64,6 +71,43 @@ internal class LvlContentTypeReader : ContentTypeReader<LevelModel>
         }
 
         return tiles;
+    }
+
+    private IEnumerable<LevelObjectModel> DeserializeObjects(XElement objectsElement)
+    {
+        if (objectsElement is null)
+            yield break;
+
+        // TODO: Это точно можно сделать гораздо проще, но сейчас модели супер-простые, поэтому так.
+        foreach (var node in objectsElement.Nodes())
+        {
+            var element = (XElement)node;
+            var position = new Point(int.Parse(element.Attribute("x")!.Value), int.Parse(element.Attribute("y")!.Value));
+            var size = new Point(int.Parse(element.Attribute("w")!.Value), int.Parse(element.Attribute("h")!.Value));
+
+            yield return element.Name.LocalName.ToLower() switch
+            {
+                "falcon" => new FalconModel
+                {
+                    Position = position,
+                    Size = size
+                },
+
+                "botspawner" => new BotSpawnerModel
+                {
+                    Position = position,
+                    Size = size
+                },
+
+                "playerspawner" => new PlayerSpawnerModel((PlayerIndex)(int.Parse(element.Attribute("player")!.Value) - 1))
+                {
+                    Position = position,
+                    Size = size
+                },
+
+                _ => throw new NotSupportedException($"Unsupported element type '{element.Name}'.")
+            };
+        }
     }
 
     private static (TankType, int)[] DeserializeBotTypes(string botTypesAsString)
