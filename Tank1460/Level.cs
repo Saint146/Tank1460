@@ -427,48 +427,39 @@ public class Level : IDisposable
 
     private void HandleTileRemoved(Tile tile)
     {
+        if (!IsTileObstructing(tile))
+            return;
+
         var tilePosition = tile.TileRectangle.Location;
 
-        var rectToRecalc = new Rectangle(tilePosition.X - 1, tilePosition.Y - 1, 3, 3);
+        // Пересчитываем заново занятость клеток для квадрата 3х3 вокруг нужной клетки.
+        var allPointsToRecalcObstruction = new Rectangle(tilePosition.X - 1, tilePosition.Y - 1, 3, 3)
+                                           .Clip(TileBounds)
+                                           .GetAllPoints()
+                                           .ToHashSet();
 
-        // TODO: Ну, это конечно быстрее работает, но одженерить надо.
-        var posToTheLeft = tilePosition with { X = tilePosition.X - 1 };
-        var posToTheTop = tilePosition with { Y = tilePosition.Y - 1 };
-        var posToTheDiag = new Point(x: tilePosition.X - 1, y: tilePosition.Y - 1);
+        foreach (var tilePoint in allPointsToRecalcObstruction)
+            _obstructedTiles.Remove(tilePoint);
 
-        var collisionToTheLeft = GetTile(posToTheLeft)?.CollisionType ?? CollisionType.None;
-        var collisionToTheTop = GetTile(posToTheTop)?.CollisionType ?? CollisionType.None;
-        var collisionToTheDiag = GetTile(posToTheDiag)?.CollisionType ?? CollisionType.None;
-
-        var passableToTheLeft = collisionToTheLeft.HasOneOfFlags(CollisionType.Impassable, CollisionType.PassableOnlyByShip);
-        var passableToTheTop = collisionToTheTop.HasOneOfFlags(CollisionType.Impassable, CollisionType.PassableOnlyByShip);
-        var passableToTheDiag = collisionToTheDiag.HasOneOfFlags(CollisionType.Impassable, CollisionType.PassableOnlyByShip);
-
-        if (passableToTheLeft)
-            _obstructedTiles.Remove(posToTheLeft);
-
-        if (passableToTheTop)
-            _obstructedTiles.Remove(posToTheTop);
-
-        if (passableToTheDiag && passableToTheLeft && passableToTheTop)
-            _obstructedTiles.Remove(posToTheDiag);
+        // Сама удаленная клетка ещё на этот момент остаётся в коллекции.
+        allPointsToRecalcObstruction.Remove(tilePosition);
+        foreach (var t in allPointsToRecalcObstruction.Select(GetTile).Where(t => t is not null))
+            AddObstructionForTile(t);
     }
 
     private void AddObstructionForTile(Tile tile)
     {
-        switch (tile.Type)
-        {
-            case TileType.Concrete:
-            case TileType.Water:
-                var tilePosition = tile.TileRectangle.Location;
+        if (!IsTileObstructing(tile))
+            return;
 
-                _obstructedTiles.Add(tilePosition);
-                _obstructedTiles.Add(tilePosition with { X = tilePosition.X - 1 });
-                _obstructedTiles.Add(tilePosition with { Y = tilePosition.Y - 1 });
-                _obstructedTiles.Add(tilePosition with { X = tilePosition.X - 1, Y = tilePosition.Y - 1 });
-                break;
-        }
+        var tilePosition = tile.TileRectangle.Location;
+        _obstructedTiles.Add(tilePosition);
+        _obstructedTiles.Add(tilePosition with { X = tilePosition.X - 1 });
+        _obstructedTiles.Add(tilePosition with { Y = tilePosition.Y - 1 });
+        _obstructedTiles.Add(tilePosition with { X = tilePosition.X - 1, Y = tilePosition.Y - 1 });
     }
+
+    private bool IsTileObstructing(Tile tile) => tile.Type is TileType.Concrete or TileType.Water;
 
     internal Tile GetTile(int x, int y)
     {

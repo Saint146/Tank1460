@@ -123,10 +123,10 @@ internal class LvlContentTypeReader : ContentTypeReader<LevelModel>
         foreach (var botTypeString in botTypesStrings)
         {
             var split = botTypeString.Split('*', StringSplitOptions.TrimEntries);
-            if (split.Length != 2 || !int.TryParse(split[0], out var botType) || !int.TryParse(split[1], out var botCount))
-                throw new Exception($"Invalid format for bot type entry '{botTypeString}'. It should look like '3*15'.");
+            if (split.Length != 2 || !Enum.TryParse<TankType>(split[0], out var botType) || !int.TryParse(split[1], out var botCount))
+                throw new Exception($"Invalid format for bot type entry '{botTypeString}'. It should look like 'B2*15'.");
 
-            result.Add(((TankType)botType, botCount));
+            result.Add((botType, botCount));
         }
 
         return result.ToArray();

@@ -20,6 +20,7 @@ internal static class GameRules
         { TankType.P1, 500 },
         { TankType.P2, 500 },
         { TankType.P3, 500 },
+        { TankType.P4, 500 },
 
         { TankType.B0, 100 },
         { TankType.B1, 200 },
