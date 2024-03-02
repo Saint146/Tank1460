@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Tank1460.AI.Algo;
 using Tank1460.Audio;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level;
@@ -71,6 +72,8 @@ public class Level : IDisposable
 
     internal bool ClassicRules => Tank1460Game.ClassicRules;
 
+    internal IReadOnlyCollection<Point> ObstructedTiles => _obstructedTiles;
+
     internal ICollection<LevelObject> GetLevelObjectsInTile(int x, int y) => _tileObjectMap[x, y];
 
     internal HashSet<LevelObject> GetLevelObjectsInTiles(Rectangle tileRectangle)
@@ -85,6 +88,12 @@ public class Level : IDisposable
     private readonly List<Tile> _tiles = new();
     //private Texture2D[] layers;
     private List<LevelObject>[,] _tileObjectMap;
+
+    /// <summary>
+    /// Список заблокированных точек для алгоритма A*. Включает в себя границы экрана. Меняется при добавлении или удалении тайлов.
+    /// </summary>
+    // TODO: Добавить вес, чтобы кирпичи считались тяжелее пустых точек.
+    private readonly HashSet<Point> _obstructedTiles = new();
 
     private readonly LevelEffects _levelEffects = new();
 
@@ -180,7 +189,7 @@ public class Level : IDisposable
                 break;
 
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(Status));
         }
 
         foreach (var playerIndex in PlayersInGame)
@@ -197,7 +206,7 @@ public class Level : IDisposable
                     continue;
 
                 // Обрабатываем нажатия клавиш игрока без жизней.
-                if (playerInput.Active.HasFlag(PlayerInputCommands.ShootTurbo) || playerInput.Pressed.HasFlag(PlayerInputCommands.Shoot))
+                if (playerInput.Pressed.HasFlag(PlayerInputCommands.ShootTurbo) || playerInput.Pressed.HasFlag(PlayerInputCommands.Shoot))
                     TrySnatchLife(playerIndex);
             }
             else
@@ -271,7 +280,10 @@ public class Level : IDisposable
                 explosion.Update(gameTime);
             _explosions.RemoveAll(e => e.ToRemove);
 
+            // TODO: Написать нормально
+            _tiles.Where(t => t.ToRemove).ForEach(HandleTileRemoved);
             _tiles.RemoveAll(t => t.ToRemove);
+
             foreach (var tile in _tiles)
                 tile.Update(gameTime);
 
@@ -311,6 +323,17 @@ public class Level : IDisposable
         // TODO: перейти на слои
         foreach (var tile in _tiles.Where(tile => tile.TileLayer == TileLayer.Default))
             tile.Draw(gameTime, spriteBatch);
+
+#if DEBUG
+        if (GameRules.ShowObstructedTiles)
+        {
+            foreach (var point in _obstructedTiles)
+            {
+                var obstructedRect = GetTileBounds(point.X, point.Y);
+                spriteBatch.DrawRectangle(obstructedRect, new Color(0x220000ff));
+            }
+        }
+#endif
 
         foreach (var playerTank in GetAllPlayerTanks())
             playerTank.Draw(gameTime, spriteBatch);
@@ -393,6 +416,58 @@ public class Level : IDisposable
     {
         _tiles.Add(tile);
         tile.Spawn(new Point(x * Tile.DefaultWidth, y * Tile.DefaultHeight));
+
+        AddObstructionForTile(tile);
+    }
+
+    private void RemoveTile(Tile tile)
+    {
+        tile.Remove();
+    }
+
+    private void HandleTileRemoved(Tile tile)
+    {
+        var tilePosition = tile.TileRectangle.Location;
+
+        var rectToRecalc = new Rectangle(tilePosition.X - 1, tilePosition.Y - 1, 3, 3);
+
+        // TODO: Ну, это конечно быстрее работает, но одженерить надо.
+        var posToTheLeft = tilePosition with { X = tilePosition.X - 1 };
+        var posToTheTop = tilePosition with { Y = tilePosition.Y - 1 };
+        var posToTheDiag = new Point(x: tilePosition.X - 1, y: tilePosition.Y - 1);
+
+        var collisionToTheLeft = GetTile(posToTheLeft)?.CollisionType ?? CollisionType.None;
+        var collisionToTheTop = GetTile(posToTheTop)?.CollisionType ?? CollisionType.None;
+        var collisionToTheDiag = GetTile(posToTheDiag)?.CollisionType ?? CollisionType.None;
+
+        var passableToTheLeft = collisionToTheLeft.HasOneOfFlags(CollisionType.Impassable, CollisionType.PassableOnlyByShip);
+        var passableToTheTop = collisionToTheTop.HasOneOfFlags(CollisionType.Impassable, CollisionType.PassableOnlyByShip);
+        var passableToTheDiag = collisionToTheDiag.HasOneOfFlags(CollisionType.Impassable, CollisionType.PassableOnlyByShip);
+
+        if (passableToTheLeft)
+            _obstructedTiles.Remove(posToTheLeft);
+
+        if (passableToTheTop)
+            _obstructedTiles.Remove(posToTheTop);
+
+        if (passableToTheDiag && passableToTheLeft && passableToTheTop)
+            _obstructedTiles.Remove(posToTheDiag);
+    }
+
+    private void AddObstructionForTile(Tile tile)
+    {
+        switch (tile.Type)
+        {
+            case TileType.Concrete:
+            case TileType.Water:
+                var tilePosition = tile.TileRectangle.Location;
+
+                _obstructedTiles.Add(tilePosition);
+                _obstructedTiles.Add(tilePosition with { X = tilePosition.X - 1 });
+                _obstructedTiles.Add(tilePosition with { Y = tilePosition.Y - 1 });
+                _obstructedTiles.Add(tilePosition with { X = tilePosition.X - 1, Y = tilePosition.Y - 1 });
+                break;
+        }
     }
 
     internal Tile GetTile(int x, int y)
@@ -400,9 +475,13 @@ public class Level : IDisposable
         return (Tile)_tileObjectMap[x, y].SingleOrDefault(o => o is Tile);
     }
 
+    internal Tile GetTile(Point point) => GetTile(point.X, point.Y);
+
     internal void TryRemoveTileAt(int x, int y)
     {
-        GetTile(x, y)?.Remove();
+        var tile = GetTile(x, y);
+        if (tile != null)
+            RemoveTile(tile);
     }
 
     internal void ArmorFalcons(double effectTime)
@@ -539,8 +618,8 @@ public class Level : IDisposable
 
         _tileObjectMap = new List<LevelObject>[width, height];
         for (var y = 0; y < height; y++)
-        for (var x = 0; x < width; x++)
-            _tileObjectMap[x, y] = new List<LevelObject>();
+            for (var x = 0; x < width; x++)
+                _tileObjectMap[x, y] = new List<LevelObject>();
 
         for (var y = 0; y < height; y++)
         {
@@ -556,6 +635,10 @@ public class Level : IDisposable
 
         TileBounds = new Rectangle(0, 0, width, height);
         Bounds = TileBounds.Multiply(new Point(Tile.DefaultWidth, Tile.DefaultHeight));
+
+        var levelBoundsRect = TileBounds;
+        levelBoundsRect.Inflate(1, 1);
+        _obstructedTiles.UnionWith(levelBoundsRect.GetOutlinePoints());
     }
 
     private Tile LoadTile(TileType tileType)
@@ -581,7 +664,7 @@ public class Level : IDisposable
 
     private void LoadObjects(LevelObjectModel[] objectModels)
     {
-        foreach(var objectModel in objectModels.EmptyIfNull())
+        foreach (var objectModel in objectModels.EmptyIfNull())
             switch (objectModel)
             {
                 case BotSpawnerModel botSpawnerModel:
@@ -667,7 +750,7 @@ public class Level : IDisposable
     private void ClearTilesUnderObjects()
     {
         var pointsToClear = new HashSet<Point>();
- 
+
         foreach (var spawner in PlayerSpawners.Values)
             spawner.TileBounds.GetAllPoints().ForEach(point => pointsToClear.Add(point));
 
@@ -678,9 +761,7 @@ public class Level : IDisposable
         {
             var tile = GetTile(point.X, point.Y);
             if (tile is { CollisionType: not CollisionType.None })
-            {
-                tile.Remove();
-            }
+                RemoveTile(tile);
         }
     }
 

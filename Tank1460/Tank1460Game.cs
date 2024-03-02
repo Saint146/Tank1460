@@ -502,6 +502,12 @@ public class Tank1460Game : Game
         }
 
 #if DEBUG
+        // F3 — Включить/отключить отображение "занятых клеток" для AI.
+        if (KeyboardEx.HasBeenPressed(Keys.F3)) GameRules.ShowObstructedTiles = !GameRules.ShowObstructedTiles;
+
+        // F4 — Включить/отключить отображение пути AI
+        if (KeyboardEx.HasBeenPressed(Keys.F4)) GameRules.ShowAiPaths = !GameRules.ShowAiPaths;
+
         // F5 — Включить/отключить отображение границ объектов и занимаемых тайлов
         if (KeyboardEx.HasBeenPressed(Keys.F5)) GameRules.ShowObjectsBoundaries = !GameRules.ShowObjectsBoundaries;
 

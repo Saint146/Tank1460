@@ -8,6 +8,8 @@ internal static class GameRules
 #if DEBUG
     public static bool ShowObjectsBoundaries { get; set; }
     public static bool ShowBotsPeriods { get; set; } = true;
+    public static bool ShowAiPaths { get; set; }
+    public static bool ShowObstructedTiles { get; set; }
 #endif
 
     public static double TimeInFrames(int frameCount) => frameCount * OneFrameSpan;

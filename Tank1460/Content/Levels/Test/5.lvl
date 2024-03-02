@@ -1,0 +1,16 @@
+<level>
+	<tiles>
+		......
+		......
+		......
+		......
+	</tiles>
+	<objects>
+		<botSpawner x="0" y="0" w="2" h="2" />
+		<falcon x="4" y="2" w="2" h="2" />
+		<playerSpawner x="0" y="2" w="2" h="2" player="1" />
+		<playerSpawner x="0" y="2" w="2" h="2" player="2" />
+		<playerSpawner x="0" y="2" w="2" h="2" player="3" />
+		<playerSpawner x="0" y="2" w="2" h="2" player="4" />
+	</objects>
+</level>

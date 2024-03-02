@@ -52,7 +52,7 @@ public abstract class LevelObject : DrawableObject
 #if DEBUG
         if (GameRules.ShowObjectsBoundaries)
         {
-            spriteBatch.DrawRectangle(BoundingRectangle, Color.Red);
+            spriteBatch.DrawRectangle(BoundingRectangle, Color.Yellow);
             spriteBatch.DrawPoint(Position.X, Position.Y, Color.Magenta);
             foreach (var tile in TileRectangle.GetAllPoints())
                 spriteBatch.DrawRectangle(Level.GetTileBounds(tile.X, tile.Y), new Color(0x22222222));

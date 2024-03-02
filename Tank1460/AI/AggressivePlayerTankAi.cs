@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Tank1460.AI.Algo;
 using Tank1460.Common;
 using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object;
@@ -14,18 +15,20 @@ using ObjectDirectionExtensions = Tank1460.Common.Extensions.ObjectDirectionExte
 
 namespace Tank1460.AI;
 
-internal class CommonPlayerTankAi : PlayerTankAi
+internal class AggressivePlayerTankAi : PlayerTankAi
 {
+    internal IReadOnlyList<Point> LastCalculatedPath;
+
     private readonly Level _level;
     private TankOrder _order;
     private bool _skipThink;
     private LevelObject _target;
+    private readonly APathFinder _pathFinder;
 
-    internal IReadOnlyCollection<Point> LastCalculatedPath;
-
-    public CommonPlayerTankAi(PlayerTank tank, Level level) : base(tank)
+    public AggressivePlayerTankAi(PlayerTank tank, Level level) : base(tank)
     {
         _level = level;
+        _pathFinder = new APathFinder(_level.TileBounds.Size.X * _level.TileBounds.Size.Y);
     }
 
     public override TankOrder Think()
@@ -35,6 +38,8 @@ internal class CommonPlayerTankAi : PlayerTankAi
 
         // Думаем только в каждом втором такте (логика оригинала).
         // TODO: Тут бы тоже время считать по-хорошему как везде, чтобы в случае какого-то лага это все равно срабатывало верно.
+
+        // TODO: Это может приводить к проскакиванию углов, так что как-то завязать с CenteredOnTile.
         _skipThink = !_skipThink;
         if (_skipThink)
             return newOrder;
@@ -268,7 +273,7 @@ internal class CommonPlayerTankAi : PlayerTankAi
 
     private ObjectDirection? CheckTileReach()
     {
-        if (PlayerTank.Position.IsCenteredOnTile() && Rng.OneIn(16))
+        if (PlayerTank.Position.IsCenteredOnTile())
             return RefreshAndHuntTarget();
 
         if (PlayerTank.IsFrontTileBlocked && Rng.Next(4) == 0)
@@ -277,7 +282,7 @@ internal class CommonPlayerTankAi : PlayerTankAi
         return null;
     }
 
-    private ObjectDirection RefreshAndHuntTarget()
+    private ObjectDirection? RefreshAndHuntTarget()
     {
         RefreshTarget();
         return _target is not null ? HuntCurrentTarget() : ObjectDirectionExtensions.GetRandomDirection();
@@ -303,24 +308,14 @@ internal class CommonPlayerTankAi : PlayerTankAi
         ChangeTarget(null);
     }
 
-
     private void ChangeTarget(LevelObject newTarget)
     {
         _target = newTarget;
     }
 
-    private ObjectDirection ChangeDirection()
+    private ObjectDirection? ChangeDirection()
     {
-        if (Rng.Next(2) == 0)
-            return RefreshAndHuntTarget();
-
         return Rng.Next(2) == 0 ? PlayerTank.Direction.Clockwise() : PlayerTank.Direction.CounterClockwise();
-    }
-
-    private ObjectDirection Hunt(LevelObject target)
-    {
-        Debug.Assert(target is not null);
-        return GetDirectionToPoint(target.Position);
     }
 
     private ObjectDirection GetDirectionToPoint(Point point)
@@ -340,7 +335,25 @@ internal class CommonPlayerTankAi : PlayerTankAi
         return ObjectDirectionExtensions.GetRandomDirection();
     }
 
-    private ObjectDirection HuntCurrentTarget() => Hunt(_target);
+    private ObjectDirection? HuntCurrentTarget()
+    {
+        Debug.Assert(_target is not null);
+
+        // TODO: Ещё при получении целей считать, можем ли мы проложить путь и брать следующую цель, если не можем.
+        if (!_pathFinder.Calculate(_target.TileRectangle.Location, Tank.TileRectangle.Location, _level.ObstructedTiles, out var path))
+        {
+            _target = null;
+            return ObjectDirectionExtensions.GetRandomDirection();
+        }
+
+        LastCalculatedPath = path;
+
+        if (path.Count < 2)
+            return ObjectDirectionExtensions.GetRandomDirection();
+
+        // Последняя точка в пути - это и есть наша позиция, поэтому берём предпоследнюю.
+        return GetDirectionToPoint(path[1] * Tile.DefaultSize);
+    }
 
     private static ObjectDirection DeltaXToDirection(int deltaX)
     {

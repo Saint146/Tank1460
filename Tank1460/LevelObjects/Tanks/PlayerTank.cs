@@ -5,9 +5,11 @@ using System;
 using System.Collections.Generic;
 using Tank1460.AI;
 using Tank1460.Audio;
+using Tank1460.Common.Extensions;
 using Tank1460.Common.Level.Object.Tank;
 using Tank1460.Globals;
 using Tank1460.Input;
+using Tank1460.LevelObjects.Tiles;
 
 namespace Tank1460.LevelObjects.Tanks;
 
@@ -44,7 +46,7 @@ public class PlayerTank : Tank
         IsControlledByAi = controlledByAi;
 
         if (controlledByAi)
-            _ai = new CommonPlayerTankAi(this, level);
+            _ai = PlayerIndex == PlayerIndex.Two ? new AggressivePlayerTankAi(this, level) : new CommonPlayerTankAi(this, level);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -54,6 +56,22 @@ public class PlayerTank : Tank
 #if DEBUG
         if (GodMode)
             spriteBatch.DrawEllipse(BoundingRectangle.Center.ToVector2(), new Vector2(2), 4, Microsoft.Xna.Framework.Color.Black);
+
+        if (GameRules.ShowAiPaths && _ai is AggressivePlayerTankAi aggressiveAi)
+        {
+            var path = aggressiveAi.LastCalculatedPath;
+            if (path is not null)
+            {
+                var halfTileSize = Tile.DefaultSize.Divide(2);
+                var previousPoint = path[0] * Tile.DefaultSize + halfTileSize;
+                for (var i = 1; i < path.Count; i++)
+                {
+                    var currentPoint = path[i] * Tile.DefaultSize + halfTileSize;
+                    spriteBatch.DrawLine(previousPoint.ToVector2(), currentPoint.ToVector2(), Microsoft.Xna.Framework.Color.AntiqueWhite);
+                    previousPoint = currentPoint;
+                }
+            }
+        }
 #endif
     }
 
