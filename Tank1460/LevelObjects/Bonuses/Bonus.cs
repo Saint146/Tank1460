@@ -105,7 +105,7 @@ public class Bonus : LevelObject
                 // Даём бонус не всем: взявшему танку и не более чем определенному количеству остальных.
                 // TODO: Завязать на BotManager.MaxAliveBots
                 const int maxBotsGainingArmor = 5;
-                var botTanks = Level.BotManager.BotTanks.ToArray().Except(new[] { botTank }).ToArray().GetRandoms(maxBotsGainingArmor).Union(new[] { botTank });
+                var botTanks = Level.BotManager.BotTanks.ToArray().Except(new[] { botTank }).ToArray().TakeRandom(maxBotsGainingArmor).Union(new[] { botTank });
                 foreach (var tank in botTanks)
                 {
                     if (tank.BonusCount > 0)
@@ -125,7 +125,7 @@ public class Bonus : LevelObject
 
             case BonusType.Grenade:
                 // Взрываем два случайных танка игроков.
-                Level.GetAllPlayerTanks().ToArray().GetRandoms(2).ForEach(playerTank => playerTank.Explode(botTank));
+                Level.GetAllPlayerTanks().ToArray().TakeRandom(2).ForEach(playerTank => playerTank.Explode(botTank));
                 break;
 
             case BonusType.Pistol:

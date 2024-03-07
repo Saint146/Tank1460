@@ -56,4 +56,26 @@ internal static class SpriteBatchExtensions
         var angle = (float)center.GetAngleTo(target.Value.ToVector2());
         spriteBatch.DrawLine(center, radius, angle, color);
     }
+
+    public static void DrawReticle(this SpriteBatch spriteBatch, Color color, Point target, float radius = 8f)
+    {
+        const float outsideMargin = 1.5f;
+
+        spriteBatch.DrawCircle(target.ToVector2(), radius, 12, color);
+        spriteBatch.DrawLine(new Vector2(target.X - radius - outsideMargin, target.Y),
+                             new Vector2(target.X - radius / 3, target.Y),
+                             color);
+
+        spriteBatch.DrawLine(new Vector2(target.X + radius + outsideMargin, target.Y),
+                             new Vector2(target.X + radius / 3, target.Y),
+                             color);
+
+        spriteBatch.DrawLine(new Vector2(target.X, target.Y - radius - outsideMargin),
+                             new Vector2(target.X, target.Y - radius / 3),
+                             color);
+
+        spriteBatch.DrawLine(new Vector2(target.X, target.Y + radius + outsideMargin),
+                             new Vector2(target.X, target.Y + radius / 3),
+                             color);
+    }
 }

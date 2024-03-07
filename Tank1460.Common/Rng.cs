@@ -9,6 +9,11 @@ namespace Tank1460.Common;
 public static class Rng
 {
     /// <summary>
+    /// Случайное неотрицательное число, т.е. из [0; <see cref="int.MaxValue"/>).
+    /// </summary>
+    public static int Next() => Random.Shared.Next();
+
+    /// <summary>
     /// Случайное число из [0; maxValue).
     /// </summary>
     /// <remarks>

@@ -41,6 +41,18 @@ public static class EnumerableExtensions
     {
         if (length == 1) return source.Select(t => new[] { t });
         return GetCombinations(source, length - 1).SelectMany(t => source.Where(o => o.CompareTo(t.Last()) > 0),
-                                                        (t1, t2) => t1.Concat(new[] { t2 }));
+                                                              (t1, t2) => t1.Concat(new[] { t2 }));
     }
+
+    /// <summary>
+    /// Вернуть <paramref name="maxCount" /> неповторяющихся случайных элемента.
+    /// </summary>
+    /// <remarks>
+    /// Если <paramref name="maxCount"/> ≥ длины перечисления, вернутся все элементы в случайном порядке.
+    /// </remarks>
+    public static IEnumerable<T> TakeRandom<T>(this IEnumerable<T> source, int maxCount) => source.ToArray().TakeRandom(maxCount);
+
+    public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source) => source.ToArray().Shuffle();
+
+    public static bool IsNullOrEmpty<T>(this IEnumerable<T> source) => source is null || !source.Any();
 }

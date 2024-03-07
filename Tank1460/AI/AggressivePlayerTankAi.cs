@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Tank1460.AI.Algo;
 using Tank1460.Common;
 using Tank1460.Common.Extensions;
@@ -17,12 +16,12 @@ namespace Tank1460.AI;
 
 internal class AggressivePlayerTankAi : PlayerTankAi
 {
-    internal IReadOnlyList<Point> LastCalculatedPath;
+    internal IReadOnlyList<Point> LastCalculatedPath { get; private set; }
+    internal LevelObject Target { get; private set; }
 
     private readonly Level _level;
     private TankOrder _order;
     private bool _skipThink;
-    private LevelObject _target;
     private readonly APathFinder _pathFinder;
 
     public AggressivePlayerTankAi(PlayerTank tank, Level level) : base(tank)
@@ -284,33 +283,47 @@ internal class AggressivePlayerTankAi : PlayerTankAi
 
     private ObjectDirection? RefreshAndHuntTarget()
     {
-        RefreshTarget();
-        return _target is not null ? HuntCurrentTarget() : ObjectDirectionExtensions.GetRandomDirection();
-    }
-
-    private void RefreshTarget()
-    {
-        if (_target is { ToRemove: false })
-            return;
-
-        if (_level.BonusManager.Bonuses.Count != 0)
+        // Проверяем, что текущая цель цела и достижима.
+        if (Target is { ToRemove: false })
         {
-            ChangeTarget(_level.BonusManager.Bonuses.ToArray().GetRandom());
-            return;
+            if (TryGetPathToTarget(Target, out var path))
+                return SetTargetAndPath(Target, path);
         }
 
-        if (_level.BotManager.BotTanks.Count != 0)
+        // Ищем новые цели.
+        foreach (var bonus in _level.BonusManager.Bonuses.Shuffle())
         {
-            ChangeTarget(_level.BotManager.BotTanks.ToArray().GetRandom());
-            return;
+            if (TryGetPathToTarget(bonus, out var path))
+                return SetTargetAndPath(bonus, path);
         }
 
-        ChangeTarget(null);
+        foreach (var tank in _level.BotManager.BotTanks.Shuffle())
+            if (TryGetPathToTarget(tank, out var path))
+                return SetTargetAndPath(tank, path);
+
+        return SetTargetAndPath(null, null);
     }
 
-    private void ChangeTarget(LevelObject newTarget)
+    private bool TryGetPathToTarget(LevelObject target, out IReadOnlyList<Point> path)
     {
-        _target = newTarget;
+        return _pathFinder.Calculate(target.TileRectangle.Location, Tank.TileRectangle.Location, _level.ObstructedTiles, out path);
+    }
+
+    private ObjectDirection SetTargetAndPath(LevelObject target, IReadOnlyList<Point> path)
+    {
+        Target = target;
+
+        if (Target is null)
+        {
+            LastCalculatedPath = Array.Empty<Point>();
+            return ObjectDirectionExtensions.GetRandomDirection();
+        }
+
+        LastCalculatedPath = path;
+
+        // Последняя точка в пути - это и есть наша позиция, поэтому берём предпоследнюю.
+        var targetPoint = path.Count < 2 ? target.Position : path[1] * Tile.DefaultSize;
+        return GetDirectionToPoint(targetPoint);
     }
 
     private ObjectDirection? ChangeDirection()
@@ -333,26 +346,6 @@ internal class AggressivePlayerTankAi : PlayerTankAi
             return DeltaYToDirection(deltaY);
 
         return ObjectDirectionExtensions.GetRandomDirection();
-    }
-
-    private ObjectDirection? HuntCurrentTarget()
-    {
-        Debug.Assert(_target is not null);
-
-        // TODO: Ещё при получении целей считать, можем ли мы проложить путь и брать следующую цель, если не можем.
-        if (!_pathFinder.Calculate(_target.TileRectangle.Location, Tank.TileRectangle.Location, _level.ObstructedTiles, out var path))
-        {
-            _target = null;
-            return ObjectDirectionExtensions.GetRandomDirection();
-        }
-
-        LastCalculatedPath = path;
-
-        if (path.Count < 2)
-            return ObjectDirectionExtensions.GetRandomDirection();
-
-        // Последняя точка в пути - это и есть наша позиция, поэтому берём предпоследнюю.
-        return GetDirectionToPoint(path[1] * Tile.DefaultSize);
     }
 
     private static ObjectDirection DeltaXToDirection(int deltaX)
