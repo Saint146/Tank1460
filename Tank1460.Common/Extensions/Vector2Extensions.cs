@@ -15,6 +15,13 @@ public static class Vector2Extensions
         return Math.Atan2(target.Y - vector.Y, target.X - vector.X);
     }
 
+    public static Vector2 GetPointByAngleAndDistance(this Vector2 vector, float angle, float distance)
+    {
+        var (sin, cos) = Math.SinCos(angle);
+
+        return new Vector2(vector.X + distance * (float)cos, vector.Y + distance * (float)sin);
+    }
+
     /// <summary>
     /// Прибавить <paramref name="step"/> к данному вектору и проверить, не перешли уже через <paramref name="target"/>.
     /// Возвращает true, если переход не совершен, то есть если шагать ещё можно. Иначе — false.

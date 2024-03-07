@@ -18,33 +18,34 @@ internal static class SpriteBatchExtensions
         switch (mark)
         {
             case 0:
-                spriteBatch.DrawEllipse(rectangle.Center.ToVector2(), new Vector2(radius), 16, color);
+                spriteBatch.DrawEllipse(rectangle.Center.ToVector2(), new Vector2(radius), 16, color, 0.8f);
                 break;
 
             case 1:
-                spriteBatch.DrawLine(rectangle.Center.ToVector2(), radius, -(float)Math.PI * 0.75f, color);
+                spriteBatch.DrawLine(rectangle.Center.ToVector2(), radius, -(float)Math.PI * 0.75f, color, 0.8f);
                 break;
 
             case 2:
-                spriteBatch.DrawLine(rectangle.Center.ToVector2(), radius, -(float)Math.PI * 0.25f, color);
-                spriteBatch.DrawLine(rectangle.Center.ToVector2(), radius, -(float)Math.PI * 0.75f, color);
+                spriteBatch.DrawLine(rectangle.Center.ToVector2(), radius, -(float)Math.PI * 0.25f, color, 0.8f);
+                spriteBatch.DrawLine(rectangle.Center.ToVector2(), radius, -(float)Math.PI * 0.75f, color, 0.8f);
                 break;
 
             default:
                 const float angle = -(float)Math.PI * 0.75f;
                 var deltaAngle = 2 * (float)Math.PI / mark;
                 for (var i = 0; i < mark; i++)
-                    spriteBatch.DrawLine(rectangle.Center.ToVector2(), radius, angle + deltaAngle * i, color);
+                    spriteBatch.DrawLine(rectangle.Center.ToVector2(), radius, angle + deltaAngle * i, color, 0.8f);
                 break;
         }
     }
 
     /// <summary>
-    /// Нарисовать стрелку, показывающую в направлении указанной цели
+    /// Нарисовать стрелку, показывающую в направлении указанной цели.
     /// </summary>
     public static void DrawDebugArrow(this SpriteBatch spriteBatch, Rectangle rectangle, Color color, Point? target)
     {
-        const float radius = 3.5f;
+        const float pi = (float)Math.PI;
+        const float radius = 5.5f;
 
         if (target is null)
         {
@@ -54,7 +55,11 @@ internal static class SpriteBatchExtensions
 
         var center = rectangle.Center.ToVector2();
         var angle = (float)center.GetAngleTo(target.Value.ToVector2());
-        spriteBatch.DrawLine(center, radius, angle, color);
+        var endPoint = center.GetPointByAngleAndDistance(angle, radius);
+
+        spriteBatch.DrawLine(center, endPoint, color, 0.8f);
+        spriteBatch.DrawLine(endPoint, radius / 2, pi + angle + 0.7f, color, 0.8f);
+        spriteBatch.DrawLine(endPoint, radius / 2, pi + angle - 0.7f, color, 0.8f);
     }
 
     public static void DrawReticle(this SpriteBatch spriteBatch, Color color, Point target, float radius = 8f)
