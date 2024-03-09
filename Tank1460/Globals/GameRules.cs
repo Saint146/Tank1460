@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Tank1460.Common.Level.Object.Tank;
+using Tank1460.LevelObjects.Bonuses;
 
 namespace Tank1460.Globals;
 
@@ -27,6 +28,17 @@ internal static class GameRules
         { TankType.B2, 300 },
         { TankType.B3, 400 },
         { TankType.B9, 500 }
+    };
+
+    public static readonly IReadOnlyList<BonusType> AllowedRandomBonusTypes = new[]
+    {
+        BonusType.Armor,
+        BonusType.Clock,
+        //BonusType.Grenade,
+        BonusType.OneUp,
+        BonusType.Pistol,
+        BonusType.Shovel,
+        BonusType.Star
     };
 
     public static bool AiEnabled { get; set; }

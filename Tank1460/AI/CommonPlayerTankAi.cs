@@ -21,8 +21,6 @@ internal class CommonPlayerTankAi : PlayerTankAi
     private bool _skipThink;
     private LevelObject _target;
 
-    internal IReadOnlyCollection<Point> LastCalculatedPath;
-
     public CommonPlayerTankAi(PlayerTank tank, Level level) : base(tank)
     {
         _level = level;

@@ -48,7 +48,7 @@ public class PlayerTank : Tank
         IsControlledByAi = controlledByAi;
 
         if (controlledByAi)
-            _ai = PlayerIndex == PlayerIndex.Two ? new AggressivePlayerTankAi(this, level) : new CommonPlayerTankAi(this, level);
+            _ai = new AggressivePlayerTankAi(this, level);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)

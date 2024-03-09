@@ -1,12 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using Tank1460.Audio;
 using Tank1460.Common;
 using Tank1460.Common.Extensions;
+using Tank1460.Globals;
 
 namespace Tank1460.LevelObjects.Bonuses;
 
@@ -17,15 +16,13 @@ public class BonusManager
     private readonly Level _level;
     private readonly int _maxBonusesOnScreen;
     private readonly List<Bonus> _bonuses = new();
-    private readonly BonusType[] _allowedTypes;
+    private readonly IReadOnlyList<BonusType> _allowedTypes;
 
     public BonusManager(Level level, int maxBonusesOnScreen)
     {
         _level = level;
         _maxBonusesOnScreen = maxBonusesOnScreen;
-        _allowedTypes = Enum.GetValues<BonusType>();
-        if (level.ClassicRules)
-            _allowedTypes = _allowedTypes.Where(bonus => bonus != BonusType.Ship).ToArray();
+        _allowedTypes = GameRules.AllowedRandomBonusTypes;
     }
 
     public Bonus Spawn(BonusType type, int x, int y)
@@ -73,7 +70,7 @@ public class BonusManager
         return (x, y);
     }
 
-    private BonusType GetRandomBonusType() => _allowedTypes[Rng.Next(_allowedTypes.Length)];
+    private BonusType GetRandomBonusType() => _allowedTypes.GetRandom();
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
