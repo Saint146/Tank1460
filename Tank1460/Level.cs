@@ -755,6 +755,12 @@ public class Level : IDisposable
         return false;
     }
 
+    internal bool IsObjectOnIce(LevelObject obj)
+    {
+        var tileCenter = obj.TileRectangle.Center;
+        return GetTile(tileCenter.X, tileCenter.Y)?.Type == TileType.Ice;
+    }
+
     public delegate void LevelEvent(Level level);
     public delegate void LevelEvent<in T>(Level level, T args);
 

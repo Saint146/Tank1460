@@ -183,11 +183,12 @@ internal class SoundPlayer : ISoundPlayer
 
         LoadSound(content, Sound.MoveBot, SoundChannels.Square2, 0, true);
         LoadSound(content, Sound.MovePlayer, SoundChannels.Square2, 1, true);
-        LoadSound(content, Sound.HitHurt, SoundChannels.Square2, 2);
-        LoadSound(content, Sound.HitDull, SoundChannels.Square2, 2);
-        LoadSound(content, Sound.BonusSpawn, SoundChannels.Square2, 3);
-        LoadSound(content, Sound.BonusPickup, SoundChannels.Square2, 4);
-        LoadSound(content, Sound.Fail, SoundChannels.Square2, 5);
+        LoadSound(content, Sound.Slide, SoundChannels.Square2, 2);
+        LoadSound(content, Sound.HitHurt, SoundChannels.Square2, 3);
+        LoadSound(content, Sound.HitDull, SoundChannels.Square2, 4);
+        LoadSound(content, Sound.BonusSpawn, SoundChannels.Square2, 4);
+        LoadSound(content, Sound.BonusPickup, SoundChannels.Square2, 5);
+        LoadSound(content, Sound.Fail, SoundChannels.Square2, 6);
         LoadSound(content, Sound.Pause, SoundChannels.Square2, 8);
 
         LoadSound(content, Sound.OneUp, SoundChannels.Square1 | SoundChannels.Square2, 5);

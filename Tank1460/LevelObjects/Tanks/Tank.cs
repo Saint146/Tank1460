@@ -77,7 +77,7 @@ public abstract class Tank : MoveableLevelObject
     {
     }
 
-    public sealed override void Update(GameTime gameTime)
+    public  override void Update(GameTime gameTime)
     {
         Debug.Assert(Status != TankStatus.Unknown);
         switch (Status)

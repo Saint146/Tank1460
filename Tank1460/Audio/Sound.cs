@@ -18,6 +18,7 @@ internal enum Sound
     OneUp,
     Pause,
     Reward,
+    Slide,
     Shot,
     Tick
 }

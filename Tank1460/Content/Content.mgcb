@@ -556,6 +556,12 @@
 /processorParam:Quality=Best
 /build:Sounds/8bit/Shot/3.ogg
 
+#begin Sounds/8bit/Slide/1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/8bit/Slide/1.ogg
+
 #begin Sounds/8bit/Tick/1.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor

@@ -23,11 +23,17 @@ internal class GameOverScreen : Form
 
     protected override void OnClick(FormItem item)
     {
+        if (SoundPlayer.IsPlaying(Sound.GameOver))
+            return;
+
         Exit();
     }
 
     protected override void OnInputPressed(PlayerIndex playerIndex, PlayerInputCommands input)
     {
+        if (SoundPlayer.IsPlaying(Sound.GameOver))
+            return;
+
         if (input.HasOneOfFlags(PlayerInputCommands.Shoot, PlayerInputCommands.ShootTurbo, PlayerInputCommands.Start))
             Exit();
     }
