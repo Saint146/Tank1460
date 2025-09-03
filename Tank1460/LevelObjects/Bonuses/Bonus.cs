@@ -33,7 +33,7 @@ public class Bonus : LevelObject
 
     protected override void LoadContent()
     {
-        _animation = new Animation(Level.Content.Load<Texture2D>($@"Sprites/Bonus/{Type}"), GameRules.TimeInFrames(8), true);
+        _animation = new Animation(Level.Content.Load<Texture2D>($"Sprites/Bonus/{Type}"), GameRules.TimeInFrames(8), true);
     }
 
     private void ApplyEffectOnPlayer(PlayerTank playerTank)
