@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
 using System;
 using System.Collections.Generic;
@@ -18,22 +17,22 @@ using Tank1460.LevelObjects.Bonuses;
 using Tank1460.LevelObjects.Explosions;
 using Tank1460.LevelObjects.Tanks;
 using Tank1460.LevelObjects.Tiles;
+using Tank1460.Managers;
 
 namespace Tank1460;
 
 public class Level : IDisposable
 {
-    // TODO: Паблик Морозов во все поля и попахивает год-обжектом :(
-
-    public int PlayerLivesRemaining(PlayerIndex playerIndex) => PlayerSpawners[playerIndex].LivesRemaining;
+    // Public Properties
+    public int PlayerLivesRemaining(PlayerIndex playerIndex) => _playerManager.GetPlayerLivesRemaining(playerIndex);
 
     public int BotSpawnsRemaining => BotManager?.SpawnsRemaining ?? 0;
 
     public bool BotsCanGrabBonuses { get; } = true;
 
-    public int PlayerCount => PlayerSpawners.Count;
+    public int PlayerCount => _playerManager.GetAllPlayerSpawners().Count();
 
-    public PlayerSpawner GetPlayerSpawner(PlayerIndex playerIndex) => PlayerSpawners[playerIndex];
+    public PlayerSpawner GetPlayerSpawner(PlayerIndex playerIndex) => _playerManager.GetPlayerSpawner(playerIndex);
 
     public BotManager BotManager { get; }
 
@@ -53,9 +52,9 @@ public class Level : IDisposable
 
     public Rectangle Bounds { get; private set; }
 
-    public bool IsLoaded => Status != LevelStatus.Loading;
+    public bool IsLoaded => _stateManager.Status != LevelStatus.Loading;
 
-    public PlayerTank GetPlayerTank(PlayerIndex playerIndex) => PlayerSpawners[playerIndex]?.Tank;
+    public PlayerTank GetPlayerTank(PlayerIndex playerIndex) => _playerManager.GetPlayerTank(playerIndex);
 
     public IEnumerable<PlayerTank> GetAllPlayerTanks() => PlayersInGame.Select(GetPlayerTank).Where(tank => tank is not null);
 
@@ -71,46 +70,32 @@ public class Level : IDisposable
 
     internal bool ClassicRules => Tank1460Game.ClassicRules;
 
-    internal ICollection<LevelObject> GetLevelObjectsInTile(int x, int y) => _tileObjectMap[x, y];
+    public ICollection<LevelObject> GetLevelObjectsInTile(int x, int y) => _collisionDetector.GetLevelObjectsInTile(x, y);
 
-    internal HashSet<LevelObject> GetLevelObjectsInTiles(Rectangle tileRectangle)
-    {
-        var objects = new HashSet<LevelObject>();
-        tileRectangle.EnumerateArray(_tileObjectMap, objects.UnionWith);
-        return objects;
-    }
+    public HashSet<LevelObject> GetLevelObjectsInTiles(Rectangle tileRectangle) => _collisionDetector.GetLevelObjectsInTiles(tileRectangle);
 
-    private LevelStatus Status { get; set; }
+    // Private Managers and Fields
+    private readonly LevelStateManager _stateManager;
+    private LevelCollisionDetector _collisionDetector;
+    private readonly LevelPlayerManager _playerManager;
+    private readonly LevelInputHandler _inputHandler;
 
     private readonly List<Tile> _tiles = new();
-    //private Texture2D[] layers;
     private List<LevelObject>[,] _tileObjectMap;
 
     private readonly LevelEffects _levelEffects = new();
-
-    // В оригинале именно так: зависит лишь от режима,
-    // а не от того, жив ли второй игрок. Даже если уровень стартует, когда один уже без жизней, всё равно будет шесть.
-    private int MaxAliveBots() => (PlayersInGame.Length + 1) * 2;
-
-    private Dictionary<PlayerIndex, PlayerSpawner> PlayerSpawners { get; } = new();
-    private Dictionary<PlayerIndex, int> PlayersScore { get; } = new();
     private readonly List<Explosion> _explosions = new();
+
     private const int TotalBots = 20;
     private const int MaxBonusesOnScreen = 1;
-#if DEBUG
-    private bool _cheatGodMode;
-#endif
 
-    private double _delayTime;
-    private double _delayEffectTime;
-    private LevelStatus _statusBeforePause;
+    private int MaxAliveBots() => (PlayersInGame.Length + 1) * 2;
 
     public Level(GameServiceContainer serviceProvider, LevelModel levelModel, GameState startingGameState)
     {
         Model = levelModel;
         ShortName = levelModel.ShortName;
 
-        // TODO: Попробовать выкинуть этот номер всё-таки.
         if (!int.TryParse(ShortName, out var levelNumber))
             levelNumber = -1;
         LevelNumber = levelNumber;
@@ -121,20 +106,31 @@ public class Level : IDisposable
         Content = serviceProvider.GetService<ContentManagerEx>();
         SoundPlayer = serviceProvider.GetService<ISoundPlayer>();
 
+        // Initialize managers
+        _playerManager = new LevelPlayerManager(_levelEffects, this);
+        _stateManager = new LevelStateManager(
+            this, SoundPlayer,
+            _levelEffects,
+            () => LevelComplete?.Invoke(this),
+            () => GameOver?.Invoke(this));
+        _collisionDetector = new LevelCollisionDetector(_tileObjectMap, new Rectangle(0, 0, 26, 26));
+        _inputHandler = new LevelInputHandler(this, _stateManager, _playerManager);
         BotManager = new BotManager(this, TotalBots, MaxAliveBots());
         BonusManager = new BonusManager(this, MaxBonusesOnScreen);
+
+
         LoadTiles(levelModel.Tiles);
         LoadObjects(levelModel.Objects);
 
-        // Load starting game state.
+        // Load starting game state
         foreach (var (playerIndex, playerState) in startingGameState.PlayersStates)
         {
-            PlayersScore[playerIndex] = playerState.Score;
-            PlayerSpawners[playerIndex].LivesRemaining = playerState.LivesRemaining;
-            PlayerSpawners[playerIndex].SetNextSpawnSettings(playerState.TankType, playerState.TankHasShip);
+            _playerManager.SetPlayerScore(playerIndex, playerState.Score);
+            GetPlayerSpawner(playerIndex).LivesRemaining = playerState.LivesRemaining;
+            GetPlayerSpawner(playerIndex).SetNextSpawnSettings(playerState.TankType, playerState.TankHasShip);
         }
 
-        Status = LevelStatus.Intro;
+        _stateManager.Status = LevelStatus.Intro;
     }
 
     public void AddExplosion(Explosion explosion) => _explosions.Add(explosion);
@@ -163,90 +159,17 @@ public class Level : IDisposable
 
     public void HandleInput(PlayerInputCollection playersInputs)
     {
-        switch (Status)
-        {
-            case LevelStatus.Loading:
-            case LevelStatus.Intro:
-            case LevelStatus.LostDelay:
-            case LevelStatus.Win:
-            case LevelStatus.GameOver:
-                playersInputs.ClearInputs();
-                break;
-
-            case LevelStatus.Running:
-            case LevelStatus.Paused:
-            case LevelStatus.WinDelay:
-            case LevelStatus.LostPreDelay:
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-        foreach (var playerIndex in PlayersInGame)
-        {
-            var playerInput = playersInputs[playerIndex];
-
-            if (playerInput.Pressed.HasFlag(PlayerInputCommands.Start))
-                TogglePause();
-
-            var tank = GetPlayerTank(playerIndex);
-            if (tank is null)
-            {
-                if (PlayerLivesRemaining(playerIndex) != 0)
-                    continue;
-
-                // Обрабатываем нажатия клавиш игрока без жизней.
-                if (playerInput.Active.HasFlag(PlayerInputCommands.ShootTurbo) || playerInput.Pressed.HasFlag(PlayerInputCommands.Shoot))
-                    TrySnatchLife(playerIndex);
-            }
-            else
-            {
-                tank.HandleInput(playerInput);
-            }
-        }
-
-#if DEBUG
-        if (KeyboardEx.HasBeenPressed(Keys.F10))
-        {
-            _cheatGodMode = !_cheatGodMode;
-            GetAllPlayerTanks().ForEach(tank => tank.GodMode = _cheatGodMode);
-        }
-
-        if (KeyboardEx.HasBeenPressed(Keys.PageUp))
-            GetAllPlayerTanks().ForEach(tank => tank.UpgradeUp());
-
-        if (KeyboardEx.HasBeenPressed(Keys.PageDown))
-            GetAllPlayerTanks().ForEach(tank => tank.UpgradeDown());
-
-        if (KeyboardEx.IsPressed(Keys.LeftAlt))
-        {
-            foreach (var digit in Enumerable.Range(1, 4))
-            {
-                var key = Keys.NumPad0 + digit;
-                if (!KeyboardEx.HasBeenPressed(key))
-                    continue;
-
-                var player = (PlayerIndex)(digit - 1);
-                if (!PlayersInGame.Contains(player))
-                    continue;
-
-                BotManager.ExplodeAll(GetPlayerTank(player));
-
-                break;
-            }
-        }
-#endif
+        _inputHandler.HandleInput(playersInputs);
     }
 
     public void Update(GameTime gameTime)
     {
-        var proceedWithUpdate = ProcessStatus(gameTime);
+        var proceedWithUpdate = _stateManager.ProcessStatus(gameTime);
 
         if (proceedWithUpdate)
         {
             var playerTanks = GetAllPlayerTanks().ToList();
-            playerTanks.FindAll(p => p.ToRemove).ForEach(HandlePlayerTankDestroyed);
+            playerTanks.FindAll(p => p.ToRemove).ForEach(_playerManager.HandlePlayerTankDestroyed);
             foreach (var playerTank in playerTanks)
                 playerTank.Update(gameTime);
 
@@ -267,25 +190,24 @@ public class Level : IDisposable
             foreach (var tile in _tiles)
                 tile.Update(gameTime);
 
-            foreach (var playerSpawner in PlayerSpawners.Values)
+            foreach (var playerSpawner in _playerManager.GetAllPlayerSpawners())
                 playerSpawner.Update(gameTime);
 
             BonusManager.Update(gameTime);
         }
 
-        _levelEffects.Update(gameTime, Status == LevelStatus.Paused);
+        _levelEffects.Update(gameTime, _stateManager.Status == LevelStatus.Paused);
     }
 
     public bool CanTankPassThroughTile(Tank tank, Point tilePoint)
     {
-        var tileObjects = _tileObjectMap.ElementAtOrDefault(tilePoint.X, tilePoint.Y);
-        return tileObjects?.All(o => !o.CollisionType.HasFlag(CollisionType.Impassable) && (!o.CollisionType.HasFlag(CollisionType.PassableOnlyByShip) || tank.HasShip)) == true;
+        return _collisionDetector.CanTankPassThroughTile(tank, tilePoint);
     }
 
     public void HandleFalconDestroyed(Falcon falcon)
     {
         if (!Falcons.Any(f => f.IsAlive))
-            StartGameOverSequence();
+            HandleAllPlayersLostLives();
     }
 
     public void Dispose()
@@ -297,10 +219,6 @@ public class Level : IDisposable
     {
         spriteBatch.FillRectangle(Bounds, Color.Black);
 
-        //for (int i = 0; i <= EntityLayer; ++i)
-        //    spriteBatch.Draw(layers[i], Vector2.Zero, Color.White);
-
-        // TODO: перейти на слои
         foreach (var tile in _tiles.Where(tile => tile.TileLayer == TileLayer.Default))
             tile.Draw(gameTime, spriteBatch);
 
@@ -330,25 +248,17 @@ public class Level : IDisposable
 
     public void HandleChangeTileBounds(LevelObject levelObject, Rectangle oldTileBounds, Rectangle? newTileBounds)
     {
-        oldTileBounds.EnumerateArray(_tileObjectMap, tileLevelObjects => { tileLevelObjects.Remove(levelObject); });
-
-        newTileBounds?.EnumerateArray(_tileObjectMap, tileLevelObjects => { tileLevelObjects.Add(levelObject); });
+        _collisionDetector.HandleChangeTileBounds(levelObject, oldTileBounds, newTileBounds);
     }
 
     public void HandleAllBotsDestroyed()
     {
-        if (Status is LevelStatus.LostPreDelay or LevelStatus.LostDelay)
-            return;
-
-        Status = LevelStatus.WinDelay;
-        _delayTime = 0.0;
-        _delayEffectTime = GameRules.TimeInFrames(144);
+        _stateManager.HandleAllBotsDestroyed();
     }
 
     public void Start()
     {
-        Debug.Assert(Status == LevelStatus.Intro);
-        Status = LevelStatus.Running;
+        _stateManager.Start();
     }
 
     public void HandleObjectRemoved(UpdateableObject o)
@@ -359,26 +269,9 @@ public class Level : IDisposable
         HandleChangeTileBounds(levelObject, levelObject.TileRectangle, null);
     }
 
-    public ICollection<LevelObject> GetAllCollisionsSimple(LevelObject levelObject,
-        IReadOnlyCollection<LevelObject> excludedObjects = null)
+    public ICollection<LevelObject> GetAllCollisionsSimple(LevelObject levelObject, IReadOnlyCollection<LevelObject> excludedObjects = null)
     {
-        if (DetectOutOfBoundsCollisionSimple(levelObject.TileRectangle))
-            return new LevelObject[] { null };
-
-        // Ограничиваем список всех объектов на уровне теми, что находятся в тех же тайлах.
-        var closeObjects = GetLevelObjectsInTiles(levelObject.TileRectangle);
-
-        // Выкидываем из него лишнее - сам объект и то, что было указано как лишнее.
-        closeObjects.Remove(levelObject);
-        if (excludedObjects is not null)
-            closeObjects.RemoveWhere(excludedObjects.Contains);
-
-        // Вот здесь уже настоящая проверка коллизий.
-        // TODO: Использовать более простой метод, ведь нам тут не надо считать глубину.
-        closeObjects.RemoveWhere(closeObject =>
-            levelObject.BoundingRectangle.GetIntersectionDepth(closeObject.BoundingRectangle) == Vector2.Zero);
-
-        return closeObjects;
+        return _collisionDetector.GetAllCollisionsSimple(levelObject, excludedObjects);
     }
 
     internal void AddTile(Tile tile, int x, int y)
@@ -389,7 +282,7 @@ public class Level : IDisposable
 
     internal Tile GetTile(int x, int y)
     {
-        return (Tile)_tileObjectMap[x, y].SingleOrDefault(o => o is Tile);
+        return (Tile)_collisionDetector.GetLevelObjectsInTile(x, y).SingleOrDefault(o => o is Tile);
     }
 
     internal void TryRemoveTileAt(int x, int y)
@@ -414,26 +307,12 @@ public class Level : IDisposable
 
     internal void AddPlayerStatsForDefeatingTank(PlayerIndex playerIndex, Tank tank)
     {
-        var tankType = tank.Type;
-
-        var playerBotStats = Stats.PlayerStats[playerIndex].BotsDefeated;
-        if (playerBotStats.TryGetValue(tankType, out var value))
-            playerBotStats[tankType] = value + 1;
-        else
-            playerBotStats[tankType] = 1;
-
-        RewardPlayerWithPoints(playerIndex, GameRules.TankScoreByType[tankType]);
+        _playerManager.AddPlayerStatsForDefeatingTank(playerIndex, tank);
     }
 
     internal void RewardPlayerWithPoints(PlayerIndex playerIndex, int points)
     {
-        Debug.Assert(points > 0);
-
-        var oneUpsGained = GameRules.GetOneUpsGained(PlayersScore[playerIndex], points);
-        PlayersScore[playerIndex] += points;
-
-        if (oneUpsGained > 0)
-            PlayerSpawners[playerIndex].AddOneUps(oneUpsGained);
+        _playerManager.RewardPlayerWithPoints(playerIndex, points);
     }
 
     internal void CreateFloatingText(Point centerPosition, string text, double effectTime)
@@ -443,13 +322,12 @@ public class Level : IDisposable
 
     internal void HandlePlayerLostAllLives(PlayerIndex playerIndex)
     {
-        if (PlayersInGame.All(player => PlayerSpawners[player].ControlledByAi || PlayerLivesRemaining(player) == 0))
-        {
-            StartGameOverSequence();
-            return;
-        }
+        _playerManager.HandlePlayerLostAllLives(playerIndex);
+    }
 
-        _levelEffects.Add(new GameOverLevelEffect(this, playerIndex));
+    internal void HandleAllPlayersLostLives()
+    {
+        _stateManager.StartGameOverSequence();
     }
 
     internal GameState GetGameState()
@@ -460,68 +338,12 @@ public class Level : IDisposable
             var tank = GetPlayerTank(playerIndex);
 
             state.LivesRemaining = PlayerLivesRemaining(playerIndex);
-            state.Score = PlayersScore[playerIndex];
+            state.Score = _playerManager.GetPlayerScore(playerIndex);
             state.TankType = tank?.Type;
             state.TankHasShip = tank?.HasShip is true;
         }
 
         return gameState;
-    }
-
-    private bool ProcessStatus(GameTime gameTime)
-    {
-        switch (Status)
-        {
-            case LevelStatus.Loading:
-            case LevelStatus.Intro:
-            case LevelStatus.Paused:
-            case LevelStatus.GameOver:
-            case LevelStatus.Win:
-                return false;
-
-            case LevelStatus.Running:
-                return true;
-
-            case LevelStatus.WinDelay:
-                _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
-                if (_delayTime <= _delayEffectTime)
-                    return true;
-
-                Status = LevelStatus.Win;
-                SoundPlayer.StopAll();
-                LevelComplete?.Invoke(this);
-
-                return false;
-
-            case LevelStatus.LostPreDelay:
-                _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
-                if (_delayTime <= _delayEffectTime)
-                    return true;
-
-                _levelEffects.AddExclusive(new GameOverLevelEffect(this));
-                SoundPlayer.MuteAllWithLessPriorityThan(Sound.ExplosionBig);
-                Status = LevelStatus.LostDelay;
-
-                _delayTime = 0.0;
-                _delayEffectTime = GameRules.TimeInFrames(252);
-                return true;
-
-            case LevelStatus.LostDelay:
-                _delayTime += gameTime.ElapsedGameTime.TotalSeconds;
-                if (_delayTime <= _delayEffectTime)
-                    return true;
-
-                Status = LevelStatus.GameOver;
-                _levelEffects.RemoveAll();
-                SoundPlayer.StopAll();
-                SoundPlayer.Unmute();
-                GameOver?.Invoke(this);
-
-                return false;
-
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
     }
 
     private void LoadTiles(TileType[,] tileTypes)
@@ -531,8 +353,11 @@ public class Level : IDisposable
 
         _tileObjectMap = new List<LevelObject>[width, height];
         for (var y = 0; y < height; y++)
-        for (var x = 0; x < width; x++)
-            _tileObjectMap[x, y] = new List<LevelObject>();
+            for (var x = 0; x < width; x++)
+                _tileObjectMap[x, y] = new List<LevelObject>();
+
+        // Update collision detector with the new tile object map
+        _collisionDetector = new LevelCollisionDetector(_tileObjectMap, new Rectangle(0, 0, width, height));
 
         for (var y = 0; y < height; y++)
         {
@@ -552,28 +377,21 @@ public class Level : IDisposable
 
     private Tile LoadTile(TileType tileType)
     {
-        // TODO: Заменить на фабричный метод.
         return tileType switch
         {
             TileType.Empty => null,
-
             TileType.Brick => new BrickTile(this),
-
             TileType.Concrete => new ConcreteTile(this),
-
             TileType.Water => new WaterTile(this),
-
             TileType.Forest => new ForestTile(this),
-
             TileType.Ice => new IceTile(this),
-
             _ => throw new NotSupportedException()
         };
     }
 
     private void LoadObjects(LevelObjectModel[] objectModels)
     {
-        foreach(var objectModel in objectModels.EmptyIfNull())
+        foreach (var objectModel in objectModels.EmptyIfNull())
             switch (objectModel)
             {
                 case BotSpawnerModel botSpawnerModel:
@@ -593,7 +411,6 @@ public class Level : IDisposable
             }
 
         CreateMissingRequiredObjects();
-
         ClearTilesUnderObjects();
     }
 
@@ -602,11 +419,11 @@ public class Level : IDisposable
         if (!PlayersInGame.Contains(playerIndex))
             return;
 
-        if (PlayerSpawners.ContainsKey(playerIndex))
+        if (_playerManager.ContainsPlayerSpawner(playerIndex))
             throw new NotSupportedException($"A level may only have one player {playerIndex} spawn.");
 
         var playerSpawner = new PlayerSpawner(this, tileBounds, playerIndex);
-        PlayerSpawners.Add(playerIndex, playerSpawner);
+        _playerManager.AddPlayerSpawner(playerIndex, playerSpawner);
 
         if (playerIndex == PlayerIndex.One || !GameRules.AiEnabled)
             return;
@@ -619,7 +436,6 @@ public class Level : IDisposable
     {
         var falcon = new Falcon(this, tileBounds.Size);
         Falcons.Add(falcon);
-
         falcon.Spawn(tileBounds.Location * Tile.DefaultSize);
     }
 
@@ -630,9 +446,8 @@ public class Level : IDisposable
 
     private void CreateMissingRequiredObjects()
     {
-        var playersWithoutSpawners = PlayersInGame.Where(playerIndex => !PlayerSpawners.ContainsKey(playerIndex)).ToList();
+        var playersWithoutSpawners = PlayersInGame.Where(playerIndex => !_playerManager.ContainsPlayerSpawner(playerIndex)).ToList();
 
-        // TODO: Временный хардкод, пока не дойдут руки переделать сами файлы уровней.
         if (Falcons.Count == 0)
             CreateFalcon(new Rectangle(12, 24, 2, 2));
 
@@ -659,8 +474,8 @@ public class Level : IDisposable
     private void ClearTilesUnderObjects()
     {
         var pointsToClear = new HashSet<Point>();
- 
-        foreach (var spawner in PlayerSpawners.Values)
+
+        foreach (var spawner in _playerManager.GetAllPlayerSpawners())
             spawner.TileBounds.GetAllPoints().ForEach(point => pointsToClear.Add(point));
 
         foreach (var falcon in Falcons)
@@ -674,85 +489,6 @@ public class Level : IDisposable
                 tile.Remove();
             }
         }
-    }
-
-    private void TogglePause()
-    {
-        switch (Status)
-        {
-            case LevelStatus.Loading:
-            case LevelStatus.WinDelay:
-            case LevelStatus.LostDelay:
-                return;
-
-            case LevelStatus.Intro:
-            case LevelStatus.LostPreDelay:
-            case LevelStatus.Running:
-                _statusBeforePause = Status;
-                Status = LevelStatus.Paused;
-                SoundPlayer.PauseAndPushState();
-                SoundPlayer.Play(Sound.Pause);
-                _levelEffects.AddExclusive(new PauseLevelEffect(this));
-                break;
-
-            case LevelStatus.Paused:
-                _levelEffects.RemoveAll<PauseLevelEffect>();
-                Status = _statusBeforePause;
-                SoundPlayer.ResumeAndPopState();
-                break;
-
-            case LevelStatus.Win:
-            case LevelStatus.GameOver:
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
-
-    private void HandlePlayerTankDestroyed(PlayerTank playerTank)
-    {
-        var playerSpawner = PlayerSpawners[playerTank.PlayerIndex];
-        if (playerSpawner is null)
-        {
-            Debug.Fail($"Cannot find player spawner for player {playerTank.PlayerIndex}.");
-            return;
-        }
-
-        playerSpawner.HandleTankDestroyed(playerTank);
-    }
-
-    private void TrySnatchLife(PlayerIndex playerIndex)
-    {
-        if (!PlayerSpawners.Values.TryGetFirst(out var spawnerDonator, spawner => spawner.CanDonateLife()))
-            return;
-
-        spawnerDonator.DonateLife(PlayerSpawners[playerIndex]);
-        _levelEffects.RemoveAll<GameOverLevelEffect>(effect => effect.PlayerIndex == playerIndex);
-    }
-
-    private void StartGameOverSequence()
-    {
-        if (Status is LevelStatus.LostPreDelay or LevelStatus.LostDelay)
-            return;
-
-        Status = LevelStatus.LostPreDelay;
-        _delayEffectTime = GameRules.TimeInFrames(36);
-    }
-
-    private bool DetectOutOfBoundsCollisionSimple(Rectangle tileRect)
-    {
-        if (tileRect.Top < TileBounds.Top)
-            return true;
-
-        if (tileRect.Bottom > TileBounds.Bottom)
-            return true;
-
-        if (tileRect.Left < TileBounds.Left)
-            return true;
-
-        if (tileRect.Right > TileBounds.Right)
-            return true;
-
-        return false;
     }
 
     public delegate void LevelEvent(Level level);
